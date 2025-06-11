@@ -72,7 +72,7 @@ export default function Home() {
                 onClick={() => setShowCreateModal(true)}
               >
                 <Plus className="w-6 h-6 mr-2" />
-                Create a Right
+                Tokenize Your Music
               </Button>
               
               <Button 
@@ -82,7 +82,7 @@ export default function Home() {
                 onClick={scrollToMarketplace}
               >
                 <Search className="w-6 h-6 mr-2" />
-                Explore Rights
+                Browse Music Rights
               </Button>
             </div>
           </div>
@@ -97,9 +97,9 @@ export default function Home() {
       <section className="py-20 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground mb-4">What Is This?</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">How Dright Works</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Transform your rights into tradeable digital assets with transparent ownership and automated revenue streams.
+              Turn your music, videos, and audio content into valuable NFTs that generate ongoing revenue from streaming platforms.
             </p>
           </div>
 
@@ -110,10 +110,10 @@ export default function Home() {
                   <FileText className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  📄 Ownable
+                  🎵 Tokenize Music
                 </h3>
                 <p className="text-muted-foreground">
-                  Tokenize any legal or creative right as an NFT with verifiable ownership and transferability.
+                  Convert your songs, beats, or audio content into tradeable NFTs with verified ownership and streaming rights.
                 </p>
               </CardContent>
             </Card>
@@ -124,10 +124,10 @@ export default function Home() {
                   <DollarSign className="w-8 h-8 text-accent-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  💰 Earning
+                  💰 Earn Royalties
                 </h3>
                 <p className="text-muted-foreground">
-                  Set up automated income streams that flow directly to NFT holders through smart contracts.
+                  Receive automated payouts from Spotify, YouTube, Apple Music, and other platforms directly to your wallet.
                 </p>
               </CardContent>
             </Card>
@@ -138,10 +138,10 @@ export default function Home() {
                   <Shield className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  🧾 Verifiable
+                  🔗 Platform Connected
                 </h3>
                 <p className="text-muted-foreground">
-                  Attach legal documents, proof, and royalty information transparently on-chain.
+                  Link to YouTube channels, TikTok accounts, and streaming platforms with transparent revenue tracking.
                 </p>
               </CardContent>
             </Card>
@@ -153,9 +153,9 @@ export default function Home() {
       <section id="marketplace" className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Featured Rights</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">Featured Music Rights</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Explore tokenized rights currently available in the marketplace.
+              Discover trending songs, viral videos, and profitable audio content available for investment.
             </p>
           </div>
 
@@ -232,10 +232,10 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">
-                Rights<span className="text-green-400">Market</span>
+                D<span className="text-green-400">right</span>
               </h3>
               <p className="text-gray-400">
-                Tokenize, trade, and earn from your rights with transparent smart contracts.
+                Tokenize, trade, and earn from your music with transparent smart contracts and streaming royalties.
               </p>
             </div>
             

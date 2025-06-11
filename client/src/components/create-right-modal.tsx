@@ -165,7 +165,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a New Right</DialogTitle>
+          <DialogTitle>Tokenize Your Music</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
