@@ -72,7 +72,9 @@ const rightTypeOptions = [
 
 export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -114,6 +116,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       onOpenChange(false);
       form.reset();
       setSelectedFile(null);
+      setYoutubeUrl("");
     },
     onError: (error) => {
       toast({
