@@ -57,12 +57,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Tokenize Your Music.<br />
-              <span className="text-primary">Own Your Sound.</span>
+              Tokenize Your Rights.<br />
+              <span className="text-primary">Make Them Liquid.</span>
             </h1>
             
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Transform your songs, videos, and audio content into tradeable NFTs with built-in royalty streams from streaming platforms.
+              Transform any legal right into tradeable NFTs - starting with music rights, expanding to all valuable rights that can be sold or transmitted.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
@@ -72,7 +72,7 @@ export default function Home() {
                 onClick={() => setShowCreateModal(true)}
               >
                 <Plus className="w-6 h-6 mr-2" />
-                Tokenize Your Music
+                Create a Right
               </Button>
               
               <Button 
@@ -82,7 +82,7 @@ export default function Home() {
                 onClick={scrollToMarketplace}
               >
                 <Search className="w-6 h-6 mr-2" />
-                Browse Music Rights
+                Explore Rights
               </Button>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-4">How Dright Works</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Turn your music, videos, and audio content into valuable NFTs that generate ongoing revenue from streaming platforms.
+              Transform any legal right into liquid, tradeable assets. Starting with music rights, expanding to all valuable rights.
             </p>
           </div>
 
@@ -110,10 +110,10 @@ export default function Home() {
                   <FileText className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  🎵 Tokenize Music
+                  📄 Tokenize Rights
                 </h3>
                 <p className="text-muted-foreground">
-                  Convert your songs, beats, or audio content into tradeable NFTs with verified ownership and streaming rights.
+                  Convert any legal or creative right into tradeable NFTs with verified ownership and transferability.
                 </p>
               </CardContent>
             </Card>
@@ -124,10 +124,10 @@ export default function Home() {
                   <DollarSign className="w-8 h-8 text-accent-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  💰 Earn Royalties
+                  💰 Generate Revenue
                 </h3>
                 <p className="text-muted-foreground">
-                  Receive automated payouts from Spotify, YouTube, Apple Music, and other platforms directly to your wallet.
+                  Set up automated income streams that flow directly to NFT holders through smart contracts and revenue sharing.
                 </p>
               </CardContent>
             </Card>
@@ -138,10 +138,10 @@ export default function Home() {
                   <Shield className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  🔗 Platform Connected
+                  🔗 Make Liquid
                 </h3>
                 <p className="text-muted-foreground">
-                  Link to YouTube channels, TikTok accounts, and streaming platforms with transparent revenue tracking.
+                  Transform traditionally illiquid rights into instantly tradeable assets with transparent market pricing.
                 </p>
               </CardContent>
             </Card>
@@ -153,9 +153,9 @@ export default function Home() {
       <section id="marketplace" className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Featured Music Rights</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-4">Featured Rights</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Discover trending songs, viral videos, and profitable audio content available for investment.
+              Explore our initial collection of tokenized music rights and other valuable assets available for investment.
             </p>
           </div>
 

@@ -55,11 +55,11 @@ interface CreateRightModalProps {
 }
 
 const rightTypeOptions = [
-  { value: "copyright", label: "📄 Song Copyright", symbol: "📄" },
-  { value: "royalty", label: "💰 Streaming Royalties", symbol: "💰" },
-  { value: "license", label: "📜 Sync/Commercial License", symbol: "📜" },
-  { value: "ownership", label: "🏢 Beat/Sample Ownership", symbol: "🏢" },
-  { value: "access", label: "🔐 Exclusive Access Rights", symbol: "🔐" },
+  { value: "copyright", label: "📄 Copyright (Music, Media)", symbol: "📄" },
+  { value: "royalty", label: "💰 Revenue Share", symbol: "💰" },
+  { value: "license", label: "📜 License (Patent, Trademark)", symbol: "📜" },
+  { value: "ownership", label: "🏢 Ownership Rights", symbol: "🏢" },
+  { value: "access", label: "🔐 Access Rights", symbol: "🔐" },
 ];
 
 export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) {
@@ -165,7 +165,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Tokenize Your Music</DialogTitle>
+          <DialogTitle>Create a New Right</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -175,9 +175,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Song/Content Title *</FormLabel>
+                  <FormLabel>Right Title *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Streaming Rights: 'Midnight Dreams'" {...field} />
+                    <Input placeholder="e.g., Streaming Rights: 'Midnight Dreams' or Patent License: AI Algorithm" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,7 +217,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                   <FormLabel>Description *</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe your song/content, streaming numbers, platforms, and revenue details..."
+                      placeholder="Describe what this right allows, revenue potential, usage statistics, or market value..."
                       rows={4}
                       {...field}
                     />
