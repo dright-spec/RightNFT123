@@ -73,9 +73,9 @@ export default function Marketplace() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Music Rights Marketplace</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Rights Marketplace</h1>
           <p className="text-muted-foreground">
-            Browse and invest in tokenized music, videos, and audio content from creators worldwide
+            Browse and invest in tokenized rights - from music and media to patents and real estate
           </p>
         </div>
 

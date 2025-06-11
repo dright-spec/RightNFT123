@@ -280,9 +280,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>This content generates streaming revenue</FormLabel>
+                        <FormLabel>This right generates ongoing revenue</FormLabel>
                         <p className="text-sm text-muted-foreground">
-                          Enable if your music/video earns money from Spotify, YouTube, Apple Music, etc.
+                          Enable if this right pays dividends, royalties, or recurring income to holders
                         </p>
                       </div>
                     </FormItem>
@@ -296,9 +296,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                       name="paymentAddress"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Revenue Wallet Address</FormLabel>
+                          <FormLabel>Payment Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="0x... (where streaming royalties will be sent)" {...field} />
+                            <Input placeholder="0x... (where revenue will be sent)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -379,10 +379,10 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 {(createRightMutation.isPending || isUploading) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isUploading ? "Uploading..." : "Minting..."}
+                    {isUploading ? "Uploading..." : "Creating..."}
                   </>
                 ) : (
-                  "Mint Music NFT"
+                  "Create Right (Mint NFT)"
                 )}
               </Button>
             </div>
