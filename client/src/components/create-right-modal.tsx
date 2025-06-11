@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,6 +75,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -129,14 +130,74 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === "application/pdf") {
-      setSelectedFile(file);
-    } else {
+    if (file) {
+      const validTypes = [
+        'audio/', 'video/', 'image/',
+        'application/pdf'
+      ];
+      
+      const isValidType = validTypes.some(type => file.type.startsWith(type));
+      
+      if (isValidType) {
+        setSelectedFile(file);
+        setYoutubeUrl(""); // Clear YouTube URL if file is selected
+      } else {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select an audio, video, image, or PDF file",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const extractYouTubeVideoId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/watch\?.*v=([^&\n?#]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
+  const handleYoutubeUrl = async () => {
+    if (!youtubeUrl) return;
+    
+    const videoId = extractYouTubeVideoId(youtubeUrl);
+    if (!videoId) {
       toast({
-        title: "Invalid File",
-        description: "Please select a PDF file",
+        title: "Invalid YouTube URL",
+        description: "Please enter a valid YouTube URL",
         variant: "destructive",
       });
+      return;
+    }
+
+    setIsExtracting(true);
+    try {
+      // Generate a hash from the YouTube URL for content verification
+      const blob = new Blob([youtubeUrl], { type: 'text/plain' });
+      const urlFile = new File([blob], `youtube-${videoId}.txt`, { type: 'text/plain' });
+      const urlHash = await generateFileHash(urlFile);
+      
+      toast({
+        title: "YouTube Video Added",
+        description: "Video URL has been processed and ready for verification",
+      });
+      
+      setSelectedFile(null); // Clear file if YouTube URL is used
+    } catch (error) {
+      toast({
+        title: "Processing Failed",
+        description: "Failed to process YouTube URL. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -150,7 +211,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       let contentFileSize = 0;
       let contentFileType = "";
 
-      // Upload content file if provided
+      // Upload content file or process YouTube URL
       if (selectedFile) {
         const uploadResult = await uploadContentToIPFS(selectedFile);
         if (uploadResult.success) {
@@ -161,6 +222,20 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
           contentFileType = uploadResult.fileType || selectedFile.type;
         } else {
           throw new Error("Failed to upload content file");
+        }
+      } else if (youtubeUrl) {
+        // Process YouTube URL
+        const videoId = extractYouTubeVideoId(youtubeUrl);
+        if (videoId) {
+          // Create a File object for YouTube URL hashing
+          const blob = new Blob([youtubeUrl], { type: 'text/plain' });
+          const urlFile = new File([blob], `youtube-${videoId}.txt`, { type: 'text/plain' });
+          contentFileHash = await generateFileHash(urlFile);
+          contentFileUrl = youtubeUrl;
+          contentFileName = `YouTube Video: ${videoId}`;
+          contentFileType = "video/youtube";
+        } else {
+          throw new Error("Invalid YouTube URL");
         }
       }
 
