@@ -62,7 +62,7 @@ export default function Home() {
             </h1>
             
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Transform any legal right into tradeable NFTs - starting with music rights, expanding to all valuable rights that can be sold or transmitted.
+              Transform any legal right into tradeable NFTs. From music streaming rights to patents, real estate shares to trademarks - make any valuable right instantly liquid.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
@@ -99,7 +99,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-4">How Dright Works</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Transform any legal right into liquid, tradeable assets. Starting with music rights, expanding to all valuable rights.
+              Transform any legal right into liquid, tradeable assets. Music rights, patents, real estate, trademarks - all become instantly tradeable.
             </p>
           </div>
 
@@ -155,7 +155,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-4">Featured Rights</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Explore our initial collection of tokenized music rights and other valuable assets available for investment.
+              Discover trending music rights, valuable patents, real estate shares, and other tokenized assets available for investment.
             </p>
           </div>
 
