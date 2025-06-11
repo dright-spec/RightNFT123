@@ -40,9 +40,15 @@ export function RightCard({ right }: RightCardProps) {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
               <span className="text-2xl">{rightSymbol}</span>
             </div>
-            <Badge className={getBadgeColor(right.type)}>
-              {rightLabel}
-            </Badge>
+            <div className="flex flex-col gap-2">
+              <Badge className={getBadgeColor(right.type)}>
+                {rightLabel}
+              </Badge>
+              <VerificationBadge 
+                status={right.verificationStatus as "pending" | "verified" | "rejected" || "pending"} 
+                size="sm" 
+              />
+            </div>
           </div>
           <div className="flex items-center space-x-1">
             {right.paysDividends ? (
@@ -85,12 +91,28 @@ export function RightCard({ right }: RightCardProps) {
         </div>
 
         <div className="pt-4 border-t border-border/50">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <div className="text-xs text-muted-foreground flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xs font-bold text-primary">{right.creator.username.charAt(0).toUpperCase()}</span>
               </div>
               by {right.creator.username}
+            </div>
+            <TrustScore 
+              verificationStatus={right.verificationStatus as "pending" | "verified" | "rejected" || "pending"}
+              hasContentFile={!!right.contentFileHash}
+              creatorVerified={right.creator.isVerified || false}
+              className="text-xs"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {right.contentFileHash && (
+                <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <FileCheck className="w-3 h-3" />
+                  <span>Content Verified</span>
+                </div>
+              )}
             </div>
             <Link href={`/rights/${right.id}`}>
               <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-all hover:scale-105 glow-primary">
