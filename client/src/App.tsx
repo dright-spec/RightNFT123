@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Marketplace from "@/pages/marketplace";
 import RightDetail from "@/pages/right-detail";
 import Admin from "@/pages/admin";
+import GoogleCallback from "@/pages/google-callback";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
+      <Route path="/auth/google/callback" component={GoogleCallback} />
       <Route component={NotFound} />
     </Switch>
   );
