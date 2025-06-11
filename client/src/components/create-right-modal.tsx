@@ -28,12 +28,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadContentToIPFS, generateFileHash } from "@/lib/ipfs";
-import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel } from "lucide-react";
+import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube } from "lucide-react";
 import type { InsertRight } from "@shared/schema";
 
 const formSchema = z.object({
@@ -72,10 +73,12 @@ const rightTypeOptions = [
 
 export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [ownershipFiles, setOwnershipFiles] = useState<File[]>([]);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ownershipInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -117,6 +120,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       onOpenChange(false);
       form.reset();
       setSelectedFile(null);
+      setOwnershipFiles([]);
       setYoutubeUrl("");
     },
     onError: (error) => {
@@ -682,7 +686,136 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               </CardContent>
             </Card>
 
+            {/* Content Upload Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Content Upload
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Upload your actual content files (songs, videos) or provide YouTube URL for verification and authenticity
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {/* File Upload Option */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Upload Content File</Label>
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center space-y-3">
+                      {selectedFile ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center gap-2 text-green-600">
+                            <CheckCircle className="h-5 w-5" />
+                            <span className="font-medium">File Selected</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{selectedFile.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedFile(null)}
+                          >
+                            Remove File
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">Drop your content file here</p>
+                            <p className="text-sm text-muted-foreground">
+                              Songs, videos, documents (MP3, MP4, MOV, PDF, etc.)
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            Choose File
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="audio/*,video/*,.pdf,.doc,.docx"
+                      onChange={handleFileSelect}
+                    />
+                  </div>
 
+                  {/* Or Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
+
+                  {/* YouTube URL Option */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">YouTube Video URL</Label>
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                        disabled={isExtracting}
+                      />
+                      {youtubeUrl && extractYouTubeVideoId(youtubeUrl) && (
+                        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Youtube className="h-4 w-4 text-red-500" />
+                            <span className="text-sm">Video detected: {extractYouTubeVideoId(youtubeUrl)}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleYouTubeExtract}
+                            disabled={isExtracting}
+                          >
+                            {isExtracting ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              "Process Video"
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      We'll extract and hash the video content for on-chain verification
+                    </p>
+                  </div>
+                </div>
+
+                {(selectedFile || youtubeUrl) && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                      <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-medium text-blue-900 dark:text-blue-100">Content Verification</p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          Your content will be hashed and stored on-chain for authenticity verification. 
+                          This ensures buyers can verify they're purchasing genuine rights to the actual content.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button
