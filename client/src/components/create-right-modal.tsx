@@ -32,8 +32,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { uploadToIPFS } from "@/lib/ipfs";
-import { Upload, FileText, Loader2 } from "lucide-react";
+import { uploadContentToIPFS, generateFileHash } from "@/lib/ipfs";
+import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel } from "lucide-react";
 import type { InsertRight } from "@shared/schema";
 
 const formSchema = z.object({
