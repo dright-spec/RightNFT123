@@ -81,22 +81,40 @@ export default function Home() {
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="px-8 py-4 text-lg font-semibold h-auto shadow-lg hover:scale-105 transition-all"
+                className="px-8 py-4 text-lg font-semibold h-auto shadow-lg hover:scale-105 transition-all glow-primary relative overflow-hidden"
                 onClick={() => setShowCreateModal(true)}
               >
-                <Plus className="w-6 h-6 mr-2" />
-                Create a Right
+                <div className="absolute inset-0 shimmer"></div>
+                <Plus className="w-6 h-6 mr-2 relative z-10" />
+                <span className="relative z-10">Create a Right</span>
+                <ArrowRight className="w-4 h-4 ml-2 relative z-10" />
               </Button>
               
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="px-8 py-4 text-lg font-semibold h-auto border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                className="px-8 py-4 text-lg font-semibold h-auto glass-card hover:bg-primary/5 transition-all"
                 onClick={scrollToMarketplace}
               >
                 <Search className="w-6 h-6 mr-2" />
                 Explore Rights
               </Button>
+            </div>
+
+            {/* Stats */}
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
+              <div className="text-center p-4 rounded-xl bg-white/30 backdrop-blur-sm border border-white/20">
+                <div className="text-3xl font-bold text-primary">$2.4M+</div>
+                <div className="text-sm text-muted-foreground">Rights Tokenized</div>
+              </div>
+              <div className="text-center p-4 rounded-xl bg-white/30 backdrop-blur-sm border border-white/20">
+                <div className="text-3xl font-bold text-accent">150+</div>
+                <div className="text-sm text-muted-foreground">Active Rights</div>
+              </div>
+              <div className="text-center p-4 rounded-xl bg-white/30 backdrop-blur-sm border border-white/20">
+                <div className="text-3xl font-bold text-primary">50K+</div>
+                <div className="text-sm text-muted-foreground">Community Members</div>
+              </div>
             </div>
           </div>
         </div>
@@ -117,44 +135,38 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center p-6 hover:bg-muted/50 transition-colors">
+            <Card className="text-center p-8 rights-card-hover group">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <FileText className="w-8 h-8 text-primary-foreground" />
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <FileText className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  📄 Tokenize Rights
-                </h3>
-                <p className="text-muted-foreground">
-                  Convert any legal or creative right into tradeable NFTs with verified ownership and transferability.
+                <h3 className="text-xl font-semibold mb-3 text-gradient">Upload Your Rights</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Upload legal documents and specify the type of right you want to tokenize. Music rights, patents, real estate - we support them all.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:bg-muted/50 transition-colors">
+            <Card className="text-center p-8 rights-card-hover group">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-accent rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <DollarSign className="w-8 h-8 text-accent-foreground" />
+                <div className="w-20 h-20 bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <Shield className="w-10 h-10 text-accent" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  💰 Generate Revenue
-                </h3>
-                <p className="text-muted-foreground">
-                  Set up automated income streams that flow directly to NFT holders through smart contracts and revenue sharing.
+                <h3 className="text-xl font-semibold mb-3 text-gradient">Mint as NFT</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  We create an NFT representing your right with smart contracts that automatically handle dividend distributions.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="text-center p-6 hover:bg-muted/50 transition-colors">
+            <Card className="text-center p-8 rights-card-hover group">
               <CardContent className="pt-6">
-                <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-6">
-                  <Shield className="w-8 h-8 text-white" />
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                  <DollarSign className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3 flex items-center justify-center gap-2">
-                  🔗 Make Liquid
-                </h3>
-                <p className="text-muted-foreground">
-                  Transform traditionally illiquid rights into instantly tradeable assets with transparent market pricing.
+                <h3 className="text-xl font-semibold mb-3 text-gradient">Trade & Earn</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  List your rights on our marketplace, collect dividends automatically, and trade with other investors worldwide.
                 </p>
               </CardContent>
             </Card>
