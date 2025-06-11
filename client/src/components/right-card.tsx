@@ -2,7 +2,8 @@ import { Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, X, TrendingUp, Sparkles, ArrowRight } from "lucide-react";
+import { Check, X, TrendingUp, Sparkles, ArrowRight, FileCheck } from "lucide-react";
+import { VerificationBadge, TrustScore } from "./verification-badge";
 import type { RightWithCreator } from "@shared/schema";
 import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
 

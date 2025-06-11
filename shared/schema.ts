@@ -70,6 +70,13 @@ export const rights = pgTable("rights", {
   highestBidderId: integer("highest_bidder_id").references(() => users.id),
   views: integer("views").default(0),
   favorites: integer("favorites").default(0),
+  
+  // Verification system
+  verificationStatus: text("verification_status").default("pending"), // "pending", "verified", "rejected"
+  verifiedAt: timestamp("verified_at"),
+  verifiedBy: text("verified_by"),
+  verificationNotes: text("verification_notes"),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
