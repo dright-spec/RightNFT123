@@ -53,8 +53,11 @@ export const rights = pgTable("rights", {
   distributionDetails: text("distribution_details"), // detailed explanation for buyers
   price: decimal("price", { precision: 18, scale: 8 }),
   currency: text("currency").default("ETH"),
-  legalDocumentHash: text("legal_document_hash"),
-  legalDocumentUrl: text("legal_document_url"),
+  contentFileHash: text("content_file_hash"), // SHA-256 hash of uploaded content
+  contentFileUrl: text("content_file_url"), // IPFS URL of the actual content
+  contentFileName: text("content_file_name"),
+  contentFileSize: integer("content_file_size"),
+  contentFileType: text("content_file_type"), // audio/mp3, video/mp4, etc.
   metadataHash: text("metadata_hash"),
   metadataUrl: text("metadata_url"),
   creatorId: integer("creator_id").references(() => users.id),
@@ -151,8 +154,11 @@ export const insertRightSchema = createInsertSchema(rights).pick({
   distributionDetails: true,
   price: true,
   currency: true,
-  legalDocumentHash: true,
-  legalDocumentUrl: true,
+  contentFileHash: true,
+  contentFileUrl: true,
+  contentFileName: true,
+  contentFileSize: true,
+  contentFileType: true,
   listingType: true,
   auctionEndTime: true,
   minBidAmount: true,

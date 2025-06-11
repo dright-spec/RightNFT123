@@ -40,11 +40,19 @@ const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   type: z.enum(["copyright", "royalty", "access", "ownership", "license"]),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  tags: z.array(z.string()).default([]),
+  listingType: z.enum(["fixed", "auction"]).default("fixed"),
+  price: z.string().min(1, "Price is required"),
+  currency: z.string().default("ETH"),
+  auctionDuration: z.number().optional(),
+  minBidAmount: z.string().optional(),
   paysDividends: z.boolean().default(false),
   paymentAddress: z.string().optional(),
   paymentFrequency: z.enum(["monthly", "quarterly", "yearly", "streaming"]).optional(),
-  price: z.string().min(1, "Price is required"),
-  currency: z.string().default("ETH"),
+  revenueDistributionMethod: z.enum(["automatic", "manual", "escrow"]).optional(),
+  distributionPercentage: z.string().optional(),
+  minimumDistribution: z.string().optional(),
+  distributionDetails: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -74,16 +82,23 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       title: "",
       type: "copyright",
       description: "",
+      tags: [],
+      listingType: "fixed",
+      price: "",
+      currency: "ETH",
       paysDividends: false,
       paymentAddress: "",
       paymentFrequency: "monthly",
-      price: "",
-      currency: "ETH",
+      revenueDistributionMethod: "automatic",
+      distributionPercentage: "",
+      minimumDistribution: "",
+      distributionDetails: "",
     },
   });
 
   const paysDividends = form.watch("paysDividends");
   const selectedType = form.watch("type");
+  const listingType = form.watch("listingType");
 
   const createRightMutation = useMutation({
     mutationFn: async (data: InsertRight) => {

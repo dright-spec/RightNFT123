@@ -4,6 +4,44 @@ export interface IPFSUploadResult {
   hash: string;
   url: string;
   success: boolean;
+  fileHash?: string; // SHA-256 hash of the file content
+  fileSize?: number;
+  fileName?: string;
+  fileType?: string;
+}
+
+export async function generateFileHash(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function uploadContentToIPFS(file: File): Promise<IPFSUploadResult> {
+  try {
+    // Generate content hash for verification
+    const fileHash = await generateFileHash(file);
+    
+    // In production, this would upload to actual IPFS
+    const mockHash = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    
+    return {
+      hash: mockHash,
+      url: `https://ipfs.io/ipfs/${mockHash}`,
+      fileHash,
+      fileSize: file.size,
+      fileName: file.name,
+      fileType: file.type,
+      success: true,
+    };
+  } catch (error) {
+    console.error('IPFS upload error:', error);
+    return {
+      hash: '',
+      url: '',
+      success: false,
+    };
+  }
 }
 
 export async function uploadToIPFS(file: File): Promise<IPFSUploadResult> {
