@@ -34,6 +34,15 @@
   --rights-bg-gradient-from: hsl(214, 100%, 97%);
   --rights-bg-gradient-via: hsl(0, 0%, 100%);
   --rights-bg-gradient-to: hsl(270, 100%, 98%);
+  
+  /* Enhanced gradients */
+  --hero-gradient-start: hsl(230, 80%, 95%);
+  --hero-gradient-mid: hsl(260, 70%, 97%);
+  --hero-gradient-end: hsl(290, 60%, 95%);
+  --card-gradient-start: hsl(0, 0%, 100%);
+  --card-gradient-end: hsl(220, 14%, 98%);
+  --accent-glow: hsl(142, 76%, 36%);
+  --primary-glow: hsl(220, 90%, 56%);
 }
 
 .dark {
@@ -75,11 +84,32 @@
 
 @layer components {
   .hero-gradient {
-    background: linear-gradient(135deg, var(--rights-bg-gradient-from) 0%, var(--rights-bg-gradient-via) 50%, var(--rights-bg-gradient-to) 100%);
+    background: linear-gradient(135deg, var(--hero-gradient-start) 0%, var(--hero-gradient-mid) 50%, var(--hero-gradient-end) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .hero-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at top left, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(34, 197, 94, 0.1) 0%, transparent 50%);
+    pointer-events: none;
   }
   
   .rights-card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-2 hover:scale-[1.02];
+    background: linear-gradient(135deg, var(--card-gradient-start) 0%, var(--card-gradient-end) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+  }
+  
+  .rights-card-hover:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(59, 130, 246, 0.1);
   }
   
   .animate-float {
@@ -88,6 +118,31 @@
   
   .animate-float-delayed {
     animation: float 6s ease-in-out infinite 3s;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
+  }
+  
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(220, 90%, 56%) 0%, hsl(142, 76%, 36%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
@@ -98,6 +153,30 @@
   50% {
     transform: translateY(-20px);
   }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background-size: 200px 100%;
+  animation: shimmer 2s infinite;
 }
 
 /* Custom scrollbar */

@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CreateRightModal } from "@/components/create-right-modal";
 import { WalletButton } from "@/components/wallet-button";
 import { RightCard } from "@/components/right-card";
-import { Plus, Search, FileText, DollarSign, Shield, Check, X } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Home() {
@@ -56,9 +56,22 @@ export default function Home() {
       <section className="relative overflow-hidden hero-gradient py-20 sm:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
+            {/* Floating Icons */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <Music className="absolute top-20 left-10 w-8 h-8 text-primary/20 animate-float" />
+              <Globe className="absolute top-32 right-16 w-6 h-6 text-accent/20 animate-float-delayed" />
+              <TrendingUp className="absolute bottom-20 left-20 w-7 h-7 text-primary/20 animate-float" />
+              <Sparkles className="absolute top-16 right-32 w-5 h-5 text-accent/20 animate-pulse-slow" />
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Star className="w-4 h-4" />
+              Now Supporting All Rights Types
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight relative z-10">
               Tokenize Your Rights.<br />
-              <span className="text-primary">Make Them Liquid.</span>
+              <span className="text-gradient">Make Them Liquid.</span>
             </h1>
             
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
