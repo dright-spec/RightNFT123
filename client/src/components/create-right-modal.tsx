@@ -141,34 +141,61 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     setIsUploading(true);
     
     try {
-      let legalDocumentHash = "";
-      let legalDocumentUrl = "";
+      let contentFileHash = "";
+      let contentFileUrl = "";
+      let contentFileName = "";
+      let contentFileSize = 0;
+      let contentFileType = "";
 
-      // Upload legal document if provided
+      // Upload content file if provided
       if (selectedFile) {
         const uploadResult = await uploadContentToIPFS(selectedFile);
-        legalDocumentHash = uploadResult.hash;
-        legalDocumentUrl = uploadResult.url;
+        if (uploadResult.success) {
+          contentFileHash = uploadResult.fileHash || "";
+          contentFileUrl = uploadResult.url;
+          contentFileName = uploadResult.fileName || selectedFile.name;
+          contentFileSize = uploadResult.fileSize || selectedFile.size;
+          contentFileType = uploadResult.fileType || selectedFile.type;
+        } else {
+          throw new Error("Failed to upload content file");
+        }
       }
 
-      // Get the symbol for the selected type
-      const selectedTypeOption = rightTypeOptions.find(option => option.value === data.type);
-      const symbol = selectedTypeOption?.symbol || "📄";
+      // Generate symbol from title
+      const symbol = data.title.substring(0, 6).toUpperCase().replace(/[^A-Z]/g, '') || "DRIGHT";
 
       const rightData: InsertRight = {
-        ...data,
+        title: data.title,
+        type: data.type,
+        description: data.description,
         symbol,
-        legalDocumentHash: legalDocumentHash || undefined,
-        legalDocumentUrl: legalDocumentUrl || undefined,
+        tags: data.tags,
+        listingType: data.listingType,
+        price: data.price,
+        currency: data.currency,
+        auctionEndTime: data.listingType === "auction" && data.auctionDuration 
+          ? new Date(Date.now() + data.auctionDuration * 60 * 60 * 1000) 
+          : undefined,
+        minBidAmount: data.minBidAmount,
+        paysDividends: data.paysDividends,
         paymentAddress: data.paysDividends ? data.paymentAddress : undefined,
         paymentFrequency: data.paysDividends ? data.paymentFrequency : undefined,
+        revenueDistributionMethod: data.paysDividends ? data.revenueDistributionMethod : undefined,
+        distributionPercentage: data.distributionPercentage,
+        minimumDistribution: data.minimumDistribution,
+        distributionDetails: data.paysDividends ? data.distributionDetails : undefined,
+        contentFileHash,
+        contentFileUrl,
+        contentFileName,
+        contentFileSize,
+        contentFileType,
       };
 
       await createRightMutation.mutateAsync(rightData);
     } catch (error) {
       toast({
         title: "Upload Failed",
-        description: "Failed to upload legal document to IPFS",
+        description: error instanceof Error ? error.message : "Failed to create right",
         variant: "destructive",
       });
     } finally {
@@ -242,44 +269,168 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="0.00" type="number" step="0.01" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Content File Upload Section */}
+            <Card className="border-2 border-dashed border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardContent className="pt-6">
+                <div className="text-center space-y-4">
+                  <div className="flex justify-center">
+                    {selectedFile ? (
+                      selectedFile.type.startsWith('audio/') ? <Music className="h-12 w-12 text-primary" /> :
+                      selectedFile.type.startsWith('video/') ? <Video className="h-12 w-12 text-primary" /> :
+                      selectedFile.type.startsWith('image/') ? <Image className="h-12 w-12 text-primary" /> :
+                      <File className="h-12 w-12 text-primary" />
+                    ) : (
+                      <Upload className="h-12 w-12 text-muted-foreground" />
+                    )}
+                  </div>
+                  
+                  {selectedFile ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{selectedFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}
+                      </p>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedFile(null)}
+                      >
+                        Remove File
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">Upload Content File</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Upload the actual content (song, video, document) to verify authenticity
+                      </p>
+                      <Input
+                        type="file"
+                        accept="audio/*,video/*,image/*,.pdf,.doc,.docx"
+                        onChange={handleFileSelect}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Supports: MP3, MP4, PDF, images • Max 100MB • Files are hashed for authenticity
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-              <FormField
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Currency</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+            {/* Listing Type Selection */}
+            <FormField
+              control={form.control}
+              name="listingType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Listing Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="fixed">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Fixed Price Sale
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="auction">
+                        <div className="flex items-center gap-2">
+                          <Gavel className="h-4 w-4" />
+                          Timed Auction
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Price and Currency for Fixed Price or Auction Settings */}
+            {listingType === "fixed" ? (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price *</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                        <Input placeholder="0.00" type="number" step="0.01" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="ETH">ETH</SelectItem>
-                        <SelectItem value="USDC">USDC</SelectItem>
-                        <SelectItem value="DAI">DAI</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Currency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ETH">ETH</SelectItem>
+                          <SelectItem value="USDC">USDC</SelectItem>
+                          <SelectItem value="DAI">DAI</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="minBidAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Starting Bid *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="0.00" type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="auctionDuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (hours) *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="24" 
+                          type="number" 
+                          min="1" 
+                          max="168" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
 
             <Card className="bg-muted/30">
               <CardContent className="pt-6">
@@ -306,15 +457,106 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
                 {paysDividends && (
                   <div className="mt-4 space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                            Revenue Distribution Transparency Required
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            You must clearly specify how ongoing revenue will be distributed to NFT holders to ensure transparency and trust.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     <FormField
                       control={form.control}
-                      name="paymentAddress"
+                      name="revenueDistributionMethod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Payment Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="0x... (where revenue will be sent)" {...field} />
-                          </FormControl>
+                          <FormLabel>Revenue Distribution Method *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select distribution method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="equal">Equal Split Among All Holders</SelectItem>
+                              <SelectItem value="proportional">Proportional to Ownership Percentage</SelectItem>
+                              <SelectItem value="tiered">Tiered Based on Purchase Price</SelectItem>
+                              <SelectItem value="custom">Custom Distribution Formula</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="distributionPercentage"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Revenue Share % *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="e.g., 80" 
+                                type="number" 
+                                min="1" 
+                                max="100" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">
+                              Percentage of revenue shared with NFT holders
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="minimumDistribution"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Minimum Distribution</FormLabel>
+                            <FormControl>
+                              <Input placeholder="0.001" type="number" step="0.001" {...field} />
+                            </FormControl>
+                            <p className="text-xs text-muted-foreground">
+                              Minimum amount before distribution (ETH)
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="paymentFrequency"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Frequency *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select frequency" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="monthly">Monthly</SelectItem>
+                              <SelectItem value="quarterly">Quarterly</SelectItem>
+                              <SelectItem value="yearly">Yearly</SelectItem>
+                              <SelectItem value="streaming">Real-time Streaming</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -322,23 +564,37 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
                     <FormField
                       control={form.control}
-                      name="paymentFrequency"
+                      name="distributionDetails"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Payment Frequency</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="monthly">Monthly</SelectItem>
-                              <SelectItem value="quarterly">Quarterly</SelectItem>
-                              <SelectItem value="yearly">Yearly</SelectItem>
-                              <SelectItem value="streaming">Streaming (Superfluid)</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Distribution Details *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Explain how revenue is generated, when distributions occur, any conditions or restrictions, and how holders can claim their payments..."
+                              rows={4}
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Provide clear, transparent information about revenue distribution to build trust with potential buyers
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="paymentAddress"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Contract Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="0x... (smart contract for automated distributions)" {...field} />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Optional: Smart contract address for automated revenue distribution
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -348,34 +604,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               </CardContent>
             </Card>
 
-            <div>
-              <FormLabel>Legal Agreement (PDF)</FormLabel>
-              <div className="mt-2">
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    id="legal-document"
-                  />
-                  <label htmlFor="legal-document" className="cursor-pointer">
-                    <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      {selectedFile ? selectedFile.name : "Drop your PDF here or click to browse"}
-                    </p>
-                  </label>
-                </div>
-                {selectedFile && (
-                  <div className="mt-2">
-                    <Badge variant="secondary" className="flex items-center gap-2 w-fit">
-                      <FileText className="w-3 h-3" />
-                      {selectedFile.name}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-            </div>
+
 
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button
