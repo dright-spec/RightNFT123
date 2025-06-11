@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { connectWallet, disconnectWallet, getWalletStatus } from "@/lib/web3";
@@ -41,7 +41,7 @@ export function WalletButton() {
   };
 
   // Check wallet status on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     const status = getWalletStatus();
     if (status.isConnected && status.address) {
       setWalletAddress(status.address);

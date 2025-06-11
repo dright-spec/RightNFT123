@@ -30,7 +30,7 @@ export default function Home() {
             <div className="flex items-center">
               <Link href="/" className="flex-shrink-0">
                 <h1 className="text-xl font-bold text-primary">
-                  Rights<span className="text-accent">Market</span>
+                  D<span className="text-accent">right</span>
                 </h1>
               </Link>
             </div>
@@ -57,12 +57,12 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
-              Tokenize Your Rights.<br />
-              <span className="text-primary">Own the Future.</span>
+              Tokenize Your Music.<br />
+              <span className="text-primary">Own Your Sound.</span>
             </h1>
             
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Create NFTs backed by copyrights, royalties, and other rights — visible, tradable, and revenue-generating.
+              Transform your songs, videos, and audio content into tradeable NFTs with built-in royalty streams from streaming platforms.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
