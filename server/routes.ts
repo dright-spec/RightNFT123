@@ -9,15 +9,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rights routes
   app.get("/api/rights", async (req, res) => {
     try {
-      const { limit = "20", offset = "0", type, isListed } = req.query;
-      const rights = await storage.getRightsWithCreator(
-        parseInt(limit as string),
-        parseInt(offset as string),
-        type as string,
-        isListed ? isListed === "true" : undefined
-      );
+      const options = {
+        limit: parseInt(req.query.limit as string) || 20,
+        offset: parseInt(req.query.offset as string) || 0,
+        search: req.query.search as string,
+        type: req.query.type as string,
+        categoryId: req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined,
+        listingType: req.query.listingType as string,
+        priceMin: req.query.priceMin as string,
+        priceMax: req.query.priceMax as string,
+        paysDividends: req.query.paysDividends === "true" ? true : req.query.paysDividends === "false" ? false : undefined,
+        sortBy: req.query.sortBy as string || "createdAt",
+        sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
+        userId: req.query.userId ? parseInt(req.query.userId as string) : undefined,
+      };
+      
+      const rights = await marketplaceStorage.getRights(options);
       res.json(rights);
     } catch (error) {
+      console.error("Error fetching rights:", error);
       res.status(500).json({ error: "Failed to fetch rights" });
     }
   });
@@ -25,7 +35,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rights/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const right = await storage.getRightWithCreator(id);
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+      const right = await marketplaceStorage.getRight(id, userId);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
@@ -33,6 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(right);
     } catch (error) {
+      console.error("Error fetching right:", error);
       res.status(500).json({ error: "Failed to fetch right" });
     }
   });
@@ -43,14 +55,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mockUserId = 1;
       
       const validatedData = insertRightSchema.parse(req.body);
-      const right = await storage.createRight({
+      const right = await marketplaceStorage.createRight({
         ...validatedData,
         creatorId: mockUserId,
         ownerId: mockUserId,
       });
       
       // Create mint transaction
-      await storage.createTransaction({
+      await marketplaceStorage.createTransaction({
         rightId: right.id,
         toUserId: mockUserId,
         transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`,
@@ -188,6 +200,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true,
       });
     } catch (error) {
+      res.status(500).json({ error: "Failed to upload to IPFS" });
+    }
+  });
+
+  // Categories routes
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await marketplaceStorage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  // Search routes
+  app.get("/api/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      if (!query) {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+      
+      const results = await marketplaceStorage.searchRights(query, { limit, offset });
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching rights:", error);
+      res.status(500).json({ error: "Failed to search rights" });
+    }
+  });
+
+  // Bidding routes
+  app.post("/api/rights/:id/bids", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const mockUserId = 1; // In production, get from authentication
+      const { amount } = req.body;
+      
+      if (!amount || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: "Valid bid amount is required" });
+      }
+      
+      const bid = await marketplaceStorage.placeBid({
+        rightId,
+        bidderId: mockUserId,
+        amount,
+        isActive: true,
+      });
+      
+      res.status(201).json(bid);
+    } catch (error) {
+      console.error("Error placing bid:", error);
+      res.status(500).json({ error: "Failed to place bid" });
+    }
+  });
+
+  app.get("/api/rights/:id/bids", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const bids = await marketplaceStorage.getBidsForRight(rightId);
+      res.json(bids);
+    } catch (error) {
+      console.error("Error fetching bids:", error);
+      res.status(500).json({ error: "Failed to fetch bids" });
+    }
+  });
+
+  // Favorites routes
+  app.post("/api/rights/:id/favorite", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const mockUserId = 1; // In production, get from authentication
+      
+      await marketplaceStorage.addToFavorites(mockUserId, rightId);
+      res.status(200).json({ message: "Added to favorites" });
+    } catch (error) {
+      console.error("Error adding to favorites:", error);
+      res.status(500).json({ error: "Failed to add to favorites" });
+    }
+  });
+
+  app.delete("/api/rights/:id/favorite", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const mockUserId = 1; // In production, get from authentication
+      
+      await marketplaceStorage.removeFromFavorites(mockUserId, rightId);
+      res.status(200).json({ message: "Removed from favorites" });
+    } catch (error) {
+      console.error("Error removing from favorites:", error);
+      res.status(500).json({ error: "Failed to remove from favorites" });
+    }
+  });
+
+  // Mock IPFS upload endpoint
+  app.post("/api/ipfs/upload", async (req, res) => {
+    try {
+      const { filename, size, type } = req.body;
+      
+      // Simulate upload process
+      const mockHash = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      
+      res.json({
+        hash: mockHash,
+        url: `https://ipfs.io/ipfs/${mockHash}`,
+        success: true,
+        fileSize: size,
+        fileName: filename,
+        fileType: type,
+      });
+    } catch (error) {
+      console.error("Error uploading to IPFS:", error);
       res.status(500).json({ error: "Failed to upload to IPFS" });
     }
   });

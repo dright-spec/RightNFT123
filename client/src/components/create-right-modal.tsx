@@ -146,7 +146,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
       // Upload legal document if provided
       if (selectedFile) {
-        const uploadResult = await uploadToIPFS(selectedFile);
+        const uploadResult = await uploadContentToIPFS(selectedFile);
         legalDocumentHash = uploadResult.hash;
         legalDocumentUrl = uploadResult.url;
       }
