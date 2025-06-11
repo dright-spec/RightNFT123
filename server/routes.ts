@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { marketplaceStorage } from "./marketplaceStorage";
+import { db } from "./db";
+import { users, rights } from "@shared/schema";
+import { eq, desc, or, ilike, sql } from "drizzle-orm";
 import { insertRightSchema, insertUserSchema, insertTransactionSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -316,6 +319,299 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading to IPFS:", error);
       res.status(500).json({ error: "Failed to upload to IPFS" });
+    }
+  });
+
+  // Admin routes
+  app.get('/api/admin/stats', async (req, res) => {
+    try {
+      // Use the existing storage to get stats
+      const allRights = await marketplaceStorage.getRights({ limit: 1000 });
+      const pendingRights = allRights.filter(r => r.verificationStatus === 'pending');
+      
+      const stats = {
+        totalUsers: 10, // Mock data for demo
+        totalRights: allRights.length,
+        pendingVerifications: pendingRights.length,
+        bannedUsers: 0,
+        totalRevenue: "15.7 ETH",
+        monthlyGrowth: 24.5
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get('/api/admin/rights', async (req, res) => {
+    try {
+      const { status, search } = req.query;
+      
+      const options: any = { limit: 100 };
+      if (search) {
+        options.search = search as string;
+      }
+      
+      let rightsData = await marketplaceStorage.getRights(options);
+      
+      // Filter by verification status if specified
+      if (status && status !== 'all') {
+        rightsData = rightsData.filter(right => right.verificationStatus === status);
+      }
+
+      res.json(rightsData);
+    } catch (error) {
+      console.error("Error fetching rights for admin:", error);
+      res.status(500).json({ error: "Failed to fetch rights" });
+    }
+  });
+
+  app.post('/api/admin/rights/:id/verify', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, notes } = req.body;
+
+      if (!['pending', 'verified', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Invalid verification status" });
+      }
+
+      const updateData: any = {
+        verificationStatus: status,
+        verificationNotes: notes || null,
+      };
+
+      if (status === 'verified') {
+        updateData.verifiedAt = new Date();
+        updateData.verifiedBy = 'Dright Team';
+      }
+
+      await marketplaceStorage.updateRight(parseInt(id), updateData);
+      res.json({ message: "Verification status updated successfully" });
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      res.status(500).json({ error: "Failed to update verification status" });
+    }
+  });
+
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      // Mock users data for demo
+      const mockUsers = [
+        {
+          id: 1,
+          username: "alice_creator",
+          email: "alice@example.com",
+          walletAddress: "0x742d35Cc6634C0532925a3b8D3AC4C2C7bF27f86",
+          isBanned: false,
+          isVerified: true,
+          createdAt: new Date('2024-01-15'),
+          totalSales: 12,
+          totalEarnings: "8.5"
+        },
+        {
+          id: 2,
+          username: "bob_musician",
+          email: "bob@example.com", 
+          walletAddress: "0x1234567890123456789012345678901234567890",
+          isBanned: false,
+          isVerified: true,
+          createdAt: new Date('2024-02-01'),
+          totalSales: 5,
+          totalEarnings: "3.2"
+        },
+        {
+          id: 3,
+          username: "charlie_artist",
+          email: "charlie@example.com",
+          walletAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+          isBanned: true,
+          isVerified: false,
+          createdAt: new Date('2024-03-10'),
+          totalSales: 0,
+          totalEarnings: "0"
+        }
+      ];
+
+      res.json(mockUsers);
+    } catch (error) {
+      console.error("Error fetching users for admin:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/admin/users/:id/ban', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { banned } = req.body;
+
+      // In a real implementation, this would update the database
+      console.log(`User ${id} ${banned ? 'banned' : 'unbanned'}`);
+      
+      res.json({ message: `User ${banned ? 'banned' : 'unbanned'} successfully` });
+    } catch (error) {
+      console.error("Error updating user ban status:", error);
+      res.status(500).json({ error: "Failed to update user status" });
+    }
+  });
+
+  // Admin routes
+  app.get('/api/admin/stats', async (req, res) => {
+    try {
+      const totalUsersQuery = `SELECT COUNT(*) as count FROM users`;
+      const totalRightsQuery = `SELECT COUNT(*) as count FROM rights`;
+      const pendingVerificationsQuery = `SELECT COUNT(*) as count FROM rights WHERE verification_status = 'pending'`;
+      const bannedUsersQuery = `SELECT COUNT(*) as count FROM users WHERE is_banned = true`;
+
+      const [totalUsers, totalRights, pendingVerifications, bannedUsers] = await Promise.all([
+        db.execute(totalUsersQuery),
+        db.execute(totalRightsQuery),
+        db.execute(pendingVerificationsQuery),
+        db.execute(bannedUsersQuery)
+      ]);
+
+      const stats = {
+        totalUsers: Number(totalUsers.rows[0]?.count || 0),
+        totalRights: Number(totalRights.rows[0]?.count || 0),
+        pendingVerifications: Number(pendingVerifications.rows[0]?.count || 0),
+        bannedUsers: Number(bannedUsers.rows[0]?.count || 0),
+        totalRevenue: "0 ETH",
+        monthlyGrowth: 0
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get('/api/admin/rights', async (req, res) => {
+    try {
+      const { status, search } = req.query;
+      
+      let query = `
+        SELECT r.*, 
+               u.username as creator_username, u.email as creator_email, u.wallet_address as creator_wallet_address, u.is_verified as creator_is_verified,
+               o.username as owner_username, o.email as owner_email, o.wallet_address as owner_wallet_address
+        FROM rights r 
+        LEFT JOIN users u ON r.creator_id = u.id 
+        LEFT JOIN users o ON r.owner_id = o.id
+      `;
+      
+      const conditions = [];
+      const params = [];
+      
+      if (status && status !== 'all') {
+        conditions.push(`r.verification_status = $${params.length + 1}`);
+        params.push(status);
+      }
+      
+      if (search) {
+        conditions.push(`(r.title ILIKE $${params.length + 1} OR r.description ILIKE $${params.length + 1} OR u.username ILIKE $${params.length + 1})`);
+        params.push(`%${search}%`);
+      }
+      
+      if (conditions.length > 0) {
+        query += ` WHERE ${conditions.join(' AND ')}`;
+      }
+      
+      query += ` ORDER BY r.created_at DESC`;
+
+      const result = await db.execute(query, params);
+      
+      const rightsWithCreator = result.rows.map((row: any) => ({
+        id: row.id,
+        tokenId: row.token_id,
+        title: row.title,
+        type: row.type,
+        description: row.description,
+        symbol: row.symbol,
+        price: row.price,
+        currency: row.currency,
+        contentFileHash: row.content_file_hash,
+        contentFileUrl: row.content_file_url,
+        verificationStatus: row.verification_status,
+        verifiedAt: row.verified_at,
+        verifiedBy: row.verified_by,
+        verificationNotes: row.verification_notes,
+        createdAt: row.created_at,
+        creator: {
+          id: row.creator_id,
+          username: row.creator_username,
+          email: row.creator_email,
+          walletAddress: row.creator_wallet_address,
+          isVerified: row.creator_is_verified
+        },
+        owner: {
+          id: row.owner_id,
+          username: row.owner_username,
+          email: row.owner_email,
+          walletAddress: row.owner_wallet_address
+        }
+      }));
+
+      res.json(rightsWithCreator);
+    } catch (error) {
+      console.error("Error fetching rights for admin:", error);
+      res.status(500).json({ error: "Failed to fetch rights" });
+    }
+  });
+
+  app.post('/api/admin/rights/:id/verify', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, notes } = req.body;
+
+      if (!['pending', 'verified', 'rejected'].includes(status)) {
+        return res.status(400).json({ error: "Invalid verification status" });
+      }
+
+      const updateFields = [`verification_status = $1`, `verification_notes = $2`, `updated_at = NOW()`];
+      const params = [status, notes || null];
+
+      if (status === 'verified') {
+        updateFields.push(`verified_at = NOW()`, `verified_by = $${params.length + 1}`);
+        params.push('Dright Team');
+      } else {
+        updateFields.push(`verified_at = NULL`, `verified_by = NULL`);
+      }
+
+      const query = `UPDATE rights SET ${updateFields.join(', ')} WHERE id = $${params.length + 1}`;
+      params.push(parseInt(id));
+
+      await db.execute(query, params);
+      res.json({ message: "Verification status updated successfully" });
+    } catch (error) {
+      console.error("Error updating verification status:", error);
+      res.status(500).json({ error: "Failed to update verification status" });
+    }
+  });
+
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      const query = `SELECT * FROM users ORDER BY created_at DESC`;
+      const result = await db.execute(query);
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error fetching users for admin:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.post('/api/admin/users/:id/ban', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { banned } = req.body;
+
+      const query = `UPDATE users SET is_banned = $1, updated_at = NOW() WHERE id = $2`;
+      await db.execute(query, [banned, parseInt(id)]);
+
+      res.json({ message: `User ${banned ? 'banned' : 'unbanned'} successfully` });
+    } catch (error) {
+      console.error("Error updating user ban status:", error);
+      res.status(500).json({ error: "Failed to update user status" });
     }
   });
 

@@ -19,6 +19,7 @@ export const users = pgTable("users", {
   totalSales: integer("total_sales").default(0),
   followersCount: integer("followers_count").default(0),
   followingCount: integer("following_count").default(0),
+  isBanned: boolean("is_banned").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
