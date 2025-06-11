@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { uploadContentToIPFS, generateFileHash } from "@/lib/ipfs";
+import { uploadContentToIPFS, uploadToIPFS, uploadJSONToIPFS, generateFileHash } from "@/lib/ipfs";
 import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube } from "lucide-react";
 import type { InsertRight } from "@shared/schema";
 
@@ -205,6 +205,23 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     }
   };
 
+  const handleOwnershipFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      setOwnershipFiles(prev => [...prev, ...files]);
+      toast({
+        title: "Documents Added",
+        description: `${files.length} ownership document(s) added for verification`,
+      });
+    }
+    // Reset input value to allow selecting the same file again
+    event.target.value = "";
+  };
+
+  const removeOwnershipFile = (index: number) => {
+    setOwnershipFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsUploading(true);
     
@@ -271,6 +288,47 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         contentFileName,
         contentFileSize,
         contentFileType,
+      };
+
+      // Upload ownership documents to IPFS if any
+      if (ownershipFiles.length > 0) {
+        try {
+          const ownershipDocuments = [];
+          for (const file of ownershipFiles) {
+            const uploadResult = await uploadToIPFS(file);
+            if (uploadResult.success) {
+              ownershipDocuments.push({
+                name: file.name,
+                hash: uploadResult.hash,
+                url: uploadResult.url,
+                size: file.size,
+                type: file.type
+              });
+            }
+          }
+          
+          if (ownershipDocuments.length > 0) {
+            // Store as JSON metadata
+            const ownershipMetadata = {
+              documents: ownershipDocuments,
+              uploadedAt: new Date().toISOString(),
+              totalDocuments: ownershipDocuments.length
+            };
+            
+            const metadataUpload = await uploadJSONToIPFS(ownershipMetadata);
+            if (metadataUpload.success) {
+              rightData.ownershipDocumentHash = metadataUpload.hash;
+              rightData.ownershipDocumentUrl = metadataUpload.url;
+            }
+          }
+        } catch (error) {
+          console.error("Error uploading ownership documents:", error);
+          toast({
+            title: "Warning",
+            description: "Some ownership documents failed to upload, but the right will still be created.",
+            variant: "destructive",
+          });
+        }
       };
 
       await createRightMutation.mutateAsync(rightData);
@@ -779,7 +837,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                           <Button
                             type="button"
                             size="sm"
-                            onClick={handleYouTubeExtract}
+                            onClick={handleYoutubeUrl}
                             disabled={isExtracting}
                           >
                             {isExtracting ? (
@@ -814,6 +872,111 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Ownership Documents Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Ownership Verification Documents
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Upload legal documents that prove your ownership of the rights you're tokenizing
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {/* Document Type Examples */}
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                    <h4 className="font-medium mb-2">Examples of Valid Ownership Documents:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Copyright certificates or registrations</li>
+                      <li>• Trademark registration documents</li>
+                      <li>• Patent certificates</li>
+                      <li>• Contracts, licenses, or assignment agreements</li>
+                      <li>• Recording contracts or distribution agreements</li>
+                      <li>• Publishing agreements or songwriter splits</li>
+                      <li>• Property deeds or ownership titles</li>
+                      <li>• Court judgments establishing ownership</li>
+                    </ul>
+                  </div>
+
+                  {/* File Upload Area */}
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Upload Ownership Documents</Label>
+                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center space-y-3">
+                      <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">Upload legal documents</p>
+                        <p className="text-sm text-muted-foreground">
+                          PDF, DOC, DOCX, JPG, PNG files accepted
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => ownershipInputRef.current?.click()}
+                      >
+                        Choose Documents
+                      </Button>
+                    </div>
+                    <input
+                      ref={ownershipInputRef}
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      multiple
+                      onChange={handleOwnershipFileSelect}
+                    />
+                  </div>
+
+                  {/* Uploaded Documents List */}
+                  {ownershipFiles.length > 0 && (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Uploaded Documents ({ownershipFiles.length})</Label>
+                      <div className="space-y-2">
+                        {ownershipFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <div>
+                                <p className="text-sm font-medium">{file.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeOwnershipFile(index)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Verification Notice */}
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-medium text-amber-900 dark:text-amber-100">Verification Required</p>
+                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                          All ownership documents will be reviewed by our verification team before your right can be approved for trading. 
+                          This process typically takes 2-5 business days. Clear, official documents help speed up the verification process.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

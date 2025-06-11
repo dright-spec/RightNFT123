@@ -78,6 +78,10 @@ export const rights = pgTable("rights", {
   verifiedBy: text("verified_by"),
   verificationNotes: text("verification_notes"),
   
+  // Ownership documents for verification
+  ownershipDocumentHash: text("ownership_document_hash"), // IPFS hash of ownership documents metadata
+  ownershipDocumentUrl: text("ownership_document_url"), // IPFS URL of ownership documents metadata
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -170,6 +174,8 @@ export const insertRightSchema = createInsertSchema(rights).pick({
   listingType: true,
   auctionEndTime: true,
   minBidAmount: true,
+  ownershipDocumentHash: true,
+  ownershipDocumentUrl: true,
 });
 
 export const insertBidSchema = createInsertSchema(bids).pick({
