@@ -55,11 +55,11 @@ interface CreateRightModalProps {
 }
 
 const rightTypeOptions = [
-  { value: "copyright", label: "📄 Copyright", symbol: "📄" },
-  { value: "royalty", label: "💰 Royalty Income", symbol: "💰" },
-  { value: "access", label: "🔐 Access Right", symbol: "🔐" },
-  { value: "ownership", label: "🏢 Ownership Share", symbol: "🏢" },
-  { value: "license", label: "📜 License", symbol: "📜" },
+  { value: "copyright", label: "📄 Song Copyright", symbol: "📄" },
+  { value: "royalty", label: "💰 Streaming Royalties", symbol: "💰" },
+  { value: "license", label: "📜 Sync/Commercial License", symbol: "📜" },
+  { value: "ownership", label: "🏢 Beat/Sample Ownership", symbol: "🏢" },
+  { value: "access", label: "🔐 Exclusive Access Rights", symbol: "🔐" },
 ];
 
 export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) {
@@ -175,9 +175,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Right Title *</FormLabel>
+                  <FormLabel>Song/Content Title *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Streaming Rights to Song XYZ" {...field} />
+                    <Input placeholder="e.g., Streaming Rights: 'Midnight Dreams'" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,7 +217,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                   <FormLabel>Description *</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describe what this right allows or entitles..."
+                      placeholder="Describe your song/content, streaming numbers, platforms, and revenue details..."
                       rows={4}
                       {...field}
                     />
@@ -280,9 +280,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>This right pays dividends</FormLabel>
+                        <FormLabel>This content generates streaming revenue</FormLabel>
                         <p className="text-sm text-muted-foreground">
-                          Enable if this right generates ongoing income for holders
+                          Enable if your music/video earns money from Spotify, YouTube, Apple Music, etc.
                         </p>
                       </div>
                     </FormItem>
@@ -296,9 +296,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                       name="paymentAddress"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Payment Address</FormLabel>
+                          <FormLabel>Revenue Wallet Address</FormLabel>
                           <FormControl>
-                            <Input placeholder="0x... or ENS name" {...field} />
+                            <Input placeholder="0x... (where streaming royalties will be sent)" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -379,10 +379,10 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 {(createRightMutation.isPending || isUploading) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isUploading ? "Uploading..." : "Creating..."}
+                    {isUploading ? "Uploading..." : "Minting..."}
                   </>
                 ) : (
-                  "Create Right (Mint NFT)"
+                  "Mint Music NFT"
                 )}
               </Button>
             </div>
