@@ -35,6 +35,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google OAuth routes for YouTube verification
+  app.post("/api/auth/google/token", async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: "Authorization code required" });
+      }
+
+      // Exchange code for access token with Google
+      const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID || "",
+          client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+          redirect_uri: `${req.protocol}://${req.get('host')}/auth/google/callback`,
+          grant_type: "authorization_code",
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error("Failed to exchange code for token");
+      }
+
+      const tokenData = await tokenResponse.json();
+      res.json(tokenData);
+    } catch (error) {
+      console.error("Google OAuth error:", error);
+      res.status(500).json({ error: "Authentication failed" });
+    }
+  });
+
+  app.post("/api/auth/google/verify-youtube", async (req, res) => {
+    try {
+      const { videoId, accessToken } = req.body;
+
+      if (!videoId || !accessToken) {
+        return res.status(400).json({ error: "Video ID and access token required" });
+      }
+
+      // Get video details from YouTube API
+      const videoResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+      );
+
+      if (!videoResponse.ok) {
+        throw new Error("Failed to fetch video details");
+      }
+
+      const videoData = await videoResponse.json();
+      
+      if (!videoData.items || videoData.items.length === 0) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      const video = videoData.items[0];
+
+      // Get user's YouTube channels
+      const channelsResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true&access_token=${accessToken}`
+      );
+
+      if (!channelsResponse.ok) {
+        throw new Error("Failed to fetch user channels");
+      }
+
+      const channelsData = await channelsResponse.json();
+      
+      // Check if user owns the video's channel
+      const ownerChannel = channelsData.items.find(
+        (channel: any) => channel.id === video.snippet.channelId
+      );
+
+      res.json({
+        isOwner: !!ownerChannel,
+        video: {
+          id: video.id,
+          title: video.snippet.title,
+          channelId: video.snippet.channelId,
+          channelTitle: video.snippet.channelTitle,
+          publishedAt: video.snippet.publishedAt,
+          thumbnails: video.snippet.thumbnails
+        },
+        channel: ownerChannel ? {
+          id: ownerChannel.id,
+          title: ownerChannel.snippet.title,
+          customUrl: ownerChannel.snippet.customUrl,
+          thumbnails: ownerChannel.snippet.thumbnails,
+          statistics: ownerChannel.statistics
+        } : undefined
+      });
+    } catch (error) {
+      console.error("YouTube verification error:", error);
+      res.status(500).json({ error: "Verification failed" });
+    }
+  });
+
   app.get("/api/rights/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
