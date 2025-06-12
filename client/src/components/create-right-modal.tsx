@@ -85,6 +85,10 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
   const [uploadProgress, setUploadProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
   const [videoDetails, setVideoDetails] = useState<any>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [selectedVerificationMethod, setSelectedVerificationMethod] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ownershipInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -276,6 +280,134 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
   const removeOwnershipFile = (index: number) => {
     setOwnershipFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleGoogleOAuthVerification = async () => {
+    setIsVerifyingGoogle(true);
+    setSelectedVerificationMethod('google_oauth');
+    
+    try {
+      // Store current state for OAuth redirect
+      localStorage.setItem('youtube_verification_state', JSON.stringify({
+        videoId: extractYouTubeVideoId(youtubeUrl),
+        videoDetails,
+        rightFormData: form.getValues()
+      }));
+      
+      // Get Google Client ID
+      const clientIdResponse = await fetch('/api/auth/google/client-id');
+      const { clientId } = await clientIdResponse.json();
+      
+      // Build OAuth URL
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: `${window.location.origin}/auth/google/callback`,
+        response_type: 'code',
+        scope: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/userinfo.profile',
+        access_type: 'offline',
+        prompt: 'consent',
+        state: 'youtube_verification'
+      });
+
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+      
+      toast({
+        title: "Redirecting to Google",
+        description: "You'll be redirected to verify your YouTube channel ownership.",
+      });
+      
+      // Redirect to Google OAuth
+      window.location.href = authUrl;
+      
+    } catch (error) {
+      setIsVerifyingGoogle(false);
+      toast({
+        title: "OAuth Error",
+        description: "Failed to start Google verification. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateVerificationCode = async () => {
+    setIsGeneratingCode(true);
+    try {
+      const response = await fetch('/api/youtube/generate-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          videoId: extractYouTubeVideoId(youtubeUrl),
+          videoDetails 
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to generate code');
+      
+      const { verificationCode: code } = await response.json();
+      setVerificationCode(code);
+      setSelectedVerificationMethod('verification_code');
+      
+      toast({
+        title: "Verification Code Generated",
+        description: "Add this code to your video description to prove ownership.",
+      });
+    } catch (error) {
+      toast({
+        title: "Code Generation Failed",
+        description: "Unable to generate verification code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
+  const verifyDescriptionCode = async () => {
+    setIsVerifyingCode(true);
+    try {
+      const response = await fetch('/api/youtube/verify-description-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          videoId: extractYouTubeVideoId(youtubeUrl),
+          verificationCode 
+        })
+      });
+      
+      if (!response.ok) throw new Error('Verification failed');
+      
+      const result = await response.json();
+      
+      if (result.verified) {
+        setGoogleVerificationResult({
+          isOwner: true,
+          video: videoDetails,
+          channel: result.channel,
+          verificationMethod: 'description_code'
+        });
+        
+        toast({
+          title: "Ownership Verified!",
+          description: "Your video ownership has been confirmed via description code.",
+        });
+        
+        setTimeout(() => setCurrentStep(3), 1500);
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: "Code not found in video description. Please ensure it's added and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Verification Error",
+        description: "Failed to verify code in description. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifyingCode(false);
+    }
   };
 
   const handleGoogleVerification = async () => {
@@ -1212,7 +1344,10 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                                 <h4 className="font-medium text-sm">Choose a verification method:</h4>
                                 
                                 {/* Google OAuth Method */}
-                                <div className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                                <div 
+                                  className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                                  onClick={() => handleGoogleOAuthVerification()}
+                                >
                                   <div className="flex items-start gap-3">
                                     <svg className="w-5 h-5 mt-0.5" viewBox="0 0 24 24">
                                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1225,7 +1360,22 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                                       <p className="text-sm text-muted-foreground">
                                         Sign in with the Google account that owns this YouTube channel
                                       </p>
-                                      <p className="text-xs text-green-600 mt-1">✓ Instant verification</p>
+                                      <p className="text-xs text-green-600 mt-1">✓ Instant verification • Most secure</p>
+                                      <Button 
+                                        type="button" 
+                                        size="sm" 
+                                        className="mt-2"
+                                        disabled={isVerifyingGoogle}
+                                      >
+                                        {isVerifyingGoogle ? (
+                                          <>
+                                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                            Verifying...
+                                          </>
+                                        ) : (
+                                          'Start Google Verification'
+                                        )}
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
@@ -1307,27 +1457,29 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     </div>
                   )}
 
-                  {/* Next Steps Notice */}
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="font-medium text-blue-900 dark:text-blue-100">Verification Complete</p>
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          Your ownership verification is complete. You can now proceed to set pricing and payment terms for your right.
-                        </p>
+                  {/* Show continue button only when verification is actually complete */}
+                  {googleVerificationResult && !googleVerificationResult.requiresVerification && (
+                    <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                        <div className="space-y-1">
+                          <p className="font-medium text-green-900 dark:text-green-100">Verification Complete</p>
+                          <p className="text-sm text-green-700 dark:text-green-300">
+                            Your ownership verification is complete. You can now proceed to set pricing and payment terms for your right.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <Button
+                          type="button"
+                          onClick={() => setCurrentStep(3)}
+                          className="w-full"
+                        >
+                          Continue to Pricing & Terms
+                        </Button>
                       </div>
                     </div>
-                    <div className="mt-3">
-                      <Button
-                        type="button"
-                        onClick={() => setCurrentStep(3)}
-                        className="w-full"
-                      >
-                        Continue to Pricing & Terms
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
