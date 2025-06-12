@@ -797,6 +797,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google OAuth endpoints
+  app.get('/api/auth/google/client-id', (req, res) => {
+    res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
+  });
+
+  // Exchange authorization code for access token
+  app.post('/api/auth/google/token', async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: 'Authorization code required' });
+      }
+
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID!,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${req.protocol}://${req.get('host')}/auth/google/callback`
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        const error = await tokenResponse.text();
+        console.error('Token exchange error:', error);
+        return res.status(400).json({ error: 'Failed to exchange authorization code' });
+      }
+
+      const tokenData = await tokenResponse.json();
+      res.json(tokenData);
+    } catch (error) {
+      console.error('Google token exchange error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Verify YouTube video ownership
+  app.post('/api/auth/google/verify-video', async (req, res) => {
+    try {
+      const { videoId, accessToken } = req.body;
+      
+      if (!videoId || !accessToken) {
+        return res.status(400).json({ error: 'Video ID and access token required' });
+      }
+
+      // Get video details
+      const videoResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+      );
+
+      if (!videoResponse.ok) {
+        return res.status(400).json({ error: 'Failed to fetch video details' });
+      }
+
+      const videoData = await videoResponse.json();
+      const video = videoData.items?.[0];
+
+      if (!video) {
+        return res.status(404).json({ error: 'Video not found' });
+      }
+
+      // Get user's YouTube channels
+      const channelsResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true&access_token=${accessToken}`
+      );
+
+      if (!channelsResponse.ok) {
+        return res.status(400).json({ error: 'Failed to fetch user channels' });
+      }
+
+      const channelsData = await channelsResponse.json();
+      const userChannels = channelsData.items || [];
+
+      // Check if user owns the video's channel
+      const ownerChannel = userChannels.find((channel: any) => 
+        channel.id === video.snippet.channelId
+      );
+
+      res.json({
+        isOwner: !!ownerChannel,
+        channel: ownerChannel ? {
+          id: ownerChannel.id,
+          title: ownerChannel.snippet.title,
+          customUrl: ownerChannel.snippet.customUrl,
+          thumbnails: ownerChannel.snippet.thumbnails,
+          statistics: ownerChannel.statistics
+        } : null,
+        video: {
+          id: video.id,
+          title: video.snippet.title,
+          channelId: video.snippet.channelId,
+          channelTitle: video.snippet.channelTitle,
+          publishedAt: video.snippet.publishedAt
+        }
+      });
+    } catch (error) {
+      console.error('Video verification error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

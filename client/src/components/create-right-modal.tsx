@@ -302,48 +302,45 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       setProgressMessage("Opening Google authentication...");
       setUploadProgress(40);
 
-      // Initiate Google OAuth flow
-      await initiateGoogleAuth();
+      // Redirect to Google OAuth instead of popup
+      const clientIdResponse = await fetch('/api/auth/google/client-id');
+      const { clientId } = await clientIdResponse.json();
       
-      setProgressMessage("Waiting for authentication...");
+      if (!clientId) {
+        throw new Error('Google Client ID not available');
+      }
+
+      setProgressMessage("Redirecting to Google...");
       setUploadProgress(60);
       
-      toast({
-        title: "Verify Your Google Account",
-        description: "Sign in with the Google account that owns this YouTube video to verify ownership automatically.",
+      // Store current state before redirect
+      localStorage.setItem('youtube_verification_state', JSON.stringify({
+        videoId,
+        videoDetails,
+        currentStep: 2,
+        rightFormData: form.getValues()
+      }));
+      
+      // Build OAuth URL for redirect flow
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: `${window.location.origin}/auth/google/callback`,
+        response_type: 'code',
+        scope: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+        access_type: 'offline',
+        prompt: 'consent',
+        state: 'youtube_verification'
       });
 
-      // Simulate the authentication and verification process
-      setTimeout(() => {
-        setProgressMessage("Verifying video ownership...");
-        setUploadProgress(85);
-        
-        setTimeout(() => {
-          setProgressMessage("Verification complete!");
-          setUploadProgress(100);
-          setGoogleVerificationResult({ 
-            isOwner: true, 
-            video: videoDetails,
-            channel: { 
-              id: videoDetails?.channelId || "",
-              title: videoDetails?.channelTitle || ""
-            }
-          });
-          
-          toast({
-            title: "Ownership Verified Successfully!",
-            description: "Your YouTube video ownership has been confirmed. This verification builds trust with potential buyers.",
-          });
-          
-          // Auto-advance to next step after successful verification
-          setTimeout(() => {
-            setCurrentStep(3);
-            setProgressMessage("");
-            setUploadProgress(0);
-            setIsVerifyingGoogle(false);
-          }, 2000);
-        }, 2000);
-      }, 1500);
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+      
+      toast({
+        title: "Redirecting to Google",
+        description: "You'll be redirected to Google to verify your YouTube channel ownership.",
+      });
+      
+      // Redirect to Google OAuth
+      window.location.href = authUrl;
       
     } catch (error) {
       console.error("Google verification error:", error);
