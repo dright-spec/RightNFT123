@@ -35,7 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadContentToIPFS, uploadToIPFS, uploadJSONToIPFS, generateFileHash } from "@/lib/ipfs";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
-import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube } from "lucide-react";
+import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import type { InsertRight } from "@shared/schema";
 
 const formSchema = z.object({
@@ -80,6 +81,10 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
   const [isExtracting, setIsExtracting] = useState(false);
   const [isVerifyingGoogle, setIsVerifyingGoogle] = useState(false);
   const [googleVerificationResult, setGoogleVerificationResult] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState("");
+  const [videoDetails, setVideoDetails] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ownershipInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -185,23 +190,54 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     }
 
     setIsExtracting(true);
+    setProgressMessage("Fetching video information...");
+    setUploadProgress(20);
+    
     try {
       // Fetch video details from YouTube API
       console.log('Fetching video details for:', videoId);
-      const videoDetails = await getYouTubeVideoDetails(videoId);
-      console.log('Video details fetched:', videoDetails);
+      
+      // Create a simple fetch function to avoid import issues
+      const response = await fetch(`/api/youtube/video/${videoId}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch video details: ${response.status}`);
+      }
+      
+      const fetchedVideoDetails = await response.json();
+      console.log('Video details fetched:', fetchedVideoDetails);
+      
+      setProgressMessage("Processing video data...");
+      setUploadProgress(60);
+      
+      // Store video details for later use
+      setVideoDetails(fetchedVideoDetails);
+      
+      // Auto-fill form fields with video data
+      form.setValue("title", fetchedVideoDetails.title);
+      if (!form.getValues("description")) {
+        form.setValue("description", `YouTube video: ${fetchedVideoDetails.title} by ${fetchedVideoDetails.channelTitle}`);
+      }
+      
+      setProgressMessage("Generating content hash...");
+      setUploadProgress(80);
       
       // Generate a hash from the YouTube URL for content verification
-      const blob = new Blob([youtubeUrl], { type: 'text/plain' });
-      const urlFile = new File([blob], `youtube-${videoId}.txt`, { type: 'text/plain' });
-      const urlHash = await generateFileHash(urlFile);
+      const encoder = new TextEncoder();
+      const data = encoder.encode(youtubeUrl);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const urlHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      setProgressMessage("Complete!");
+      setUploadProgress(100);
       
       toast({
         title: "YouTube Video Processed",
-        description: `Video "${videoDetails.title}" by ${videoDetails.channelTitle} has been processed and is ready for verification`,
+        description: `Video "${fetchedVideoDetails.title}" by ${fetchedVideoDetails.channelTitle} has been processed and is ready for verification`,
       });
       
       setSelectedFile(null); // Clear file if YouTube URL is used
+      setCurrentStep(2); // Move to next step
     } catch (error) {
       console.error('YouTube processing error:', error);
       toast({
@@ -211,6 +247,10 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       });
     } finally {
       setIsExtracting(false);
+      setTimeout(() => {
+        setUploadProgress(0);
+        setProgressMessage("");
+      }, 2000);
     }
   };
 
@@ -388,12 +428,80 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     }
   };
 
+  const steps = [
+    { number: 1, title: "Content & Details", description: "Add your content and basic information" },
+    { number: 2, title: "Verification", description: "Verify ownership and authenticity" },
+    { number: 3, title: "Pricing & Terms", description: "Set pricing and payment terms" },
+    { number: 4, title: "Review & Submit", description: "Review and publish your right" }
+  ];
+
+  const resetForm = () => {
+    form.reset();
+    setSelectedFile(null);
+    setOwnershipFiles([]);
+    setYoutubeUrl("");
+    setVideoDetails(null);
+    setGoogleVerificationResult(null);
+    setCurrentStep(1);
+    setUploadProgress(0);
+    setProgressMessage("");
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      if (!newOpen) resetForm();
+      onOpenChange(newOpen);
+    }}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a New Right</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <Shield className="h-6 w-6" />
+            Create a New Right
+          </DialogTitle>
         </DialogHeader>
+
+        {/* Step Indicator */}
+        <div className="flex items-center justify-between mb-6 px-4">
+          {steps.map((step, index) => (
+            <div key={step.number} className="flex items-center">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+                currentStep >= step.number 
+                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  : 'border-gray-300 text-gray-500'
+              }`}>
+                {currentStep > step.number ? (
+                  <CheckCircle className="h-5 w-5" />
+                ) : (
+                  <span className="font-semibold">{step.number}</span>
+                )}
+              </div>
+              <div className="ml-3 text-left">
+                <div className={`text-sm font-medium ${
+                  currentStep >= step.number ? 'text-blue-600' : 'text-gray-500'
+                }`}>
+                  {step.title}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {step.description}
+                </div>
+              </div>
+              {index < steps.length - 1 && (
+                <ArrowRight className="h-4 w-4 text-gray-300 mx-4" />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Progress Bar */}
+        {(uploadProgress > 0 || progressMessage) && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">{progressMessage}</span>
+              <span className="text-sm text-gray-500">{uploadProgress}%</span>
+            </div>
+            <Progress value={uploadProgress} className="h-2" />
+          </div>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
