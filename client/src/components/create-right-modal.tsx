@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadContentToIPFS, uploadToIPFS, uploadJSONToIPFS, generateFileHash } from "@/lib/ipfs";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
-import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft } from "lucide-react";
+import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { InsertRight } from "@shared/schema";
 
@@ -1261,7 +1261,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                               
                               <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
                                 <div className="flex items-start gap-2">
-                                  <XCircle className="h-4 w-4 text-red-600 mt-0.5" />
+                                  <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                                   <p className="text-sm text-red-700 dark:text-red-300">
                                     <strong>Important:</strong> Rights can only be created for content you actually own. 
                                     Creating rights for content you don't own is fraud and will result in account termination.
