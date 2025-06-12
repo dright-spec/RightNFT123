@@ -34,7 +34,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadContentToIPFS, uploadToIPFS, uploadJSONToIPFS, generateFileHash } from "@/lib/ipfs";
-import { initiateGoogleAuth, extractYouTubeVideoId } from "@/lib/googleAuth";
+import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
 import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube } from "lucide-react";
 import type { InsertRight } from "@shared/schema";
 
@@ -186,21 +186,27 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
     setIsExtracting(true);
     try {
+      // Fetch video details from YouTube API
+      console.log('Fetching video details for:', videoId);
+      const videoDetails = await getYouTubeVideoDetails(videoId);
+      console.log('Video details fetched:', videoDetails);
+      
       // Generate a hash from the YouTube URL for content verification
       const blob = new Blob([youtubeUrl], { type: 'text/plain' });
       const urlFile = new File([blob], `youtube-${videoId}.txt`, { type: 'text/plain' });
       const urlHash = await generateFileHash(urlFile);
       
       toast({
-        title: "YouTube Video Added",
-        description: "Video URL has been processed and ready for verification",
+        title: "YouTube Video Processed",
+        description: `Video "${videoDetails.title}" by ${videoDetails.channelTitle} has been processed and is ready for verification`,
       });
       
       setSelectedFile(null); // Clear file if YouTube URL is used
     } catch (error) {
+      console.error('YouTube processing error:', error);
       toast({
         title: "Processing Failed",
-        description: "Failed to process YouTube URL. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to process YouTube URL. Please try again.",
         variant: "destructive",
       });
     } finally {
