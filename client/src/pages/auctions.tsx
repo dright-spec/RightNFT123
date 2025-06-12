@@ -117,6 +117,9 @@ export default function Auctions() {
               <p className="text-orange-100 mt-2">
                 Bid on exclusive digital rights and intellectual property
               </p>
+              <div className="mt-3 p-2 bg-black/20 rounded text-xs text-orange-100">
+                <strong>Legal Notice:</strong> This platform facilitates legal ownership transfer, not securities trading.
+              </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold">{auctionStats.totalLive}</div>

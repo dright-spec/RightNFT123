@@ -75,13 +75,13 @@ export default function Marketplace() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Rights Marketplace</h1>
           <p className="text-muted-foreground">
-            Browse and acquire tokenized legal rights - from music and media to patents and real estate
+            Browse and purchase tokenized rights - from music and media to patents and real estate
           </p>
           
           {/* Legal Disclaimer */}
           <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Legal Ownership Tool:</strong> This platform facilitates legal ownership transfer of rights. Income streams are controlled directly by original owners via payment protocols. No investment promises or returns guaranteed.
+              <strong>Legal Notice:</strong> This platform facilitates legal ownership transfer, not securities trading.
             </p>
           </div>
         </div>
