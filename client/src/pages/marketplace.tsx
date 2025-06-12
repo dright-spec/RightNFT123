@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { RightCard } from "@/components/right-card";
 import { WalletButton } from "@/components/wallet-button";
-import { ArrowLeft, Filter } from "lucide-react";
+import { ActivityFeed } from "@/components/activity-feed";
+import { ArrowLeft, Filter, TrendingUp, Zap } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Marketplace() {
@@ -131,43 +132,106 @@ export default function Marketplace() {
           </CardContent>
         </Card>
 
-        {/* Results */}
-        {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 9 }).map((_, i) => (
-              <Card key={i} className="p-6">
-                <div className="animate-pulse">
-                  <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
-                  <div className="h-3 bg-muted rounded w-full mb-2"></div>
-                  <div className="h-3 bg-muted rounded w-2/3 mb-4"></div>
-                  <div className="h-8 bg-muted rounded w-1/2"></div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-muted-foreground">
-                {sortedRights?.length || 0} rights found
-              </p>
+        {/* Market Activity Banner */}
+        <div className="mb-8 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 border border-green-200 dark:border-green-800 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-green-900 dark:text-green-100">Market is Active</h3>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  15 trades in the last hour • $24,680 volume today
+                </p>
+              </div>
             </div>
-            
-            {sortedRights && sortedRights.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedRights.map((right) => (
-                  <RightCard key={right.id} right={right} />
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-green-700 dark:text-green-300">Live Updates</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content with Activity Feed */}
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Rights Grid - Takes 3 columns */}
+          <div className="lg:col-span-3">
+            {/* Results */}
+            {isLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <Card key={i} className="p-6">
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="h-3 bg-muted rounded w-full mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-2/3 mb-4"></div>
+                      <div className="h-8 bg-muted rounded w-1/2"></div>
+                    </div>
+                  </Card>
                 ))}
               </div>
             ) : (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <p className="text-muted-foreground">No rights found matching your criteria</p>
+              <>
+                <div className="flex justify-between items-center mb-6">
+                  <p className="text-muted-foreground">
+                    {sortedRights?.length || 0} rights found
+                  </p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Zap className="w-4 h-4" />
+                    <span>Updated in real-time</span>
+                  </div>
+                </div>
+                
+                {sortedRights && sortedRights.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {sortedRights.map((right) => (
+                      <RightCard key={right.id} right={right} />
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="text-center py-12">
+                    <CardContent>
+                      <p className="text-muted-foreground">No rights found matching your criteria</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Activity Feed Sidebar - Takes 1 column */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <ActivityFeed />
+              
+              {/* Market Stats */}
+              <Card className="mt-6">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4">Market Stats</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">24h Volume</span>
+                      <span className="font-semibold text-green-600">$24,680</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Active Listings</span>
+                      <span className="font-semibold">{sortedRights?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Avg. Price</span>
+                      <span className="font-semibold">2.4 ETH</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Market Cap</span>
+                      <span className="font-semibold">$2.1M</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            )}
-          </>
-        )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
