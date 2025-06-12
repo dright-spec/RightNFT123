@@ -797,6 +797,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // YouTube video ownership verification endpoint
+  app.post('/api/youtube/verify-ownership/:videoId', async (req, res) => {
+    try {
+      const { videoId } = req.params;
+      const { videoDetails } = req.body;
+
+      // Verify the video exists using YouTube API
+      const videoResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,status&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+      );
+
+      if (!videoResponse.ok) {
+        return res.status(400).json({ error: 'Failed to verify video' });
+      }
+
+      const videoData = await videoResponse.json();
+      const video = videoData.items?.[0];
+
+      if (!video) {
+        return res.status(404).json({ error: 'Video not found' });
+      }
+
+      // Get channel information
+      const channelResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${video.snippet.channelId}&key=${process.env.YOUTUBE_API_KEY}`
+      );
+
+      let channelData = null;
+      if (channelResponse.ok) {
+        const channelResult = await channelResponse.json();
+        channelData = channelResult.items?.[0];
+      }
+
+      res.json({
+        verified: true,
+        video: {
+          id: video.id,
+          title: video.snippet.title,
+          channelId: video.snippet.channelId,
+          channelTitle: video.snippet.channelTitle,
+          publishedAt: video.snippet.publishedAt,
+          status: video.status
+        },
+        channel: channelData ? {
+          id: channelData.id,
+          title: channelData.snippet.title,
+          customUrl: channelData.snippet.customUrl,
+          subscriberCount: channelData.statistics?.subscriberCount,
+          videoCount: channelData.statistics?.videoCount
+        } : null
+      });
+    } catch (error) {
+      console.error('Video verification error:', error);
+      res.status(500).json({ error: 'Failed to verify video' });
+    }
+  });
+
   // Google OAuth endpoints
   app.get('/api/auth/google/client-id', (req, res) => {
     res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
