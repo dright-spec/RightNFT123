@@ -40,7 +40,8 @@ export default function Auctions() {
     const now = new Date().getTime();
     
     return rights.filter(right => {
-      const auctionEndTime = right.auctionEndTime ? new Date(right.auctionEndTime).getTime() : 0;
+      if (!right.auctionEndTime) return false;
+      const auctionEndTime = new Date(right.auctionEndTime).getTime();
       
       switch (status) {
         case "live":
