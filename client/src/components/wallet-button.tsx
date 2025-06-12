@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { connectWallet, disconnectWallet, getWalletStatus } from "@/lib/web3";
-import { Wallet, Loader2, User, Settings, LogOut, BarChart3 } from "lucide-react";
+import { Wallet, Loader2, User, Settings, Shield, LogOut, BarChart3 } from "lucide-react";
 
 export function WalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -107,6 +107,15 @@ export function WalletButton() {
         >
           <Settings className="mr-2 h-4 w-4" />
           Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={(e) => {
+            e.preventDefault();
+            setLocation("/admin");
+          }}
+        >
+          <Shield className="mr-2 h-4 w-4" />
+          Admin Panel
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleDisconnect}>
