@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
@@ -80,11 +80,21 @@ export function WalletButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => setLocation("/dashboard")}>
+        <DropdownMenuItem 
+          onClick={(e) => {
+            e.preventDefault();
+            setLocation("/dashboard");
+          }}
+        >
           <BarChart3 className="mr-2 h-4 w-4" />
           Dashboard
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLocation("/marketplace")}>
+        <DropdownMenuItem 
+          onClick={(e) => {
+            e.preventDefault();
+            setLocation("/marketplace");
+          }}
+        >
           <User className="mr-2 h-4 w-4" />
           Browse Marketplace
         </DropdownMenuItem>
