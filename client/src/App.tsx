@@ -7,6 +7,7 @@ import Home from "@/pages/home";
 import Marketplace from "@/pages/marketplace";
 import RightDetail from "@/pages/right-detail";
 import Admin from "@/pages/admin";
+import Dashboard from "@/pages/dashboard";
 import GoogleCallback from "@/pages/google-callback";
 import NotFound from "@/pages/not-found";
 
@@ -14,6 +15,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
