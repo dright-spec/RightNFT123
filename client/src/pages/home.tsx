@@ -73,8 +73,8 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight relative z-10">
-              Legal Ownership Tools.<br />
-              <span className="text-gradient">Not Investment Products.</span>
+              Own Real Rights.<br />
+              <span className="text-gradient">Earn Real Income.</span>
             </h1>
             
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
