@@ -27,6 +27,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.query.userId ? parseInt(req.query.userId as string) : undefined,
       };
       
+      // Filter by creator if specified
+      if (req.query.creatorId) {
+        options.userId = parseInt(req.query.creatorId as string);
+      }
+      
       const rights = await marketplaceStorage.getRights(options);
       res.json(rights);
     } catch (error) {

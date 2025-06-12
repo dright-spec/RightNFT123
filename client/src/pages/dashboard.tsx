@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreateRightModal } from "@/components/create-right-modal";
 import { 
   TrendingUp, 
   DollarSign, 
@@ -27,10 +29,12 @@ import { VerificationBadge } from "@/components/verification-badge";
 import type { RightWithCreator, User } from "@shared/schema";
 
 export default function Dashboard() {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
   // Fetch user's rights
   const { data: userRights = [], isLoading: rightsLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", "user"],
-    queryFn: () => fetch("/api/rights?userId=1").then(res => res.json()),
+    queryFn: () => fetch("/api/rights?creatorId=1").then(res => res.json()),
   });
 
   // Fetch user profile
@@ -104,7 +108,7 @@ export default function Dashboard() {
               Manage your digital rights portfolio and track performance
             </p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4" />
             Create New Right
           </Button>
@@ -161,8 +165,7 @@ export default function Dashboard() {
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
                 <div className={`text-xs flex items-center gap-1 ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 
-                  stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
+                  stat.changeType === 'positive' ? 'text-green-600' : 'text-gray-600'
                 }`}>
                   {stat.changeType === 'positive' && <TrendingUp className="h-3 w-3" />}
                   {stat.change}
@@ -426,6 +429,12 @@ export default function Dashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Create Right Modal */}
+        <CreateRightModal 
+          open={showCreateModal} 
+          onOpenChange={setShowCreateModal} 
+        />
       </div>
     </div>
   );
