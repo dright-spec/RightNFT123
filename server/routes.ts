@@ -830,8 +830,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         channelData = channelResult.items?.[0];
       }
 
+      // IMPORTANT: This endpoint only verifies the video EXISTS
+      // Actual ownership verification requires one of these methods:
+      // 1. Google OAuth to verify user owns the YouTube channel
+      // 2. Manual verification by team review of ownership documents
+      // 3. Verification code added to video description
       res.json({
-        verified: true,
+        videoExists: true,
+        ownershipVerified: false, // NOT verified - requires additional proof
+        verificationMethods: [
+          'google_oauth', 
+          'verification_code', 
+          'manual_review'
+        ],
         video: {
           id: video.id,
           title: video.snippet.title,
@@ -846,7 +857,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customUrl: channelData.snippet.customUrl,
           subscriberCount: channelData.statistics?.subscriberCount,
           videoCount: channelData.statistics?.videoCount
-        } : null
+        } : null,
+        message: 'Video found but ownership not yet verified. Choose a verification method.'
       });
     } catch (error) {
       console.error('Video verification error:', error);
