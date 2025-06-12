@@ -44,8 +44,8 @@ export interface VerificationResult {
   error?: string;
 }
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+// Note: Client-side environment variables need VITE_ prefix
+// The actual API calls will use server-side credentials for security
 
 // OAuth 2.0 scopes for YouTube channel access
 const SCOPES = [
@@ -58,12 +58,16 @@ const SCOPES = [
  * Initiates Google OAuth flow for YouTube channel verification
  */
 export async function initiateGoogleAuth(): Promise<void> {
-  if (!GOOGLE_CLIENT_ID) {
-    throw new Error('Google Client ID not configured');
+  // Get Google Client ID from server endpoint for security
+  const clientIdResponse = await fetch('/api/auth/google/client-id');
+  const { clientId } = await clientIdResponse.json();
+
+  if (!clientId) {
+    throw new Error('Google Client ID not available');
   }
 
   const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: clientId,
     redirect_uri: `${window.location.origin}/auth/google/callback`,
     response_type: 'code',
     scope: SCOPES,
@@ -158,36 +162,17 @@ export async function getUserYouTubeChannels(accessToken: string): Promise<YouTu
 }
 
 /**
- * Gets video details from YouTube API
+ * Gets video details from YouTube API via server endpoint
  */
 export async function getYouTubeVideoDetails(videoId: string): Promise<YouTubeVideo> {
-  if (!YOUTUBE_API_KEY) {
-    throw new Error('YouTube API key not configured');
-  }
-
-  const response = await fetch(
-    `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`
-  );
+  const response = await fetch(`/api/youtube/video/${videoId}`);
 
   if (!response.ok) {
     throw new Error('Failed to fetch video details');
   }
 
-  const data = await response.json();
-  
-  if (!data.items || data.items.length === 0) {
-    throw new Error('Video not found');
-  }
-
-  const video = data.items[0];
-  return {
-    id: video.id,
-    title: video.snippet.title,
-    channelId: video.snippet.channelId,
-    channelTitle: video.snippet.channelTitle,
-    publishedAt: video.snippet.publishedAt,
-    thumbnails: video.snippet.thumbnails
-  };
+  const video = await response.json();
+  return video;
 }
 
 /**

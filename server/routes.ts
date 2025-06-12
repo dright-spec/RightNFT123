@@ -36,6 +36,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google OAuth routes for YouTube verification
+  app.get("/api/auth/google/client-id", async (req, res) => {
+    try {
+      res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
+    } catch (error) {
+      console.error("Error getting client ID:", error);
+      res.status(500).json({ error: "Failed to get client ID" });
+    }
+  });
+
   app.post("/api/auth/google/token", async (req, res) => {
     try {
       const { code } = req.body;
@@ -133,6 +142,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("YouTube verification error:", error);
       res.status(500).json({ error: "Verification failed" });
+    }
+  });
+
+  // YouTube API endpoint
+  app.get("/api/youtube/video/:videoId", async (req, res) => {
+    try {
+      const { videoId } = req.params;
+      
+      if (!videoId) {
+        return res.status(400).json({ error: "Video ID required" });
+      }
+
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch video details");
+      }
+
+      const data = await response.json();
+      
+      if (!data.items || data.items.length === 0) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+
+      const video = data.items[0];
+      res.json({
+        id: video.id,
+        title: video.snippet.title,
+        channelId: video.snippet.channelId,
+        channelTitle: video.snippet.channelTitle,
+        publishedAt: video.snippet.publishedAt,
+        thumbnails: video.snippet.thumbnails
+      });
+    } catch (error) {
+      console.error("YouTube API error:", error);
+      res.status(500).json({ error: "Failed to fetch video details" });
     }
   });
 
