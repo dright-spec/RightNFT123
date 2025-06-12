@@ -315,7 +315,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       Start building your portfolio by creating your first digital right
                     </p>
-                    <Button>
+                    <Button onClick={() => setShowCreateModal(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Right
                     </Button>
