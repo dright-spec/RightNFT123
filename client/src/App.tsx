@@ -21,7 +21,7 @@ function Router() {
       <Route path="/auctions" component={Auctions} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
-      <Route path="/auth/google/callback" component={GoogleCallback} />
+      <Route path="/google-callback" component={GoogleCallback} />
       <Route component={NotFound} />
     </Switch>
   );

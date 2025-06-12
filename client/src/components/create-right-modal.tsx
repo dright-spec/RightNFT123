@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -113,6 +113,43 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       distributionDetails: "",
     },
   });
+
+  // Check for returning OAuth verification result
+  useEffect(() => {
+    const checkVerificationResult = () => {
+      const storedResult = localStorage.getItem('youtube_verification_result');
+      if (storedResult) {
+        try {
+          const result = JSON.parse(storedResult);
+          // Check if this is a recent verification (within last 5 minutes)
+          if (Date.now() - result.timestamp < 5 * 60 * 1000) {
+            setGoogleVerificationResult({
+              isOwner: result.isOwner,
+              video: result.video,
+              channel: result.channel,
+              verificationMethod: result.verificationMethod,
+              requiresVerification: false
+            });
+            
+            if (result.isOwner) {
+              toast({
+                title: "Verification Complete",
+                description: "Your YouTube video ownership has been verified successfully.",
+              });
+              setTimeout(() => setCurrentStep(3), 1000);
+            }
+            
+            // Clear the stored result after using it
+            localStorage.removeItem('youtube_verification_result');
+          }
+        } catch (error) {
+          console.error('Error parsing verification result:', error);
+        }
+      }
+    };
+
+    checkVerificationResult();
+  }, [open, toast]);
 
   const paysDividends = form.watch("paysDividends");
   const selectedType = form.watch("type");
@@ -301,7 +338,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       // Build OAuth URL
       const params = new URLSearchParams({
         client_id: clientId,
-        redirect_uri: `${window.location.origin}/auth/google/callback`,
+        redirect_uri: `${window.location.origin}/google-callback`,
         response_type: 'code',
         scope: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/userinfo.profile',
         access_type: 'offline',

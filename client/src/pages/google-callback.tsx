@@ -74,6 +74,7 @@ export default function GoogleCallback() {
           isOwner: verificationResult.isOwner,
           video: videoDetails,
           channel: verificationResult.channel,
+          verificationMethod: 'google_oauth',
           timestamp: Date.now()
         }));
 
@@ -85,7 +86,9 @@ export default function GoogleCallback() {
 
         // Redirect back to marketplace after 2 seconds
         setTimeout(() => {
-          setLocation('/marketplace');
+          // If verification was successful, redirect to marketplace with a success flag
+          // The create right modal will detect this and continue the flow
+          setLocation(`/marketplace?verification=success&timestamp=${Date.now()}`);
         }, 2000);
 
       } catch (error) {

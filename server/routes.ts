@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           code,
           client_id: process.env.GOOGLE_CLIENT_ID || "",
           client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
-          redirect_uri: `${req.protocol}://${req.get('host')}/auth/google/callback`,
+          redirect_uri: `${req.protocol}://${req.get('host')}/google-callback`,
           grant_type: "authorization_code",
         }),
       });
