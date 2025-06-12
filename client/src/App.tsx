@@ -10,6 +10,9 @@ import RightDetail from "@/pages/right-detail";
 import Admin from "@/pages/admin";
 import Dashboard from "@/pages/dashboard";
 import GoogleCallback from "@/pages/google-callback";
+import Docs from "@/pages/docs";
+import About from "@/pages/about";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +24,9 @@ function Router() {
       <Route path="/auctions" component={Auctions} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
+      <Route path="/docs" component={Docs} />
+      <Route path="/about" component={About} />
+      <Route path="/settings" component={Settings} />
       <Route path="/google-callback" component={GoogleCallback} />
       <Route component={NotFound} />
     </Switch>

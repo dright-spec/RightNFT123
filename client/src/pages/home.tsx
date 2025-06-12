@@ -42,12 +42,12 @@ export default function Home() {
               <Link href="/auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Auctions
               </Link>
-              <a href="#docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+              <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Docs
-              </a>
-              <a href="#about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+              </Link>
+              <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 About
-              </a>
+              </Link>
             </nav>
 
             <WalletButton />
