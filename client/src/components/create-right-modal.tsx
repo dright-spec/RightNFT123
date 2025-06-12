@@ -1682,6 +1682,23 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               </CardContent>
             </Card>
 
+            {/* Legal Disclaimer */}
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg mt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <p className="font-medium text-amber-900 dark:text-amber-100">Legal Ownership Tool Notice</p>
+                  <div className="text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                    <p><strong>This is a legal ownership tool, not an investment product.</strong></p>
+                    <p>• Income streams are controlled directly by original right owners via payment protocols (e.g., Superfluid)</p>
+                    <p>• Dright acts as a marketplace facilitator only, not a dividend manager</p>
+                    <p>• No promises of price appreciation or investment returns</p>
+                    <p>• Rights trading involves legal ownership transfer, not financial speculation</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <Button
                 type="button"
@@ -1702,7 +1719,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     {isUploading ? "Uploading..." : "Creating..."}
                   </>
                 ) : (
-                  "Create Right (Mint NFT)"
+                  "Create Legal Right (NFT)"
                 )}
               </Button>
             </div>
