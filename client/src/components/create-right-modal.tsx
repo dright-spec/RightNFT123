@@ -1663,7 +1663,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                         <div className="space-y-1">
                           <p className="font-medium text-green-900 dark:text-green-100">Verification Complete</p>
                           <p className="text-sm text-green-700 dark:text-green-300">
-                            Your ownership verification is complete. You can now proceed to set pricing and payment terms for your right.
+                            Your ownership verification is complete. You can now proceed to set transfer pricing. You will control income streams directly.
                           </p>
                         </div>
                       </div>

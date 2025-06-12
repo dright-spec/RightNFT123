@@ -73,13 +73,19 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight relative z-10">
-              Tokenize Your Rights.<br />
-              <span className="text-gradient">Make Them Liquid.</span>
+              Legal Ownership Tools.<br />
+              <span className="text-gradient">Not Investment Products.</span>
             </h1>
             
             <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Transform any legal right into tradeable NFTs. From music streaming rights to patents, real estate shares to trademarks - make any valuable right instantly liquid.
+              Digital marketplace for trading legal rights as NFTs. Owners control their income streams directly through verified ownership transfers.
             </p>
+
+            <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg max-w-4xl mx-auto">
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium text-center">
+                <strong>Important:</strong> This is a legal ownership tool, not an investment product. Rights trading does not guarantee returns or price appreciation.
+              </p>
+            </div>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -149,7 +155,7 @@ export default function Home() {
                   <Badge variant="secondary" className="text-xs">Most Popular</Badge>
                 </div>
                 <p className="text-muted-foreground mb-4 text-center">
-                  Own a piece of songs and earn from every stream, play, and use
+                  Legal ownership of music streaming and performance rights
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
@@ -171,7 +177,7 @@ export default function Home() {
                 </div>
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
                   <p className="text-xs text-blue-700 dark:text-blue-300">
-                    <strong>Example:</strong> Own 10% of a hit song's royalties and receive 10% of all streaming revenue automatically.
+                    <strong>Example:</strong> Legal transfer of 10% streaming rights - owner receives 10% of royalty distributions through direct payment streams.
                   </p>
                 </div>
               </CardContent>
@@ -185,7 +191,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-4 text-center">Patent Rights</h3>
                 <p className="text-muted-foreground mb-4 text-center">
-                  Monetize your inventions and innovations through licensing
+                  Legal ownership transfer of patent licensing rights
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
@@ -207,7 +213,7 @@ export default function Home() {
                 </div>
                 <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
                   <p className="text-xs text-green-700 dark:text-green-300">
-                    <strong>Example:</strong> License your smartphone camera patent to manufacturers and earn royalties on every device sold.
+                    <strong>Example:</strong> Legal transfer of patent licensing rights - new owner receives licensing fees directly from manufacturers.
                   </p>
                 </div>
               </CardContent>
@@ -221,29 +227,29 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-4 text-center">Real Estate Rights</h3>
                 <p className="text-muted-foreground mb-4 text-center">
-                  Share property ownership and receive rental income
+                  Legal transfer of fractional property ownership rights
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-600" />
-                    <span>Monthly rental income distribution</span>
+                    <span>Rental income distribution rights</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-600" />
-                    <span>Property appreciation gains</span>
+                    <span>Ownership transfer documentation</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-600" />
-                    <span>Commercial lease agreements</span>
+                    <span>Commercial lease agreement rights</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-600" />
-                    <span>Development and zoning rights</span>
+                    <span>Development and zoning rights transfer</span>
                   </div>
                 </div>
                 <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
                   <p className="text-xs text-purple-700 dark:text-purple-300">
-                    <strong>Example:</strong> Own 5% of a rental property and receive 5% of monthly rent payments automatically.
+                    <strong>Example:</strong> Legal transfer of 5% property ownership - new owner receives rental distributions through direct payment streams.
                   </p>
                 </div>
               </CardContent>
@@ -257,7 +263,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-4 text-center">Copyright Assets</h3>
                 <p className="text-muted-foreground mb-4 text-center">
-                  Profit from creative works and intellectual property
+                  Legal ownership transfer of creative work licensing rights
                 </p>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
