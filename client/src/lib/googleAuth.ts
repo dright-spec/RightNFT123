@@ -165,13 +165,28 @@ export async function getUserYouTubeChannels(accessToken: string): Promise<YouTu
  * Gets video details from YouTube API via server endpoint
  */
 export async function getYouTubeVideoDetails(videoId: string): Promise<YouTubeVideo> {
+  console.log('Fetching video details for:', videoId);
+  
   const response = await fetch(`/api/youtube/video/${videoId}`);
+  
+  console.log('Response status:', response.status);
+  console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
-    throw new Error('Failed to fetch video details');
+    const errorText = await response.text();
+    console.error('API Error Response:', errorText);
+    throw new Error(`Failed to fetch video details: ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type');
+  if (!contentType?.includes('application/json')) {
+    const htmlContent = await response.text();
+    console.error('Received HTML instead of JSON:', htmlContent.substring(0, 200));
+    throw new Error('Server returned HTML instead of JSON - API routing issue');
   }
 
   const video = await response.json();
+  console.log('Video details received:', video);
   return video;
 }
 
