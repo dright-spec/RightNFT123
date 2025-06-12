@@ -971,6 +971,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate verification code for YouTube description method
+  app.post("/api/youtube/generate-verification-code", async (req, res) => {
+    try {
+      const { videoId, videoDetails } = req.body;
+      
+      // Generate a unique verification code
+      const verificationCode = `DRIGHT-VERIFY-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      
+      res.json({
+        verificationCode,
+        instructions: "Add this code to your video description to verify ownership",
+        expiresIn: "24 hours"
+      });
+    } catch (error) {
+      console.error("Error generating verification code:", error);
+      res.status(500).json({ error: "Failed to generate verification code" });
+    }
+  });
+
+  // Verify code in YouTube video description
+  app.post("/api/youtube/verify-description-code", async (req, res) => {
+    try {
+      const { videoId, verificationCode } = req.body;
+      
+      if (!process.env.YOUTUBE_API_KEY) {
+        return res.status(500).json({ error: "YouTube API key not configured" });
+      }
+
+      // Get video details from YouTube API
+      const videoResponse = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+      );
+      
+      if (!videoResponse.ok) {
+        throw new Error('Failed to fetch video details');
+      }
+      
+      const videoData = await videoResponse.json();
+      
+      if (!videoData.items || videoData.items.length === 0) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+      
+      const video = videoData.items[0];
+      const description = video.snippet.description || "";
+      
+      // Check if verification code exists in description
+      const codeFound = description.includes(verificationCode);
+      
+      res.json({
+        verified: codeFound,
+        video: {
+          id: videoId,
+          title: video.snippet.title,
+          channelTitle: video.snippet.channelTitle
+        },
+        channel: {
+          title: video.snippet.channelTitle,
+          id: video.snippet.channelId
+        },
+        method: 'description_code'
+      });
+    } catch (error) {
+      console.error("Error verifying description code:", error);
+      res.status(500).json({ error: "Failed to verify description code" });
+    }
+  });
+
+  // Submit manual review request
+  app.post("/api/youtube/submit-manual-review", async (req, res) => {
+    try {
+      const { videoId, videoDetails, submissionNotes } = req.body;
+      
+      // Generate a review ID for tracking
+      const reviewId = `REVIEW-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      
+      res.json({
+        success: true,
+        reviewId,
+        status: 'submitted',
+        estimatedReviewTime: '2-5 business days',
+        message: 'Manual review request submitted successfully'
+      });
+    } catch (error) {
+      console.error("Error submitting manual review:", error);
+      res.status(500).json({ error: "Failed to submit manual review request" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

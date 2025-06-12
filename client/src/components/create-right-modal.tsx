@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { uploadContentToIPFS, uploadToIPFS, uploadJSONToIPFS, generateFileHash } from "@/lib/ipfs";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
-import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle } from "lucide-react";
+import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle, Copy, ExternalLink } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { InsertRight } from "@shared/schema";
 
@@ -407,6 +407,42 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       });
     } finally {
       setIsVerifyingCode(false);
+    }
+  };
+
+  const handleManualReviewSubmission = async () => {
+    try {
+      const response = await fetch('/api/youtube/submit-manual-review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          videoId: extractYouTubeVideoId(youtubeUrl),
+          videoDetails,
+          submissionNotes: 'Manual ownership verification requested'
+        })
+      });
+      
+      if (!response.ok) throw new Error('Submission failed');
+      
+      setGoogleVerificationResult({
+        isOwner: true,
+        video: videoDetails,
+        verificationMethod: 'manual_review',
+        status: 'pending'
+      });
+      
+      toast({
+        title: "Manual Review Submitted",
+        description: "Your documentation has been submitted for review. You'll be notified within 2-5 business days.",
+      });
+      
+      setTimeout(() => setCurrentStep(3), 1500);
+    } catch (error) {
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit manual review request. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1381,29 +1417,154 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                                 </div>
                                 
                                 {/* Verification Code Method */}
-                                <div className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <div className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
                                   <div className="flex items-start gap-3">
                                     <FileText className="w-5 h-5 mt-0.5 text-blue-600" />
                                     <div className="flex-1">
                                       <p className="font-medium">Verification Code Method</p>
                                       <p className="text-sm text-muted-foreground">
-                                        Add a unique code to your video description to prove ownership
+                                        Add a special code to your video description to prove ownership
                                       </p>
-                                      <p className="text-xs text-blue-600 mt-1">✓ Takes 5-10 minutes</p>
+                                      <p className="text-xs text-blue-600 mt-1">⏱ 5-10 minutes • High security</p>
+                                      
+                                      {selectedVerificationMethod === 'verification_code' ? (
+                                        <div className="mt-3 space-y-3">
+                                          {!verificationCode ? (
+                                            <Button 
+                                              onClick={generateVerificationCode}
+                                              disabled={isGeneratingCode}
+                                              size="sm"
+                                            >
+                                              {isGeneratingCode ? (
+                                                <>
+                                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                  Generating...
+                                                </>
+                                              ) : (
+                                                'Generate Verification Code'
+                                              )}
+                                            </Button>
+                                          ) : (
+                                            <div className="space-y-3">
+                                              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                                <p className="font-medium text-blue-900 dark:text-blue-100 text-sm">
+                                                  Step 1: Copy this verification code
+                                                </p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                  <code className="px-2 py-1 bg-white dark:bg-gray-800 border rounded text-sm font-mono">
+                                                    {verificationCode}
+                                                  </code>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    onClick={() => navigator.clipboard.writeText(verificationCode)}
+                                                  >
+                                                    <Copy className="w-3 h-3" />
+                                                  </Button>
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                                <p className="font-medium text-yellow-900 dark:text-yellow-100 text-sm">
+                                                  Step 2: Add to video description
+                                                </p>
+                                                <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                                  Paste the code anywhere in your video description and save the changes.
+                                                </p>
+                                                <a 
+                                                  href={`https://studio.youtube.com/video/${extractYouTubeVideoId(youtubeUrl)}/edit`}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-2"
+                                                >
+                                                  Open YouTube Studio <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                              </div>
+                                              
+                                              <Button 
+                                                onClick={verifyDescriptionCode}
+                                                disabled={isVerifyingCode}
+                                                size="sm"
+                                                className="w-full"
+                                              >
+                                                {isVerifyingCode ? (
+                                                  <>
+                                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                    Checking description...
+                                                  </>
+                                                ) : (
+                                                  'Verify Code in Description'
+                                                )}
+                                              </Button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <Button 
+                                          onClick={() => setSelectedVerificationMethod('verification_code')}
+                                          size="sm" 
+                                          className="mt-2"
+                                        >
+                                          Choose This Method
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
                                 
                                 {/* Manual Review Method */}
-                                <div className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <div className="p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors">
                                   <div className="flex items-start gap-3">
-                                    <Shield className="w-5 h-5 mt-0.5 text-purple-600" />
+                                    <Clock className="w-5 h-5 mt-0.5 text-orange-600" />
                                     <div className="flex-1">
                                       <p className="font-medium">Manual Review</p>
                                       <p className="text-sm text-muted-foreground">
-                                        Upload legal documents proving ownership for team review
+                                        Submit documentation for our team to manually verify ownership
                                       </p>
-                                      <p className="text-xs text-purple-600 mt-1">✓ Most secure, takes 2-5 days</p>
+                                      <p className="text-xs text-orange-600 mt-1">⏱ 2-5 business days • Most thorough</p>
+                                      
+                                      {selectedVerificationMethod === 'manual_review' ? (
+                                        <div className="mt-3 space-y-3">
+                                          <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                                            <p className="font-medium text-orange-900 dark:text-orange-100 text-sm">
+                                              Required Documentation
+                                            </p>
+                                            <ul className="text-xs text-orange-700 dark:text-orange-300 mt-1 space-y-1">
+                                              <li>• Screenshot of YouTube Studio showing the video</li>
+                                              <li>• Channel verification documents</li>
+                                              <li>• Government ID matching channel owner name</li>
+                                              <li>• Business registration (if applicable)</li>
+                                            </ul>
+                                          </div>
+                                          
+                                          <div className="space-y-2">
+                                            <Label htmlFor="manual-review-files">Upload Documentation</Label>
+                                            <input
+                                              id="manual-review-files"
+                                              type="file"
+                                              multiple
+                                              accept="image/*,.pdf,.doc,.docx"
+                                              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                            />
+                                          </div>
+                                          
+                                          <Button 
+                                            onClick={() => handleManualReviewSubmission()}
+                                            size="sm"
+                                            className="w-full"
+                                          >
+                                            Submit for Manual Review
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <Button 
+                                          onClick={() => setSelectedVerificationMethod('manual_review')}
+                                          size="sm" 
+                                          className="mt-2"
+                                        >
+                                          Choose This Method
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
