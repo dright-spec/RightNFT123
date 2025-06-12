@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { VerificationBadge } from "@/components/verification-badge";
+import { AdminLogin } from "@/components/admin-login";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
@@ -25,7 +26,8 @@ import {
   Settings,
   AlertTriangle,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  LogOut
 } from "lucide-react";
 import type { RightWithCreator, User } from "@shared/schema";
 
@@ -39,11 +41,45 @@ interface AdminStats {
 }
 
 export default function Admin() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedRight, setSelectedRight] = useState<RightWithCreator | null>(null);
   const [verificationNotes, setVerificationNotes] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    const session = localStorage.getItem("admin_session");
+    
+    if (token && session) {
+      const sessionTime = parseInt(session);
+      const now = Date.now();
+      // Session expires after 8 hours
+      if (now - sessionTime < 8 * 60 * 60 * 1000) {
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_session");
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_session");
+    setIsAuthenticated(false);
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out of the admin panel",
+    });
+  };
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <AdminLogin onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
 
   // Fetch admin stats
   const { data: stats } = useQuery<AdminStats>({
@@ -63,10 +99,7 @@ export default function Admin() {
   // Verification mutation
   const verifyRightMutation = useMutation({
     mutationFn: async ({ rightId, status, notes }: { rightId: number; status: string; notes: string }) => {
-      await apiRequest(`/api/admin/rights/${rightId}/verify`, {
-        method: "POST",
-        body: JSON.stringify({ status, notes }),
-      });
+      return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { status, notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/rights"] });
@@ -90,10 +123,7 @@ export default function Admin() {
   // User ban mutation
   const banUserMutation = useMutation({
     mutationFn: async ({ userId, banned }: { userId: number; banned: boolean }) => {
-      await apiRequest(`/api/admin/users/${userId}/ban`, {
-        method: "POST",
-        body: JSON.stringify({ banned }),
-      });
+      return apiRequest("POST", `/api/admin/users/${userId}/ban`, { banned });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -128,9 +158,15 @@ export default function Admin() {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage users, verify rights, and monitor platform activity</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">Manage users, verify rights, and monitor platform activity</p>
+          </div>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </Button>
         </div>
 
         {/* Stats Cards */}

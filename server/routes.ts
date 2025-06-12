@@ -1061,6 +1061,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin authentication endpoint
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      // Simple authentication - in production, use proper password hashing
+      if (username === "admin" && password === "dright2024") {
+        const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
+        res.json({ 
+          success: true, 
+          token,
+          message: "Authentication successful" 
+        });
+      } else {
+        res.status(401).json({ error: "Invalid credentials" });
+      }
+    } catch (error) {
+      console.error("Admin login error:", error);
+      res.status(500).json({ error: "Authentication failed" });
+    }
+  });
+
   // Admin routes - for platform management
   app.get("/api/admin/stats", async (req, res) => {
     try {
