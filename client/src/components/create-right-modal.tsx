@@ -1231,17 +1231,25 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     </div>
                   )}
 
-                  {/* Traditional Verification Notice */}
-                  <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                  {/* Next Steps Notice */}
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                      <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="font-medium text-amber-900 dark:text-amber-100">Manual Verification Process</p>
-                        <p className="text-sm text-amber-700 dark:text-amber-300">
-                          All ownership documents will be reviewed by our verification team before your right can be approved for trading. 
-                          This process typically takes 2-5 business days. Clear, official documents help speed up the verification process.
+                        <p className="font-medium text-blue-900 dark:text-blue-100">Verification Complete</p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          Your ownership verification is complete. You can now proceed to set pricing and payment terms for your right.
                         </p>
                       </div>
+                    </div>
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep(3)}
+                        className="w-full"
+                      >
+                        Continue to Pricing & Terms
+                      </Button>
                     </div>
                   </div>
                 </div>
