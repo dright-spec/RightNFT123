@@ -401,11 +401,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Valid bid amount is required" });
       }
       
+      // Validate the right exists and is an auction
+      const right = await marketplaceStorage.getRight(rightId);
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+      
+      if (right.listingType !== "auction") {
+        return res.status(400).json({ error: "This right is not available for auction" });
+      }
+      
+      // Check if auction is still active
+      if (right.auctionEndTime && new Date(right.auctionEndTime) < new Date()) {
+        return res.status(400).json({ error: "Auction has ended" });
+      }
+      
+      // Validate bid amount against current highest bid and minimum
+      const currentHighestBid = parseFloat(right.highestBidAmount || "0");
+      const newBidAmount = parseFloat(amount);
+      const minimumBid = Math.max(
+        currentHighestBid > 0 ? currentHighestBid * 1.05 : 0, // 5% increment if there are existing bids
+        parseFloat(right.minBidAmount || "0")
+      );
+      
+      if (newBidAmount < minimumBid) {
+        return res.status(400).json({ 
+          error: `Bid must be at least ${minimumBid.toFixed(4)} ETH` 
+        });
+      }
+      
       const bid = await marketplaceStorage.placeBid({
         rightId,
         bidderId: mockUserId,
         amount,
-        isActive: true,
+        currency: "ETH",
       });
       
       res.status(201).json(bid);
