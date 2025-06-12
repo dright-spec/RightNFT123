@@ -72,13 +72,13 @@ export default function Home() {
               Now Supporting All Rights Types
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight relative z-10">
-              Turn Your Creativity Into<br />
-              <span className="text-gradient">Tradeable Assets</span>
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-foreground leading-[0.9] relative z-10 tracking-tight">
+              Turn Your Creative Rights Into<br />
+              <span className="text-gradient bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient">Legal Digital Assets</span>
             </h1>
             
-            <p className="mt-6 text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              The first platform where musicians, creators, and IP owners can tokenize their rights and earn from a global marketplace. Keep full control while unlocking new revenue streams.
+            <p className="mt-8 text-xl sm:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed font-medium">
+              The professional platform where creators tokenize legal rights as utility assets. Maintain full ownership control while accessing global markets for licensing and usage rights.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm">
@@ -96,33 +96,77 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg max-w-4xl mx-auto">
-              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium text-center">
-                <strong>Important:</strong> This is a legal ownership tool, not an investment product. Rights trading does not guarantee returns or price appreciation.
-              </p>
-            </div>
-
-            <div className="mt-12 flex flex-col sm:flex-row gap-6 justify-center">
+            {/* Primary CTAs with Enhanced Visual Impact */}
+            <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8">
               <Button 
                 size="lg" 
-                className="px-10 py-6 text-xl font-bold h-auto shadow-2xl hover:scale-105 transition-all duration-300 glow-primary relative overflow-hidden bg-gradient-to-r from-primary via-primary to-accent border-0"
+                className="group relative bg-gradient-to-r from-primary via-accent to-primary hover:from-primary/90 hover:via-accent/90 hover:to-primary/90 text-white px-16 py-8 text-2xl font-black rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 min-w-[280px] border-0 overflow-hidden"
                 onClick={() => setShowCreateModal(true)}
               >
-                <div className="absolute inset-0 shimmer"></div>
-                <Upload className="w-7 h-7 mr-3 relative z-10" />
-                <span className="relative z-10">Start Earning Now</span>
-                <ArrowRight className="w-5 h-5 ml-3 relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <Upload className="w-8 h-8 mr-4 relative z-10" />
+                <span className="relative z-10">Create Your Right</span>
+                <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
               </Button>
               
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="px-10 py-6 text-xl font-semibold h-auto glass-card hover:bg-primary/10 transition-all duration-300 border-2 border-primary/20 hover:border-primary/40"
+                className="px-16 py-8 text-2xl font-bold rounded-3xl border-4 border-primary/30 hover:border-primary hover:bg-primary/10 transition-all duration-500 transform hover:scale-110 min-w-[280px] backdrop-blur-sm"
                 onClick={scrollToMarketplace}
               >
-                <TrendingUp className="w-7 h-7 mr-3" />
-                Browse Marketplace
+                <Search className="w-8 h-8 mr-4" />
+                Explore Marketplace
               </Button>
+            </div>
+
+            {/* Secondary Navigation */}
+            <div className="mt-12 flex flex-wrap justify-center gap-6">
+              <Link href="/docs">
+                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
+                  <FileText className="mr-2 h-5 w-5" />
+                  How It Works
+                </Button>
+              </Link>
+              <Link href="/auctions">
+                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
+                  <TrendingUp className="mr-2 h-5 w-5" />
+                  Live Auctions
+                </Button>
+              </Link>
+              <Link href="/about">
+                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
+                  <Shield className="mr-2 h-5 w-5" />
+                  Legal Framework
+                </Button>
+              </Link>
+            </div>
+
+            {/* Enhanced Legal Compliance Notice */}
+            <div className="mt-20 p-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-yellow-950/20 border-3 border-amber-200 dark:border-amber-700 rounded-3xl max-w-6xl mx-auto shadow-xl backdrop-blur-sm">
+              <div className="flex items-start gap-6">
+                <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <div className="text-left flex-1">
+                  <h3 className="text-2xl font-bold text-amber-900 dark:text-amber-100 mb-4">Utility-First Legal Platform</h3>
+                  <div className="space-y-3 text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
+                    <p>
+                      <strong>Legal Ownership Transfer:</strong> This platform facilitates the transfer of usage rights and licensing access - not securities or investment products.
+                    </p>
+                    <p>
+                      <strong>Utility-Based Assets:</strong> All tokenized rights represent utility for access, licensing, and usage purposes. No expectation of profits derived from the efforts of others.
+                    </p>
+                    <p>
+                      <strong>Creator Control:</strong> Original rights owners maintain full control over income streams and licensing terms. Platform serves as marketplace facilitator only.
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2">
+                    <Check className="w-5 h-5 text-green-600" />
+                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Compliant with utility asset regulations</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="mt-8 text-center">
