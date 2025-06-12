@@ -99,22 +99,47 @@ export function WalletButton() {
     initializeWallet();
   }, []);
 
+  // Get network name for display
+  const getNetworkName = (chainId?: number) => {
+    switch (chainId) {
+      case 1: return "Ethereum";
+      case 137: return "Polygon";
+      case 56: return "BSC";
+      case 43114: return "Avalanche";
+      default: return chainId ? `Chain ${chainId}` : "Unknown";
+    }
+  };
+
   if (!walletAddress) {
     return (
-      <Button
-        onClick={handleConnect}
-        disabled={isConnecting}
-        className="flex items-center space-x-2"
-      >
-        {isConnecting ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Wallet className="w-4 h-4" />
+      <div className="flex items-center gap-2">
+        {!hasWallet && (
+          <Badge variant="destructive" className="text-xs">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            No Wallet
+          </Badge>
         )}
-        <span>
-          {isConnecting ? "Connecting..." : "Connect Wallet"}
-        </span>
-      </Button>
+        <Button
+          onClick={handleConnect}
+          disabled={isConnecting || !hasWallet}
+          className="flex items-center space-x-2"
+          variant={hasWallet ? "default" : "outline"}
+        >
+          {isConnecting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Wallet className="w-4 h-4" />
+          )}
+          <span>
+            {isConnecting 
+              ? "Connecting..." 
+              : !hasWallet 
+                ? "Install Wallet" 
+                : "Connect Wallet"
+            }
+          </span>
+        </Button>
+      </div>
     );
   }
 
@@ -122,11 +147,38 @@ export function WalletButton() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="flex items-center space-x-2">
-          <Wallet className="w-4 h-4" />
-          <span>{`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}</span>
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span>{`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}</span>
+            {chainId && (
+              <Badge variant="secondary" className="text-xs">
+                {getNetworkName(chainId)}
+              </Badge>
+            )}
+          </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
+        {/* Wallet Info */}
+        <div className="px-3 py-2 border-b">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Connected Wallet</span>
+            <Badge variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Connected
+            </Badge>
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {walletAddress}
+          </div>
+          {chainId && (
+            <div className="text-xs text-muted-foreground">
+              Network: {getNetworkName(chainId)}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Items */}
         <DropdownMenuItem 
           onClick={(e) => {
             e.preventDefault();
@@ -165,7 +217,7 @@ export function WalletButton() {
           Admin Panel
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleDisconnect}>
+        <DropdownMenuItem onClick={handleDisconnect} className="text-red-600 focus:text-red-600">
           <LogOut className="mr-2 h-4 w-4" />
           Disconnect Wallet
         </DropdownMenuItem>
