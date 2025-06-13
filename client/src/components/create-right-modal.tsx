@@ -36,6 +36,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { hederaService, type RightMetadata, type NFTMintResult } from "@/lib/hederaSimple";
 import { hashConnectService, type HashConnectState } from "@/lib/hashConnectService";
 import { hederaWalletDetector } from "@/lib/hederaWalletDetection";
+import { uploadToIPFS, uploadJSONToIPFS } from "@/lib/ipfs";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
 import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle, Copy, ExternalLink, Wallet } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -659,7 +660,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
           payout_address: data.paysDividends ? data.paymentAddress || walletStatus.accountId! : walletStatus.accountId!,
           creator: walletStatus.accountId!,
           created_at: new Date().toISOString(),
-          verified: true,
+
         };
 
         setProgressMessage("Minting NFT on Hedera blockchain...");
