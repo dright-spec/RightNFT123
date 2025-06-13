@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { uploadContentToIPFS, uploadToIPFS, uploadJSONToIPFS, generateFileHash } from "@/lib/ipfs";
+import { hederaService, type RightMetadata, type NFTMintResult } from "@/lib/hederaSimple";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
 import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle, Copy, ExternalLink } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -564,41 +564,65 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
   const onSubmit = async (data: FormData) => {
     setIsUploading(true);
+    setProgressMessage("Preparing to mint NFT on Hedera...");
+    setUploadProgress(10);
     
     try {
-      let contentFileHash = "";
-      let contentFileUrl = "";
-      let contentFileName = "";
-      let contentFileSize = 0;
-      let contentFileType = "";
+      // Check if wallet is connected
+      const walletStatus = hederaService.getWalletStatus();
+      if (!walletStatus.isConnected) {
+        throw new Error("Please connect your HashPack wallet to mint NFTs");
+      }
 
-      // Upload content file or process YouTube URL
+      setProgressMessage("Uploading files to IPFS...");
+      setUploadProgress(25);
+
+      let contentFileUrl = "";
+      let legalDocument: File | undefined;
+
+      // Handle content file or YouTube URL
       if (selectedFile) {
-        const uploadResult = await uploadContentToIPFS(selectedFile);
-        if (uploadResult.success) {
-          contentFileHash = uploadResult.fileHash || "";
-          contentFileUrl = uploadResult.url;
-          contentFileName = uploadResult.fileName || selectedFile.name;
-          contentFileSize = uploadResult.fileSize || selectedFile.size;
-          contentFileType = uploadResult.fileType || selectedFile.type;
-        } else {
-          throw new Error("Failed to upload content file");
+        contentFileUrl = youtubeUrl || `File: ${selectedFile.name}`;
+        // Use the selected file as legal document if it's a PDF
+        if (selectedFile.type === 'application/pdf') {
+          legalDocument = selectedFile;
         }
       } else if (youtubeUrl) {
-        // Process YouTube URL
         const videoId = extractYouTubeVideoId(youtubeUrl);
         if (videoId) {
-          // Create a File object for YouTube URL hashing
-          const blob = new Blob([youtubeUrl], { type: 'text/plain' });
-          const urlFile = new File([blob], `youtube-${videoId}.txt`, { type: 'text/plain' });
-          contentFileHash = await generateFileHash(urlFile);
           contentFileUrl = youtubeUrl;
-          contentFileName = `YouTube Video: ${videoId}`;
-          contentFileType = "video/youtube";
         } else {
           throw new Error("Invalid YouTube URL");
         }
       }
+
+      // Add ownership documents as legal documents
+      if (ownershipFiles.length > 0) {
+        legalDocument = ownershipFiles[0]; // Use first ownership document
+      }
+
+      setProgressMessage("Creating NFT metadata...");
+      setUploadProgress(50);
+
+      // Create Hedera-compatible metadata
+      const rightMetadata: RightMetadata = {
+        title: data.title,
+        description: data.description,
+        type: data.type,
+        dividends: data.paysDividends,
+        payout_address: data.paysDividends ? data.paymentAddress || walletStatus.accountId! : walletStatus.accountId!,
+        creator: walletStatus.accountId!,
+        created_at: new Date().toISOString(),
+      };
+
+      setProgressMessage("Minting NFT on Hedera blockchain...");
+      setUploadProgress(75);
+
+      // Mint NFT on Hedera
+      const mintResult: NFTMintResult = await hederaService.mintRightNFT(rightMetadata, legalDocument);
+
+      setProgressMessage("Registering right in marketplace...");
+      setUploadProgress(90);
 
       // Generate symbol from title
       const symbol = data.title.substring(0, 6).toUpperCase().replace(/[^A-Z]/g, '') || "DRIGHT";
@@ -611,7 +635,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         tags: data.tags,
         listingType: data.listingType,
         price: data.price,
-        currency: data.currency,
+        currency: "HBAR", // Use HBAR for Hedera
         auctionEndTime: data.listingType === "auction" && data.auctionDuration 
           ? new Date(Date.now() + data.auctionDuration * 60 * 60 * 1000) 
           : undefined,
@@ -623,11 +647,19 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         distributionPercentage: data.distributionPercentage,
         minimumDistribution: data.minimumDistribution,
         distributionDetails: data.paysDividends ? data.distributionDetails : undefined,
-        contentFileHash,
-        contentFileUrl,
-        contentFileName,
-        contentFileSize,
-        contentFileType,
+        // Hedera-specific fields
+        contentFileHash: mintResult.transactionId,
+        contentFileUrl: mintResult.metadataUri,
+        contentFileName: `Hedera NFT ${mintResult.tokenId}:${mintResult.serialNumber}`,
+        contentFileSize: 0,
+        contentFileType: "application/hedera-nft",
+        // Store Hedera NFT information
+        hederaTokenId: mintResult.tokenId,
+        hederaSerialNumber: mintResult.serialNumber,
+        hederaTransactionId: mintResult.transactionId,
+        hederaMetadataUri: mintResult.metadataUri,
+        hederaAccountId: walletStatus.accountId!,
+        hederaNetwork: walletStatus.network,
       };
 
       // Upload ownership documents to IPFS if any
