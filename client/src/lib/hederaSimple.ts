@@ -63,68 +63,142 @@ class HederaService {
     }
   }
 
-  private async checkHashPackAvailability(): Promise<boolean> {
-    // Wait longer for extensions to fully initialize
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('Checking for wallet extensions...');
-    console.log('Window object keys:', Object.keys(window));
-    
-    // Check for HashPack wallet (multiple possible injection points)
-    const hashPackChecks = [
-      (window as any).hashpack,
-      (window as any).HashPack,
-      (window as any).hedera?.hashpack,
-      (window as any).ethereum?.isHashPack
-    ];
-    
-    for (const check of hashPackChecks) {
-      if (check) {
-        console.log('HashPack wallet detected:', check);
-        return true;
+  private setupWalletListener(): Promise<boolean> {
+    return new Promise((resolve) => {
+      let resolved = false;
+      
+      // Immediate check
+      const immediateResult = this.performWalletCheck();
+      if (immediateResult) {
+        resolved = true;
+        resolve(true);
+        return;
       }
-    }
 
-    // Check for Blade wallet (multiple possible injection points)
-    const bladeChecks = [
-      (window as any).bladeSDK,
-      (window as any).blade,
-      (window as any).BladeSDK,
-      (window as any).Blade,
-      (window as any).hedera?.blade
-    ];
-    
-    for (const check of bladeChecks) {
-      if (check) {
-        console.log('Blade wallet detected:', check);
-        return true;
-      }
-    }
+      // Listen for wallet injection events
+      const walletInjectionHandler = () => {
+        if (resolved) return;
+        const result = this.performWalletCheck();
+        if (result) {
+          resolved = true;
+          resolve(true);
+        }
+      };
 
-    // Check for HashConnect (legacy)
-    const hashConnectChecks = [
-      (window as any).hashconnect,
-      (window as any).HashConnect,
-      (window as any).hedera?.hashconnect
-    ];
-    
-    for (const check of hashConnectChecks) {
-      if (check) {
-        console.log('HashConnect detected:', check);
-        return true;
-      }
-    }
+      // Multiple event listeners for different wallet injection patterns
+      window.addEventListener('ethereum#initialized', walletInjectionHandler);
+      window.addEventListener('eip6963:announceProvider', walletInjectionHandler);
+      document.addEventListener('DOMContentLoaded', walletInjectionHandler);
+      
+      // Custom events that some wallets fire
+      window.addEventListener('hashpack:initialized', walletInjectionHandler);
+      window.addEventListener('blade:initialized', walletInjectionHandler);
 
-    console.log('No Hedera wallet extension detected after checking all injection points');
-    console.log('Available wallet-related objects:', {
-      hashpack: (window as any).hashpack,
-      blade: (window as any).blade,
-      bladeSDK: (window as any).bladeSDK,
-      ethereum: (window as any).ethereum,
-      hedera: (window as any).hedera
+      // Polling fallback with exponential backoff
+      let attempts = 0;
+      const maxAttempts = 20;
+      const pollForWallet = () => {
+        attempts++;
+        console.log(`Wallet detection attempt ${attempts}/${maxAttempts}`);
+        
+        const result = this.performWalletCheck();
+        if (result) {
+          resolved = true;
+          resolve(true);
+          return;
+        }
+
+        if (attempts < maxAttempts) {
+          setTimeout(pollForWallet, Math.min(attempts * 200, 2000));
+        } else {
+          resolved = true;
+          resolve(false);
+        }
+      };
+
+      // Start polling after a short delay
+      setTimeout(pollForWallet, 100);
     });
-    
+  }
+
+  private performWalletCheck(): boolean {
+    // Check window properties dynamically
+    const windowKeys = Object.keys(window);
+    const walletKeys = windowKeys.filter(key => 
+      key.toLowerCase().includes('hash') || 
+      key.toLowerCase().includes('blade') || 
+      key.toLowerCase().includes('hedera')
+    );
+
+    console.log('Found wallet-related keys:', walletKeys);
+
+    // Direct property checks
+    const providers = [
+      // HashPack variations
+      { name: 'HashPack', provider: (window as any).hashpack },
+      { name: 'HashConnect', provider: (window as any).hashconnect },
+      { name: 'HashPack (caps)', provider: (window as any).HashPack },
+      
+      // Blade variations
+      { name: 'Blade SDK', provider: (window as any).bladeSDK },
+      { name: 'Blade', provider: (window as any).blade },
+      { name: 'Blade (caps)', provider: (window as any).Blade },
+      
+      // Ethereum provider checks
+      { name: 'Ethereum (HashPack)', provider: (window as any).ethereum?.isHashPack ? (window as any).ethereum : null },
+      { name: 'Ethereum (Blade)', provider: (window as any).ethereum?.isBlade ? (window as any).ethereum : null },
+    ];
+
+    for (const { name, provider } of providers) {
+      if (provider && typeof provider === 'object') {
+        console.log(`✓ Detected ${name}:`, provider);
+        return true;
+      }
+    }
+
+    // Check for EIP-6963 providers (modern wallet detection)
+    if ((window as any).ethereum?.providers?.length > 0) {
+      const providers = (window as any).ethereum.providers;
+      console.log('Found EIP-6963 providers:', providers);
+      
+      for (const provider of providers) {
+        if (provider.isHashPack || provider.isBlade || provider.isHedera) {
+          console.log('✓ Detected Hedera wallet via EIP-6963:', provider);
+          return true;
+        }
+      }
+    }
+
+    // Browser-specific wallet detection
+    if ((window as any).navigator?.brave) {
+      console.log('Brave browser detected - checking for built-in wallet');
+      if ((window as any).ethereum) {
+        console.log('✓ Brave wallet (Ethereum provider) detected');
+        return true;
+      }
+    }
+
     return false;
+  }
+
+  private async checkHashPackAvailability(): Promise<boolean> {
+    console.log('Starting advanced wallet detection...');
+    
+    // Use the new detection system
+    const detected = await this.setupWalletListener();
+    
+    if (!detected) {
+      console.log('No wallets detected after comprehensive search');
+      // Log final state for debugging
+      console.log('Final window state:', {
+        ethereum: !!(window as any).ethereum,
+        hashpack: !!(window as any).hashpack,
+        blade: !!(window as any).blade,
+        allKeys: Object.keys(window).slice(0, 100)
+      });
+    }
+    
+    return detected;
   }
 
   private async mockWalletConnection(): Promise<string> {
