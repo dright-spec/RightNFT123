@@ -804,28 +804,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       query += ` ORDER BY r.created_at DESC`;
 
-      const result = await db.execute(sql.raw(query));
+      // Use proper Drizzle query builder for production security
+      const result = await db.select({
+        id: rights.id,
+        tokenId: rights.tokenId,
+        title: rights.title,
+        type: rights.type,
+        description: rights.description,
+        symbol: rights.symbol,
+        price: rights.price,
+        currency: rights.currency,
+        contentFileHash: rights.contentFileHash,
+        contentFileUrl: rights.contentFileUrl,
+        verificationStatus: rights.verificationStatus,
+        listingType: rights.listingType,
+        paysDividends: rights.paysDividends,
+        imageUrl: rights.imageUrl,
+        createdAt: rights.createdAt,
+        updatedAt: rights.updatedAt,
+        creatorId: rights.creatorId,
+        ownerId: rights.ownerId,
+        categoryId: rights.categoryId,
+        // Creator fields
+        creatorUsername: users.username,
+        creatorEmail: users.email,
+        creatorWalletAddress: users.walletAddress,
+        creatorCreatedAt: users.createdAt
+      })
+      .from(rights)
+      .leftJoin(users, eq(rights.creatorId, users.id))
+      .orderBy(desc(rights.createdAt));
       
-      const rightsWithCreator = result.rows.map((row: any) => ({
+      const rightsWithCreator = result.map((row: any) => ({
         id: row.id,
-        tokenId: row.token_id,
+        tokenId: row.tokenId,
         title: row.title,
         type: row.type,
         description: row.description,
         symbol: row.symbol,
         price: row.price,
         currency: row.currency,
-        contentFileHash: row.content_file_hash,
-        contentFileUrl: row.content_file_url,
-        verificationStatus: row.verification_status,
-        verifiedAt: row.verified_at,
-        verifiedBy: row.verified_by,
-        verificationNotes: row.verification_notes,
-        createdAt: row.created_at,
+        contentFileHash: row.contentFileHash,
+        contentFileUrl: row.contentFileUrl,
+        verificationStatus: row.verificationStatus,
+        listingType: row.listingType,
+        paysDividends: row.paysDividends,
+        imageUrl: row.imageUrl,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        creatorId: row.creatorId,
+        ownerId: row.ownerId,
+        categoryId: row.categoryId,
         creator: {
-          id: row.creator_id,
-          username: row.creator_username,
-          email: row.creator_email,
+          id: row.creatorId,
+          username: row.creatorUsername,
+          email: row.creatorEmail,
           walletAddress: row.creator_wallet_address,
           isVerified: row.creator_is_verified
         },
@@ -890,8 +923,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { banned } = req.body;
 
-      const query = `UPDATE users SET is_banned = $1, updated_at = NOW() WHERE id = $2`;
-      await db.execute(query, [banned, parseInt(id)]);
+      await db.update(users)
+        .set({ 
+          isBanned: banned,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, parseInt(id)));
 
       res.json({ message: `User ${banned ? 'banned' : 'unbanned'} successfully` });
     } catch (error) {
