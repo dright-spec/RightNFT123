@@ -142,25 +142,60 @@ class HederaService {
   }
 
   private async connectToHashPack(): Promise<string> {
-    // Try HashPack first
-    const hashPack = (window as any).hashpack;
-    if (hashPack) {
-      return this.connectHashPack(hashPack);
+    console.log('Starting HashPack connection process...');
+    
+    // Wait for extension to fully load
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Method 1: Try HashPack direct extension API
+    if ((window as any).hashpack?.connectToExtension) {
+      try {
+        console.log('Attempting HashPack direct extension connection...');
+        const result = await (window as any).hashpack.connectToExtension();
+        console.log('HashPack connection result:', result);
+        
+        if (result?.accountIds?.length > 0) {
+          const accountId = result.accountIds[0];
+          this.walletStatus = {
+            isConnected: true,
+            accountId: accountId,
+            network: result.network || 'testnet'
+          };
+          localStorage.setItem('hedera_wallet', JSON.stringify(this.walletStatus));
+          return accountId;
+        }
+      } catch (error) {
+        console.log('Direct HashPack connection failed:', error);
+      }
     }
 
-    // Try Blade wallet
+    // Method 2: Try opening HashPack directly
+    try {
+      console.log('Attempting to open HashPack wallet...');
+      const dappUrl = `hashpack://dapp-bridge?` + new URLSearchParams({
+        origin: window.location.origin,
+        name: 'Dright',
+        description: 'Legal Rights Marketplace',
+        network: 'testnet'
+      }).toString();
+      
+      window.location.href = dappUrl;
+      
+      // Show instructions to user
+      throw new Error('Opening HashPack wallet. Please approve the connection in your wallet and return to this page.');
+      
+    } catch (error) {
+      console.log('HashPack deep link failed:', error);
+    }
+
+    // Method 3: Try Blade wallet as fallback
     const blade = (window as any).bladeSDK || (window as any).blade;
     if (blade) {
+      console.log('Trying Blade wallet as fallback...');
       return this.connectBlade(blade);
     }
 
-    // Try HashConnect (legacy)
-    const hashConnect = (window as any).hashconnect;
-    if (hashConnect) {
-      return this.connectHashConnect(hashConnect);
-    }
-
-    throw new Error('No supported Hedera wallet found. Please install HashPack or Blade wallet.');
+    throw new Error('Please open HashPack wallet, go to "Connect to dApp", and enter this website URL to connect.');
   }
 
   private async connectHashPack(hashPack: any): Promise<string> {

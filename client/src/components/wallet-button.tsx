@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { hederaService, formatAccountId, type HederaWalletStatus } from "@/lib/hederaSimple";
 import { WalletConnectionHelper } from "@/components/wallet-connection-helper";
+import { HashPackDAppGuide } from "@/components/hashpack-dapp-guide";
 import { Wallet, Loader2, User, Settings, Shield, LogOut, BarChart3, AlertCircle, CheckCircle } from "lucide-react";
 
 export function WalletButton() {
