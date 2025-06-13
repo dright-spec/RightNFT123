@@ -30,6 +30,22 @@ class HashConnectService {
     console.log('=== Initializing HashConnect ===');
     
     try {
+      // Check if HashPack extension is actually installed
+      if (typeof window !== 'undefined') {
+        const hasExtension = !!(window as any).hashconnect || 
+                            !!(window as any).HashConnect ||
+                            document.querySelector('script[src*="hashpack"]') ||
+                            document.querySelector('meta[name*="hashpack"]');
+        
+        if (!hasExtension) {
+          console.warn('HashPack extension not detected. User should install HashPack wallet extension.');
+          this.state.error = 'HashPack extension not found. Please install HashPack wallet extension.';
+          return false;
+        }
+        
+        console.log('HashPack extension detected, proceeding with connection...');
+      }
+
       // Create HashConnect instance
       this.hashconnect = new HashConnect(
         process.env.NODE_ENV === 'development' // LedgerWorks flag for development

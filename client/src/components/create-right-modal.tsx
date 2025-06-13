@@ -1055,8 +1055,11 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                           type="number" 
                           min="1" 
                           max="168" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          value={field.value || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value ? parseInt(value) : undefined);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
