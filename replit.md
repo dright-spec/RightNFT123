@@ -113,7 +113,9 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 - Real-time updates via periodic data refreshing
 
 ## Changelog
-- June 13, 2025. Initial setup
+- June 13, 2025: Enhanced wallet detection system with comprehensive HashPack and Blade wallet support, including automatic extension detection, fallback connection methods, and user-friendly troubleshooting guide
+- June 13, 2025: Implemented comprehensive micro-animation system with 12+ custom keyframes, smooth page transitions, staggered grid loading, and consistent 300ms duration animations across entire marketplace
+- June 13, 2025: Initial setup with Hedera NFT marketplace foundation
 
 ## User Preferences
 
