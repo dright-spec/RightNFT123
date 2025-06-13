@@ -34,29 +34,99 @@ class HederaService {
   };
 
   async connectWallet(): Promise<string> {
-    // Check if HashPack is available
-    const hashPack = (window as any).hashconnect;
+    try {
+      // Check if we're in a browser environment
+      if (typeof window === 'undefined') {
+        throw new Error('Wallet connection only available in browser environment');
+      }
+
+      // Check for HashPack extension
+      const hashPackAvailable = await this.checkHashPackAvailability();
+      
+      if (!hashPackAvailable) {
+        throw new Error('HashPack wallet extension not detected. Please install HashPack from hashpack.app');
+      }
+
+      // For development environment, use mock connection
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname.includes('replit');
+      
+      if (isDevelopment) {
+        return this.mockWalletConnection();
+      }
+
+      // Production HashPack connection
+      return this.connectToHashPack();
+      
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      throw error;
+    }
+  }
+
+  private async checkHashPackAvailability(): Promise<boolean> {
+    // Check multiple possible HashPack injection points
+    const providers = [
+      (window as any).hashpack,
+      (window as any).hashconnect,
+      (window as any).ethereum?.isHashPack,
+      (window as any).hedera
+    ];
+
+    return providers.some(provider => provider !== undefined);
+  }
+
+  private async mockWalletConnection(): Promise<string> {
+    // Development mock connection
+    const mockAccountId = '0.0.123456';
     
-    if (!hashPack) {
-      throw new Error('HashPack wallet not detected. Please install HashPack extension.');
+    this.walletStatus = {
+      isConnected: true,
+      accountId: mockAccountId,
+      network: 'testnet'
+    };
+
+    localStorage.setItem('hedera_wallet', JSON.stringify(this.walletStatus));
+    return mockAccountId;
+  }
+
+  private async connectToHashPack(): Promise<string> {
+    const hashPack = (window as any).hashpack;
+    
+    if (!hashPack || !hashPack.connectToExtension) {
+      throw new Error('HashPack API not available');
     }
 
     try {
-      // For demonstration, simulate connection
-      // In production, this would use HashPack's connection API
-      const mockAccountId = '0.0.123456';
+      // Initialize HashPack connection
+      const result = await hashPack.connectToExtension();
+      
+      if (!result || !result.accountIds || result.accountIds.length === 0) {
+        throw new Error('No accounts found. Please create a Hedera account in HashPack.');
+      }
+
+      const accountId = result.accountIds[0];
+      const network = result.network || 'testnet';
       
       this.walletStatus = {
         isConnected: true,
-        accountId: mockAccountId,
-        network: 'testnet'
+        accountId: accountId,
+        network: network
       };
 
       localStorage.setItem('hedera_wallet', JSON.stringify(this.walletStatus));
-      return mockAccountId;
+      return accountId;
+      
     } catch (error) {
-      console.error('Wallet connection failed:', error);
-      throw new Error('Failed to connect to HashPack wallet');
+      if (error instanceof Error) {
+        if (error.message.includes('rejected') || error.message.includes('denied')) {
+          throw new Error('Connection cancelled by user');
+        }
+        if (error.message.includes('timeout')) {
+          throw new Error('Connection timeout - please ensure HashPack is unlocked');
+        }
+      }
+      
+      throw new Error('Failed to connect to HashPack. Please ensure the extension is installed and unlocked.');
     }
   }
 

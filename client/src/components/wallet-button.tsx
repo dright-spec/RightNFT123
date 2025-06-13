@@ -3,12 +3,15 @@ import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { hederaService, formatAccountId, type HederaWalletStatus } from "@/lib/hederaSimple";
+import { WalletConnectionHelper } from "@/components/wallet-connection-helper";
 import { Wallet, Loader2, User, Settings, Shield, LogOut, BarChart3, AlertCircle, CheckCircle } from "lucide-react";
 
 export function WalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showConnectionHelper, setShowConnectionHelper] = useState(false);
   const [walletStatus, setWalletStatus] = useState<HederaWalletStatus>({
     isConnected: false,
     accountId: null,
@@ -33,23 +36,32 @@ export function WalletButton() {
       setLocation("/dashboard");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to connect wallet";
+      console.error("Wallet connection error:", error);
       
-      if (errorMessage.includes("timeout")) {
+      if (errorMessage.includes("not detected") || errorMessage.includes("install")) {
+        setShowConnectionHelper(true);
+      } else if (errorMessage.includes("timeout")) {
         toast({
           title: "Connection Timeout",
-          description: "Please make sure HashPack wallet is installed and try again.",
+          description: "Please ensure HashPack is unlocked and try again.",
           variant: "destructive",
         });
-      } else if (errorMessage.includes("User rejected")) {
+      } else if (errorMessage.includes("cancelled") || errorMessage.includes("rejected")) {
         toast({
           title: "Connection Cancelled",
           description: "Wallet connection was cancelled by user.",
           variant: "destructive",
         });
+      } else if (errorMessage.includes("No accounts")) {
+        toast({
+          title: "No Accounts Found",
+          description: "Please create a Hedera account in HashPack wallet first.",
+          variant: "destructive",
+        });
       } else {
         toast({
           title: "Connection Failed",
-          description: "Please install HashPack or Blade wallet to continue.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
