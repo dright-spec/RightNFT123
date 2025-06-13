@@ -43,6 +43,7 @@ const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   type: z.enum(["copyright", "royalty", "access", "ownership", "license"]),
   description: z.string().min(10, "Description must be at least 10 characters"),
+  contentUrl: z.string().optional(),
   tags: z.array(z.string()).default([]),
   listingType: z.enum(["fixed", "auction"]).default("fixed"),
   price: z.string().min(1, "Price is required"),
@@ -601,25 +602,60 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         legalDocument = ownershipFiles[0]; // Use first ownership document
       }
 
-      setProgressMessage("Creating NFT metadata...");
-      setUploadProgress(50);
+      // Determine verification status based on content type
+      let verificationStatus: "pending" | "verified" | "rejected" = "pending";
+      let shouldMintNFT = false;
 
-      // Create Hedera-compatible metadata
-      const rightMetadata: RightMetadata = {
-        title: data.title,
-        description: data.description,
-        type: data.type,
-        dividends: data.paysDividends,
-        payout_address: data.paysDividends ? data.paymentAddress || walletStatus.accountId! : walletStatus.accountId!,
-        creator: walletStatus.accountId!,
-        created_at: new Date().toISOString(),
-      };
+      // Check if this is YouTube content that can be auto-verified
+      if (data.contentUrl && data.contentUrl.includes("youtube.com")) {
+        try {
+          const videoId = data.contentUrl.split("v=")[1]?.split("&")[0];
+          if (videoId) {
+            setProgressMessage("Verifying YouTube ownership...");
+            setUploadProgress(40);
+            
+            const verificationResponse = await fetch(`/api/youtube/verify-ownership/${videoId}`, {
+              method: 'POST'
+            });
+            const verificationResult = await verificationResponse.json();
+            
+            if (verificationResult.canVerify) {
+              verificationStatus = "verified";
+              shouldMintNFT = true;
+            }
+          }
+        } catch (error) {
+          console.log("YouTube verification failed, will remain pending");
+        }
+      }
 
-      setProgressMessage("Minting NFT on Hedera blockchain...");
-      setUploadProgress(75);
+      let mintResult: NFTMintResult | null = null;
 
-      // Mint NFT on Hedera
-      const mintResult: NFTMintResult = await hederaService.mintRightNFT(rightMetadata, legalDocument);
+      if (shouldMintNFT) {
+        setProgressMessage("Creating NFT metadata...");
+        setUploadProgress(50);
+
+        // Create Hedera-compatible metadata for verified content
+        const rightMetadata: RightMetadata = {
+          title: data.title,
+          description: data.description,
+          type: data.type,
+          dividends: data.paysDividends,
+          payout_address: data.paysDividends ? data.paymentAddress || walletStatus.accountId! : walletStatus.accountId!,
+          creator: walletStatus.accountId!,
+          created_at: new Date().toISOString(),
+          verified: true,
+        };
+
+        setProgressMessage("Minting NFT on Hedera blockchain...");
+        setUploadProgress(75);
+
+        // Mint NFT on Hedera for verified content
+        mintResult = await hederaService.mintRightNFT(rightMetadata, legalDocument);
+      } else {
+        setProgressMessage("Creating unverified right (NFT will be minted after verification)...");
+        setUploadProgress(60);
+      }
 
       setProgressMessage("Registering right in marketplace...");
       setUploadProgress(90);
@@ -647,19 +683,22 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         distributionPercentage: data.distributionPercentage,
         minimumDistribution: data.minimumDistribution,
         distributionDetails: data.paysDividends ? data.distributionDetails : undefined,
-        // Hedera-specific fields
-        contentFileHash: mintResult.transactionId,
-        contentFileUrl: mintResult.metadataUri,
-        contentFileName: `Hedera NFT ${mintResult.tokenId}:${mintResult.serialNumber}`,
-        contentFileSize: 0,
-        contentFileType: "application/hedera-nft",
-        // Store Hedera NFT information
-        hederaTokenId: mintResult.tokenId,
-        hederaSerialNumber: mintResult.serialNumber,
-        hederaTransactionId: mintResult.transactionId,
-        hederaMetadataUri: mintResult.metadataUri,
-        hederaAccountId: walletStatus.accountId!,
-        hederaNetwork: walletStatus.network,
+        verificationStatus,
+        contentUrl: data.contentUrl,
+        // Set Hedera fields only if NFT was minted
+        ...(mintResult && {
+          contentFileHash: mintResult.transactionId,
+          contentFileUrl: mintResult.metadataUri,
+          contentFileName: `Hedera NFT ${mintResult.tokenId}:${mintResult.serialNumber}`,
+          contentFileSize: 0,
+          contentFileType: "application/hedera-nft",
+          hederaTokenId: mintResult.tokenId,
+          hederaSerialNumber: mintResult.serialNumber,
+          hederaTransactionId: mintResult.transactionId,
+          hederaMetadataUri: mintResult.metadataUri,
+          hederaAccountId: walletStatus.accountId!,
+          hederaNetwork: walletStatus.network,
+        }),
       };
 
       // Upload ownership documents to IPFS if any

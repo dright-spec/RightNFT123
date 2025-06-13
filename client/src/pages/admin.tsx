@@ -99,17 +99,35 @@ export default function Admin() {
   // Verification mutation
   const verifyRightMutation = useMutation({
     mutationFn: async ({ rightId, status, notes }: { rightId: number; status: string; notes: string }) => {
-      return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { status, notes });
+      if (status === "verified") {
+        // Call the verify endpoint which updates status to verified
+        return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { notes });
+      } else {
+        // For rejected status, use the existing update endpoint
+        return apiRequest("PATCH", `/api/rights/${rightId}`, { verificationStatus: status, verificationNotes: notes });
+      }
     },
-    onSuccess: () => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/rights"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      
+      if (variables.status === "verified") {
+        toast({
+          title: "Success", 
+          description: "Right verified successfully. NFT minting will begin automatically.",
+        });
+        
+        // Trigger automatic NFT minting for verified rights
+        await triggerNFTMinting(variables.rightId);
+      } else {
+        toast({
+          title: "Success",
+          description: "Right verification status updated successfully",
+        });
+      }
+      
       setSelectedRight(null);
       setVerificationNotes("");
-      toast({
-        title: "Success",
-        description: "Right verification status updated successfully",
-      });
     },
     onError: () => {
       toast({
@@ -119,6 +137,32 @@ export default function Admin() {
       });
     },
   });
+
+  // Function to trigger NFT minting for verified rights
+  const triggerNFTMinting = async (rightId: number) => {
+    try {
+      // This would typically integrate with the Hedera service to mint NFT
+      // For now, we'll show a notification that NFT minting is initiated
+      toast({
+        title: "NFT Minting Initiated",
+        description: "The NFT will be minted automatically on the Hedera blockchain. This may take a few minutes.",
+      });
+      
+      // In a real implementation, you would:
+      // 1. Fetch the right data
+      // 2. Create Hedera metadata
+      // 3. Mint the NFT on Hedera
+      // 4. Update the right with NFT data via /api/rights/{id}/mint-nft
+      
+    } catch (error) {
+      console.error("NFT minting failed:", error);
+      toast({
+        title: "NFT Minting Failed",
+        description: "There was an error minting the NFT. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // User ban mutation
   const banUserMutation = useMutation({

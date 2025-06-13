@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = req.body;
       
-      const right = await storage.updateRight(id, updates);
+      const right = await marketplaceStorage.updateRight(id, updates);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
@@ -251,6 +251,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(right);
     } catch (error) {
       res.status(500).json({ error: "Failed to update right" });
+    }
+  });
+
+  // Admin endpoint to verify and mint NFT for a right
+  app.post("/api/admin/rights/:id/verify", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const right = await marketplaceStorage.getRight(id);
+      
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+
+      // Check if right is already verified or has NFT
+      if (right.verificationStatus === "verified" || right.hederaTokenId) {
+        return res.status(400).json({ error: "Right is already verified or has NFT minted" });
+      }
+
+      // Update verification status to verified
+      const updatedRight = await marketplaceStorage.updateRight(id, {
+        verificationStatus: "verified"
+      });
+
+      if (!updatedRight) {
+        return res.status(500).json({ error: "Failed to update verification status" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Right verified successfully. NFT minting should be triggered on frontend.",
+        right: updatedRight 
+      });
+    } catch (error) {
+      console.error("Error verifying right:", error);
+      res.status(500).json({ error: "Failed to verify right" });
+    }
+  });
+
+  // Endpoint to mint NFT for verified rights
+  app.post("/api/rights/:id/mint-nft", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { hederaData } = req.body; // Contains minted NFT data from frontend
+      
+      const right = await marketplaceStorage.getRight(id);
+      
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+
+      if (right.verificationStatus !== "verified") {
+        return res.status(400).json({ error: "Right must be verified before minting NFT" });
+      }
+
+      if (right.hederaTokenId) {
+        return res.status(400).json({ error: "NFT already minted for this right" });
+      }
+
+      // Update right with Hedera NFT data
+      const updatedRight = await marketplaceStorage.updateRight(id, {
+        hederaTokenId: hederaData.tokenId,
+        hederaSerialNumber: hederaData.serialNumber,
+        hederaTransactionId: hederaData.transactionId,
+        hederaMetadataUri: hederaData.metadataUri,
+        hederaAccountId: hederaData.accountId,
+        hederaNetwork: hederaData.network,
+        contentFileHash: hederaData.transactionId,
+        contentFileUrl: hederaData.metadataUri,
+        contentFileName: `Hedera NFT ${hederaData.tokenId}:${hederaData.serialNumber}`,
+        contentFileType: "application/hedera-nft",
+      });
+
+      res.json({ 
+        success: true, 
+        message: "NFT data recorded successfully",
+        right: updatedRight 
+      });
+    } catch (error) {
+      console.error("Error recording NFT mint:", error);
+      res.status(500).json({ error: "Failed to record NFT mint" });
     }
   });
 
