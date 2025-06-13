@@ -223,7 +223,7 @@ class HashConnectService {
     
     if (this.hashconnect && this.state.isConnected) {
       try {
-        await this.hashconnect.disconnect();
+        await this.hashconnect.disconnect(this.state.topic!);
         this.clearConnectionData();
         
         this.state.isConnected = false;

@@ -804,7 +804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       query += ` ORDER BY r.created_at DESC`;
 
-      const result = await db.execute(query, params);
+      const result = await db.execute(sql.raw(query));
       
       const rightsWithCreator = result.rows.map((row: any) => ({
         id: row.id,
@@ -866,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const query = `UPDATE rights SET ${updateFields.join(', ')} WHERE id = $${params.length + 1}`;
       params.push(parseInt(id));
 
-      await db.execute(query, params);
+      await db.execute(sql.raw(query));
       res.json({ message: "Verification status updated successfully" });
     } catch (error) {
       console.error("Error updating verification status:", error);

@@ -699,8 +699,8 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         distributionPercentage: data.distributionPercentage,
         minimumDistribution: data.minimumDistribution,
         distributionDetails: data.paysDividends ? data.distributionDetails : undefined,
-        verificationStatus,
-        contentUrl: data.contentUrl,
+
+
         // Set Hedera fields only if NFT was minted
         ...(mintResult && {
           contentFileHash: mintResult.transactionId,
