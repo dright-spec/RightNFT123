@@ -859,14 +859,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: row.creatorId,
           username: row.creatorUsername,
           email: row.creatorEmail,
-          walletAddress: row.creator_wallet_address,
-          isVerified: row.creator_is_verified
+          walletAddress: row.creatorWalletAddress,
+          createdAt: row.creatorCreatedAt
         },
         owner: {
-          id: row.owner_id,
-          username: row.owner_username,
-          email: row.owner_email,
-          walletAddress: row.owner_wallet_address
+          id: row.ownerId || row.creatorId,
+          username: row.creatorUsername,
+          email: row.creatorEmail,
+          walletAddress: row.creatorWalletAddress,
+          createdAt: row.creatorCreatedAt
         }
       }));
 
@@ -899,7 +900,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const query = `UPDATE rights SET ${updateFields.join(', ')} WHERE id = $${params.length + 1}`;
       params.push(parseInt(id));
 
-      await db.execute(sql.raw(query));
+      // Use proper Drizzle ORM for secure updates
+      if (req.body.verified) {
+        await db.update(rights)
+          .set({ 
+            verificationStatus: 'verified',
+            verifiedAt: new Date(),
+            verifiedBy: 'Dright Team'
+          })
+          .where(eq(rights.id, parseInt(id)));
+      } else {
+        await db.update(rights)
+          .set({ 
+            verificationStatus: 'pending',
+            verifiedAt: null,
+            verifiedBy: null
+          })
+          .where(eq(rights.id, parseInt(id)));
+      }
       res.json({ message: "Verification status updated successfully" });
     } catch (error) {
       console.error("Error updating verification status:", error);
