@@ -152,9 +152,9 @@ export function ActivityFeed() {
           {visibleActivities.map((activity, index) => (
             <div
               key={activity.id}
-              className={`p-3 rounded-lg border transition-all duration-500 animate-slide-in ${getActivityColor(activity.type)} ${
-                index === 0 ? 'animate-pulse-once' : ''
-              } ${activity.isHighValue ? 'ring-2 ring-yellow-400/50' : ''}`}
+              className={`p-3 rounded-lg border transition-all duration-500 hover:scale-105 hover:shadow-lg cursor-pointer animate-fade-in-up ${getActivityColor(activity.type)} ${
+                index === 0 ? 'animate-bounce-in' : ''
+              } ${activity.isHighValue ? 'ring-2 ring-yellow-400/50 animate-pulse-glow' : ''}`}
               style={{
                 animationDelay: `${index * 100}ms`
               }}

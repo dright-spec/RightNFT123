@@ -33,15 +33,17 @@ export function RightCard({ right }: RightCardProps) {
   };
 
   return (
-    <Card className="rights-card-hover cursor-pointer group relative overflow-hidden">
+    <Card className="rights-card-hover cursor-pointer group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 animate-fade-in-up">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
       <CardContent className="p-6 relative z-10">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="text-2xl">{rightSymbol}</span>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 group-hover:animate-pulse-glow">
+              <span className="text-2xl transition-transform duration-300 group-hover:scale-110">{rightSymbol}</span>
             </div>
             <div className="flex flex-col gap-2">
-              <Badge className={getBadgeColor(right.type)}>
+              <Badge className={`${getBadgeColor(right.type)} transition-all duration-300 hover:scale-105`}>
                 {rightLabel}
               </Badge>
               <VerificationBadge 
@@ -52,12 +54,12 @@ export function RightCard({ right }: RightCardProps) {
           </div>
           <div className="flex items-center space-x-1">
             {right.paysDividends ? (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20">
-                <Sparkles className="w-3 h-3 text-accent" />
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 transition-all duration-300 hover:bg-accent/20 hover:scale-105">
+                <Sparkles className="w-3 h-3 text-accent animate-pulse" />
                 <span className="text-xs text-accent font-medium">Earning</span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50 transition-all duration-300 hover:bg-muted/70">
                 <X className="w-3 h-3 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground font-medium">No Income</span>
               </div>
@@ -65,26 +67,26 @@ export function RightCard({ right }: RightCardProps) {
           </div>
         </div>
         
-        <h3 className="font-bold text-lg text-foreground mb-3 line-clamp-2 group-hover:text-gradient transition-colors">
+        <h3 className="font-bold text-lg text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300">
           {right.title}
         </h3>
-        <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed">
+        <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed transition-all duration-300 group-hover:text-foreground/80">
           {right.description}
         </p>
         
         <div className="flex items-center justify-between mb-6">
           <div className="text-sm text-muted-foreground">
             {right.paysDividends ? (
-              <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10">
-                <TrendingUp className="w-3 h-3 text-primary" />
+              <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 transition-all duration-300 hover:bg-primary/20 hover:scale-105">
+                <TrendingUp className="w-3 h-3 text-primary transition-transform duration-300 group-hover:scale-110" />
                 <span className="text-primary font-medium">{right.paymentFrequency} dividends</span>
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-full bg-muted/50 text-xs">One-time purchase</span>
+              <span className="px-3 py-1 rounded-full bg-muted/50 text-xs transition-all duration-300 hover:bg-muted/70">One-time purchase</span>
             )}
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gradient">
+            <div className="text-2xl font-bold text-gradient transition-all duration-300 group-hover:scale-105">
               {right.price} {right.currency}
             </div>
           </div>

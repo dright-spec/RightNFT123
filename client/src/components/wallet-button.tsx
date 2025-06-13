@@ -106,14 +106,14 @@ export function WalletButton() {
         <Button
           onClick={handleConnect}
           disabled={isConnecting}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95"
         >
           {isConnecting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Wallet className="w-4 h-4" />
+            <Wallet className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
           )}
-          <span>
+          <span className="transition-all duration-200">
             {isConnecting ? "Connecting..." : "Connect HashPack"}
           </span>
         </Button>
