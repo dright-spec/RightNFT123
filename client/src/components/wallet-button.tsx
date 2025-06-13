@@ -23,6 +23,17 @@ export function WalletButton() {
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
+      // Check for wallet extensions first
+      const hashpack = !!(window as any).hashpack;
+      const blade = !!((window as any).bladeSDK || (window as any).blade);
+      
+      if (!hashpack && !blade) {
+        console.log('No wallet extensions detected, showing connection helper');
+        setShowConnectionHelper(true);
+        setIsConnecting(false);
+        return;
+      }
+
       const accountId = await hederaService.connectWallet();
       const status = hederaService.getWalletStatus();
       setWalletStatus(status);
@@ -38,12 +49,12 @@ export function WalletButton() {
       const errorMessage = error instanceof Error ? error.message : "Failed to connect wallet";
       console.error("Wallet connection error:", error);
       
-      if (errorMessage.includes("not detected") || errorMessage.includes("install")) {
+      if (errorMessage.includes("not found") || errorMessage.includes("install") || errorMessage.includes("not detected")) {
         setShowConnectionHelper(true);
       } else if (errorMessage.includes("timeout")) {
         toast({
           title: "Connection Timeout",
-          description: "Please ensure HashPack is unlocked and try again.",
+          description: "Please ensure your wallet is unlocked and try again.",
           variant: "destructive",
         });
       } else if (errorMessage.includes("cancelled") || errorMessage.includes("rejected")) {
@@ -55,7 +66,7 @@ export function WalletButton() {
       } else if (errorMessage.includes("No accounts")) {
         toast({
           title: "No Accounts Found",
-          description: "Please create a Hedera account in HashPack wallet first.",
+          description: "Please create a Hedera account in your wallet first.",
           variant: "destructive",
         });
       } else {
@@ -118,20 +129,22 @@ export function WalletButton() {
           </span>
         </Button>
 
-        <Dialog open={showConnectionHelper} onOpenChange={setShowConnectionHelper}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Wallet Connection Setup</DialogTitle>
-            </DialogHeader>
-            <WalletConnectionHelper
-              onRetryConnection={() => {
-                setShowConnectionHelper(false);
-                handleConnect();
-              }}
-              isConnecting={isConnecting}
-            />
-          </DialogContent>
-        </Dialog>
+        <WalletConnectionHelper
+          open={showConnectionHelper}
+          onOpenChange={(open) => {
+            setShowConnectionHelper(open);
+            if (!open) {
+              // Try connecting again after closing the helper
+              setTimeout(() => {
+                const hashpack = !!(window as any).hashpack;
+                const blade = !!((window as any).bladeSDK || (window as any).blade);
+                if (hashpack || blade) {
+                  handleConnect();
+                }
+              }, 500);
+            }
+          }}
+        />
       </>
     );
   }

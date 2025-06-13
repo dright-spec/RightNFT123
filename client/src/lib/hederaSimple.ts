@@ -64,15 +64,32 @@ class HederaService {
   }
 
   private async checkHashPackAvailability(): Promise<boolean> {
-    // Check multiple possible HashPack injection points
-    const providers = [
-      (window as any).hashpack,
-      (window as any).hashconnect,
-      (window as any).ethereum?.isHashPack,
-      (window as any).hedera
-    ];
+    // Wait for extensions to load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check for HashPack wallet
+    const hashPack = (window as any).hashpack;
+    if (hashPack) {
+      console.log('HashPack wallet detected');
+      return true;
+    }
 
-    return providers.some(provider => provider !== undefined);
+    // Check for Blade wallet
+    const blade = (window as any).bladeSDK || (window as any).blade;
+    if (blade) {
+      console.log('Blade wallet detected');
+      return true;
+    }
+
+    // Check for HashConnect (legacy)
+    const hashConnect = (window as any).hashconnect;
+    if (hashConnect) {
+      console.log('HashConnect detected');
+      return true;
+    }
+
+    console.log('No Hedera wallet extension detected');
+    return false;
   }
 
   private async mockWalletConnection(): Promise<string> {
@@ -90,14 +107,35 @@ class HederaService {
   }
 
   private async connectToHashPack(): Promise<string> {
+    // Try HashPack first
     const hashPack = (window as any).hashpack;
-    
-    if (!hashPack || !hashPack.connectToExtension) {
-      throw new Error('HashPack API not available');
+    if (hashPack) {
+      return this.connectHashPack(hashPack);
     }
 
+    // Try Blade wallet
+    const blade = (window as any).bladeSDK || (window as any).blade;
+    if (blade) {
+      return this.connectBlade(blade);
+    }
+
+    // Try HashConnect (legacy)
+    const hashConnect = (window as any).hashconnect;
+    if (hashConnect) {
+      return this.connectHashConnect(hashConnect);
+    }
+
+    throw new Error('No supported Hedera wallet found. Please install HashPack or Blade wallet.');
+  }
+
+  private async connectHashPack(hashPack: any): Promise<string> {
     try {
-      // Initialize HashPack connection
+      console.log('Attempting HashPack connection...');
+      
+      if (!hashPack.connectToExtension) {
+        throw new Error('HashPack API not available');
+      }
+
       const result = await hashPack.connectToExtension();
       
       if (!result || !result.accountIds || result.accountIds.length === 0) {
@@ -114,9 +152,11 @@ class HederaService {
       };
 
       localStorage.setItem('hedera_wallet', JSON.stringify(this.walletStatus));
+      console.log('HashPack connected successfully:', accountId);
       return accountId;
       
     } catch (error) {
+      console.error('HashPack connection error:', error);
       if (error instanceof Error) {
         if (error.message.includes('rejected') || error.message.includes('denied')) {
           throw new Error('Connection cancelled by user');
@@ -127,6 +167,80 @@ class HederaService {
       }
       
       throw new Error('Failed to connect to HashPack. Please ensure the extension is installed and unlocked.');
+    }
+  }
+
+  private async connectBlade(blade: any): Promise<string> {
+    try {
+      console.log('Attempting Blade wallet connection...');
+      
+      // Initialize Blade SDK
+      const appMetadata = {
+        name: "Dright",
+        description: "Legal Rights Marketplace",
+        url: window.location.origin,
+        icons: [window.location.origin + "/favicon.ico"]
+      };
+
+      // Connect to Blade wallet
+      const result = await blade.createSession(appMetadata);
+      
+      if (!result || !result.accountId) {
+        throw new Error('No account found. Please create a Hedera account in Blade wallet.');
+      }
+
+      const accountId = result.accountId;
+      const network = result.network || 'testnet';
+      
+      this.walletStatus = {
+        isConnected: true,
+        accountId: accountId,
+        network: network
+      };
+
+      localStorage.setItem('hedera_wallet', JSON.stringify(this.walletStatus));
+      console.log('Blade wallet connected successfully:', accountId);
+      return accountId;
+      
+    } catch (error) {
+      console.error('Blade wallet connection error:', error);
+      if (error instanceof Error) {
+        if (error.message.includes('rejected') || error.message.includes('denied')) {
+          throw new Error('Connection cancelled by user');
+        }
+      }
+      
+      throw new Error('Failed to connect to Blade wallet. Please ensure the extension is installed and unlocked.');
+    }
+  }
+
+  private async connectHashConnect(hashConnect: any): Promise<string> {
+    try {
+      console.log('Attempting HashConnect connection...');
+      
+      // Basic HashConnect connection
+      const result = await hashConnect.connect();
+      
+      if (!result || !result.accountIds || result.accountIds.length === 0) {
+        throw new Error('No accounts found in HashConnect.');
+      }
+
+      const accountId = result.accountIds[0];
+      const network = result.network || 'testnet';
+      
+      this.walletStatus = {
+        isConnected: true,
+        accountId: accountId,
+        network: network
+      };
+
+      localStorage.setItem('hedera_wallet', JSON.stringify(this.walletStatus));
+      console.log('HashConnect connected successfully:', accountId);
+      return accountId;
+      
+    } catch (error) {
+      console.error('HashConnect connection error:', error);
+      throw new Error('Failed to connect via HashConnect.');
     }
   }
 
