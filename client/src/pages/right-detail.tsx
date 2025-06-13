@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
 import { useToast } from "@/hooks/use-toast";
+import { HederaNFTCard } from "@/components/hedera-nft-card";
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -201,6 +202,9 @@ export default function RightDetail() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Hedera NFT Information */}
+            <HederaNFTCard right={right} />
 
             {/* Technical Details */}
             <Card>
