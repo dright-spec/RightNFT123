@@ -27,7 +27,7 @@ export function configureProductionSecurity(app: Express) {
 
   // CORS configuration for production
   app.use(cors({
-    origin: function (origin, callback) {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
       // Allow requests with no origin (mobile apps, etc.)
       if (!origin) return callback(null, true);
       

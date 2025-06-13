@@ -1,205 +1,147 @@
-# Dright - Hedera NFT Rights Marketplace Deployment Guide
-
-## Overview
-Dright is a comprehensive web3 marketplace for tokenizing and trading legal rights as NFTs on the Hedera blockchain. This platform provides a secure, legally compliant way to mint, trade, and manage intellectual property rights.
-
-## Architecture
-
-### Blockchain Integration
-- **Blockchain**: Hedera Hashgraph (Testnet/Mainnet)
-- **NFT Standard**: Hedera Token Service (HTS)
-- **Wallet**: HashPack integration
-- **Storage**: IPFS for metadata and legal documents
-- **Currency**: HBAR (Hedera's native cryptocurrency)
-
-### Key Features
-1. **NFT Minting**: Rights are minted as NFTs on Hedera with metadata stored on IPFS
-2. **Legal Compliance**: Clear legal disclaimers and ownership verification
-3. **Revenue Streams**: Built-in dividend distribution system
-4. **Marketplace**: Full trading functionality with auctions and fixed-price sales
-5. **Real-time Activity**: Live trading activity feed with market statistics
-
-## Deployment Configuration
-
-### Environment Variables Required
-
-#### Database
-- `DATABASE_URL`: PostgreSQL connection string
-- `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`: PostgreSQL credentials
-
-#### Hedera Blockchain
-- `VITE_HEDERA_OPERATOR_ID`: Hedera account ID for platform operations
-- `VITE_HEDERA_OPERATOR_KEY`: Private key for platform operations
-- `VITE_HEDERA_NETWORK`: Network (testnet/mainnet)
-
-#### IPFS Storage
-- `VITE_IPFS_AUTH`: Base64 encoded IPFS service credentials (optional)
-
-#### YouTube API (for content verification)
-- `YOUTUBE_API_KEY`: YouTube Data API key for video verification
-
-### Database Schema
-The platform uses PostgreSQL with the following key tables:
-- `users`: User accounts and wallet connections
-- `rights`: Rights/NFTs with Hedera blockchain data
-- `categories`: Rights categorization
-- `bids`: Auction bidding system
-- `transactions`: Trading history
-- `favorites`: User favorites
-- `follows`: User following system
-
-### Hedera NFT Fields
-Each right is mapped to a Hedera NFT with these blockchain fields:
-- `hederaTokenId`: Hedera token ID (e.g., "0.0.123456")
-- `hederaSerialNumber`: NFT serial number within the token
-- `hederaTransactionId`: Mint transaction hash
-- `hederaMetadataUri`: IPFS URI containing NFT metadata
-- `hederaAccountId`: Current NFT holder account
-- `hederaNetwork`: Network (testnet/mainnet)
-
-## NFT-to-Rights Mapping
-
-### Unique Identification System
-1. **Platform ID**: Internal database ID for the right
-2. **Hedera Token ID**: Blockchain token identifier
-3. **Serial Number**: Unique NFT instance within the token
-4. **Transaction Hash**: Immutable proof of minting
-
-### Metadata Structure
-Each NFT contains structured metadata on IPFS:
-```json
-{
-  "title": "Stream Rights to Track X",
-  "description": "Comprehensive description of the right",
-  "type": "copyright|royalty|access|ownership|license",
-  "dividends": true,
-  "payout_address": "0.0.xxxx",
-  "creator": "0.0.yyyy",
-  "created_at": "2025-01-01T00:00:00Z",
-  "doc_uri": "ipfs://...hash" // Legal documents
-}
-```
-
-### Legal Framework
-- Rights are tokenized as legal ownership instruments, not securities
-- Platform facilitates legal ownership transfer
-- Original rights holders control income streams directly
-- Platform serves as marketplace facilitator only
-
-## Deployment Steps
-
-### 1. Database Setup
-```bash
-npm run db:push
-```
-
-### 2. Environment Configuration
-Set all required environment variables in your deployment platform.
-
-### 3. Hedera Network Setup
-- Configure testnet for development
-- Configure mainnet for production
-- Ensure operator account has sufficient HBAR for gas fees
-
-### 4. IPFS Integration
-- Configure IPFS service (Pinata, Infura, or Web3.Storage)
-- Set up authentication credentials
-
-### 5. Security Considerations
-- All wallet connections use HashPack for security
-- Private keys never stored on platform
-- NFT ownership verified on-chain
-- Legal documents stored on IPFS with content addressing
-
-## Wallet Integration
-
-### HashPack Wallet
-- Primary wallet for Hedera ecosystem
-- Users connect via browser extension
-- Supports NFT minting, transfers, and trading
-- Network switching between testnet/mainnet
-
-### Wallet Features
-- Account balance display (HBAR)
-- NFT collection viewing
-- Transaction history
-- Network status indicators
-
-## Trading Functionality
-
-### NFT Marketplace
-- Fixed-price listings in HBAR
-- Auction system with bidding
-- Automatic ownership transfer via Hedera
-- Real-time market activity feed
-
-### Revenue Distribution
-- Dividend payments configurable per NFT
-- Direct HBAR transfers to NFT holders
-- Automated or manual distribution options
-- Transparent payment tracking
-
-## Legal Compliance
-
-### Platform Disclaimers
-- Clear legal notices on all pages
-- Rights are legal ownership tools, not investments
-- Platform is marketplace facilitator only
-- Users maintain direct control of income streams
-
-### Content Verification
-- YouTube API integration for video rights verification
-- Legal document upload and IPFS storage
-- Ownership verification workflow
-- Trust scoring system
-
-## Monitoring and Analytics
-
-### Market Statistics
-- 24-hour trading volume
-- Active listings count
-- Average sale prices
-- Market capitalization
-
-### Real-time Activity
-- Live trading activity feed
-- Transaction animations
-- High-value transaction highlighting
-- Market momentum indicators
+# Dright - Deployment Guide
 
 ## Production Readiness Checklist
 
-- [ ] Database schema deployed
-- [ ] Environment variables configured
-- [ ] Hedera network configured (mainnet for production)
-- [ ] IPFS service connected
-- [ ] HashPack wallet integration tested
-- [ ] Legal disclaimers reviewed
-- [ ] Trading functionality verified
-- [ ] NFT minting process tested
-- [ ] Revenue distribution configured
-- [ ] Security audit completed
+### ✅ Security Implementation
+- **Rate Limiting**: API endpoints protected with intelligent rate limiting
+- **CORS Configuration**: Secure cross-origin policy for Replit domains
+- **Security Headers**: Comprehensive Helmet.js protection
+- **Input Validation**: Zod schema validation on all endpoints
+- **SQL Injection Prevention**: Drizzle ORM parameterized queries
 
-## Support and Maintenance
+### ✅ Database Optimization
+- **Connection Pooling**: Optimized for concurrent users
+- **Query Optimization**: Efficient Drizzle ORM queries
+- **Index Strategy**: Proper indexing for performance
+- **Error Handling**: Comprehensive database error recovery
 
-### Regular Tasks
-- Monitor HBAR gas fees
-- Update IPFS pinning
-- Database maintenance
-- Security updates
-- Legal compliance reviews
+### ✅ Error Handling & Monitoring
+- **Global Error Handler**: Production-grade error management
+- **Health Checks**: `/health` and `/api/health` endpoints
+- **Logging**: Structured error logging with timestamps
+- **Graceful Degradation**: Fallback mechanisms for service failures
 
-### Scaling Considerations
-- IPFS gateway performance
-- Database query optimization
-- Hedera consensus node selection
-- CDN for static assets
+### ✅ Performance Optimization
+- **Asset Bundling**: Optimized Vite build configuration
+- **Compression**: Gzip/Brotli compression enabled
+- **Caching Headers**: Appropriate cache control
+- **Bundle Splitting**: Code splitting for faster load times
 
-## Contact Information
-For deployment support or technical questions, refer to:
-- Hedera documentation: https://docs.hedera.com
-- HashPack wallet: https://www.hashpack.app
-- IPFS documentation: https://docs.ipfs.io
+### ✅ Hedera Integration
+- **Wallet Detection**: Comprehensive HashPack and Blade support
+- **Transaction Handling**: Robust error recovery and retry logic
+- **Network Configuration**: Testnet/Mainnet switching capability
+- **IPFS Integration**: Decentralized metadata storage
 
----
-**Important**: This platform deals with legal rights and financial transactions. Ensure all legal and regulatory requirements are met before production deployment.
+## Environment Variables Required
+
+```bash
+# Database
+DATABASE_URL=postgresql://username:password@host:port/database
+
+# Hedera Configuration
+HEDERA_NETWORK=testnet # or mainnet
+HEDERA_OPERATOR_ID=0.0.xxxxx
+HEDERA_OPERATOR_KEY=your_private_key
+
+# YouTube API (for content verification)
+YOUTUBE_API_KEY=your_youtube_api_key
+
+# Google OAuth (for YouTube integration)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# IPFS (optional but recommended)
+IPFS_PROJECT_ID=your_infura_project_id
+IPFS_PROJECT_SECRET=your_infura_secret
+```
+
+## Deployment Steps
+
+### 1. Pre-Deployment Verification
+```bash
+# Check all dependencies are installed
+npm install
+
+# Verify database connection
+npm run db:push
+
+# Run production build test
+npm run build
+
+# Test health endpoints
+curl http://localhost:5000/health
+curl http://localhost:5000/api/health
+```
+
+### 2. Deploy to Replit
+1. Click the **Deploy** button in Replit
+2. Configure environment variables in Secrets
+3. The application will automatically build and deploy
+4. Verify deployment at your `.replit.app` domain
+
+### 3. Post-Deployment Testing
+- [ ] Marketplace loads correctly
+- [ ] Wallet connection works (HashPack/Blade)
+- [ ] Right creation and NFT minting functional
+- [ ] Admin panel accessible
+- [ ] YouTube verification working
+- [ ] Database queries performing well
+
+## Performance Monitoring
+
+The application includes built-in monitoring:
+- **Response Time Logging**: All API endpoints timed
+- **Error Rate Tracking**: Comprehensive error logging
+- **Database Performance**: Query execution monitoring
+- **Security Events**: Rate limiting and blocked requests
+
+## Security Features
+
+### Rate Limiting
+- General API: 100 requests per 15 minutes
+- Authentication: 5 attempts per 15 minutes  
+- Admin endpoints: 30 requests per 15 minutes
+
+### CORS Policy
+- Replit domains automatically allowed
+- Custom domain support
+- Secure credential handling
+
+### Input Validation
+- All form inputs validated with Zod schemas
+- SQL injection prevention via parameterized queries
+- XSS protection through output encoding
+
+## Scaling Considerations
+
+### Database Scaling
+- Connection pooling configured for high concurrency
+- Query optimization with proper indexing
+- Read replica support ready for implementation
+
+### Application Scaling
+- Stateless design enables horizontal scaling
+- CDN-ready static asset configuration
+- Microservice architecture preparation
+
+## Troubleshooting
+
+### Common Issues
+1. **Wallet Connection Fails**: Check browser extension installation
+2. **Database Timeout**: Verify connection string and network access
+3. **IPFS Upload Errors**: Confirm IPFS credentials in environment
+4. **YouTube Verification Issues**: Check API key permissions
+
+### Debug Endpoints
+- `GET /health` - Application health status
+- `GET /api/health` - Service dependencies status
+- Check browser console for wallet diagnostics
+
+## Support
+
+For deployment assistance:
+1. Check application logs in Replit console
+2. Verify all environment variables are set
+3. Test individual service components
+4. Contact Replit support for platform-specific issues
