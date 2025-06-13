@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
 import { useToast } from "@/hooks/use-toast";
 import { HederaNFTCard } from "@/components/hedera-nft-card";
+import { AutoNFTMinter } from "@/components/auto-nft-minter";
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -108,6 +109,9 @@ export default function RightDetail() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Auto NFT Minter - handles automatic minting when right is verified */}
+        <AutoNFTMinter rightId={right.id} />
+        
         {/* Title Section */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">

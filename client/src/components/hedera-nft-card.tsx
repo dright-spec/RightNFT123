@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { hederaService } from "@/lib/hederaSimple";
-import { ExternalLink, Shield, CheckCircle, Clock, Hash, XCircle } from "lucide-react";
+import { ExternalLink, Shield, CheckCircle, Clock, Hash, X } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 interface HederaNFTCardProps {
@@ -47,7 +47,7 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
           }`}>
             {isVerified ? <CheckCircle className="w-4 h-4" /> :
              isPending ? <Clock className="w-4 h-4" /> :
-             isRejected ? <XCircle className="w-4 h-4" /> :
+             isRejected ? <X className="w-4 h-4" /> :
              <Clock className="w-4 h-4" />}
             NFT Status
           </CardTitle>
@@ -62,7 +62,7 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
             }`}>
               {isVerified ? <CheckCircle className="w-3 h-3 mr-1" /> :
                isPending ? <Clock className="w-3 h-3 mr-1" /> :
-               isRejected ? <XCircle className="w-3 h-3 mr-1" /> :
+               isRejected ? <X className="w-3 h-3 mr-1" /> :
                <Clock className="w-3 h-3 mr-1" />}
               {isVerified ? "Verified - NFT Pending" :
                isPending ? "Pending Verification" :
