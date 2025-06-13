@@ -102,20 +102,37 @@ export function WalletButton() {
 
   if (!walletStatus.isConnected || !walletStatus.accountId) {
     return (
-      <Button
-        onClick={handleConnect}
-        disabled={isConnecting}
-        className="flex items-center space-x-2"
-      >
-        {isConnecting ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Wallet className="w-4 h-4" />
-        )}
-        <span>
-          {isConnecting ? "Connecting..." : "Connect HashPack"}
-        </span>
-      </Button>
+      <>
+        <Button
+          onClick={handleConnect}
+          disabled={isConnecting}
+          className="flex items-center space-x-2"
+        >
+          {isConnecting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Wallet className="w-4 h-4" />
+          )}
+          <span>
+            {isConnecting ? "Connecting..." : "Connect HashPack"}
+          </span>
+        </Button>
+
+        <Dialog open={showConnectionHelper} onOpenChange={setShowConnectionHelper}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Wallet Connection Setup</DialogTitle>
+            </DialogHeader>
+            <WalletConnectionHelper
+              onRetryConnection={() => {
+                setShowConnectionHelper(false);
+                handleConnect();
+              }}
+              isConnecting={isConnecting}
+            />
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
