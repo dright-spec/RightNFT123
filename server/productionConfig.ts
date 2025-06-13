@@ -132,10 +132,10 @@ export function setupErrorHandling(app: Express) {
     });
   });
 
-  // 404 handler
-  app.use((req, res) => {
+  // 404 handler - only for API routes
+  app.use('/api/*', (req, res) => {
     res.status(404).json({
-      error: 'Endpoint not found',
+      error: 'API endpoint not found',
       path: req.path,
       method: req.method
     });

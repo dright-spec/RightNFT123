@@ -47,17 +47,18 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Configure production error handling
-  setupErrorHandling(app);
-
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  const isProduction = process.env.NODE_ENV === "production";
+  if (!isProduction) {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+
+  // Configure production error handling AFTER frontend routing
+  setupErrorHandling(app);
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
