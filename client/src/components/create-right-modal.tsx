@@ -789,14 +789,14 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         {/* Step Indicator */}
         <div className="flex items-center justify-between mb-6 px-4">
           {steps.map((step, index) => (
-            <div key={step.number} className="flex items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
+            <div key={step.number} className="flex items-center animate-fade-in-up" style={{animationDelay: `${index * 100}ms`}}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 hover:scale-110 ${
                 currentStep >= step.number 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
-                  : 'border-gray-300 text-gray-500'
+                  ? 'bg-blue-600 border-blue-600 text-white animate-bounce-in' 
+                  : 'border-gray-300 text-gray-500 hover:border-blue-300'
               }`}>
                 {currentStep > step.number ? (
-                  <CheckCircle className="h-5 w-5" />
+                  <CheckCircle className="h-5 w-5 animate-scale-in" />
                 ) : (
                   <span className="font-semibold">{step.number}</span>
                 )}

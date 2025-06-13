@@ -117,17 +117,19 @@ export function AuctionCard({ right, showBidding = true }: AuctionCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 border-2 border-orange-200 dark:border-orange-800">
-      <CardHeader className="p-0">
-        <div className="relative">
+    <Card className="overflow-hidden group relative transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:-translate-y-2 border-2 border-orange-200 dark:border-orange-800 animate-fade-in-up">
+      <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      <CardHeader className="p-0 relative z-10">
+        <div className="relative overflow-hidden">
           {right.contentFileUrl ? (
             <img 
               src={right.contentFileUrl} 
               alt={right.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
             />
           ) : (
-            <div className="w-full h-48 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 flex items-center justify-center">
+            <div className="w-full h-48 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900 dark:to-amber-900 flex items-center justify-center transition-all duration-300 group-hover:from-orange-200 group-hover:to-amber-200">
               <Gavel className="h-12 w-12 text-orange-500" />
             </div>
           )}

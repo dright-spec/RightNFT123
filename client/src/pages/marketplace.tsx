@@ -49,24 +49,26 @@ export default function Marketplace() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-fade-in">
       {/* Header */}
-      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40">
+      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40 animate-slide-in-down">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 animate-slide-in-left">
               <Link href="/">
-                <Button variant="ghost" size="sm">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
+                <Button variant="ghost" size="sm" className="transition-all duration-300 hover:scale-105 hover:shadow-lg group">
+                  <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1" />
                   Back
                 </Button>
               </Link>
-              <h1 className="text-xl font-bold text-primary">
+              <h1 className="text-xl font-bold text-primary transition-all duration-300 hover:scale-105">
                 D<span className="text-accent">right</span>
               </h1>
             </div>
             
-            <WalletButton />
+            <div className="animate-slide-in-right">
+              <WalletButton />
+            </div>
           </div>
         </div>
       </header>
@@ -185,8 +187,14 @@ export default function Marketplace() {
                 
                 {sortedRights && sortedRights.length > 0 ? (
                   <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {sortedRights.map((right) => (
-                      <RightCard key={right.id} right={right} />
+                    {sortedRights.map((right, index) => (
+                      <div 
+                        key={right.id} 
+                        className="animate-fade-in-up"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <RightCard right={right} />
+                      </div>
                     ))}
                   </div>
                 ) : (
