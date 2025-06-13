@@ -34,8 +34,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { hederaService, type RightMetadata, type NFTMintResult } from "@/lib/hederaSimple";
+import { hashConnectService, type HashConnectState } from "@/lib/hashConnectService";
+import { hederaWalletDetector } from "@/lib/hederaWalletDetection";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
-import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle, Copy, ExternalLink } from "lucide-react";
+import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle, Copy, ExternalLink, Wallet } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import type { InsertRight } from "@shared/schema";
 
