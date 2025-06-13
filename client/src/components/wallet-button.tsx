@@ -31,18 +31,28 @@ export function WalletButton() {
 
   const handleConnect = async () => {
     setIsConnecting(true);
+    console.log("Starting wallet connection with modern detection system");
+    console.log("Current detection state:", walletDetection);
+    
     try {
-      // Check for wallet extensions first
-      const hashpack = !!(window as any).hashpack;
-      const blade = !!((window as any).bladeSDK || (window as any).blade);
-      
-      if (!hashpack && !blade) {
-        console.log('No wallet extensions detected, showing connection helper');
-        setShowConnectionHelper(true);
+      // Use modern wallet detection system
+      if (!walletDetection.hasAnyWallet) {
+        console.log("No wallets detected - showing dApp connection guide");
+        setShowDAppGuide(true);
         setIsConnecting(false);
         return;
       }
-
+      
+      // Log detected wallets
+      if (walletDetection.providers.length > 0) {
+        console.log("Detected wallets:", walletDetection.providers.map(p => ({
+          name: p.name,
+          isHedera: p.isHedera,
+          detected: p.detected
+        })));
+      }
+      
+      // Attempt connection
       const accountId = await hederaService.connectWallet();
       const status = hederaService.getWalletStatus();
       setWalletStatus(status);
@@ -110,6 +120,39 @@ export function WalletButton() {
   useEffect(() => {
     const status = hederaService.getWalletStatus();
     setWalletStatus(status);
+    
+    // Initialize modern wallet detection
+    const initializeWalletDetection = async () => {
+      console.log('Initializing modern wallet detection system...');
+      
+      // Get initial detection result
+      const result = modernWalletDetector.getDetectionResult();
+      setWalletDetection(result);
+      
+      console.log('Initial wallet detection result:', result);
+      
+      // Set up listener for new wallet detections
+      const handleWalletDetected = () => {
+        const newResult = modernWalletDetector.getDetectionResult();
+        console.log('Wallet detection updated:', newResult);
+        setWalletDetection(newResult);
+      };
+      
+      modernWalletDetector.onWalletDetected(handleWalletDetected);
+      
+      // Refresh detection after a delay to catch late-loading extensions
+      setTimeout(async () => {
+        const refreshedResult = await modernWalletDetector.refreshDetection();
+        setWalletDetection(refreshedResult);
+        console.log('Refreshed wallet detection:', refreshedResult);
+      }, 2000);
+      
+      return () => {
+        modernWalletDetector.removeListener(handleWalletDetected);
+      };
+    };
+    
+    initializeWalletDetection();
   }, []);
 
   // Get network name for display
