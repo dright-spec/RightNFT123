@@ -145,7 +145,8 @@ class HashConnectService {
       console.log('Generating pairing string...');
       this.state.pairingString = this.hashconnect.generatePairingString(
         this.state.topic,
-        this.state.network
+        this.state.network,
+        false // debug flag
       );
       
       console.log('Pairing string generated:', this.state.pairingString);

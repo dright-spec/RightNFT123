@@ -37,6 +37,15 @@ export function WalletButton() {
     console.log("Current Hedera scan:", hederaScan);
     
     try {
+      // Initialize HashConnect service if not already done
+      if (!hashConnectService.isInitialized()) {
+        console.log("Initializing HashConnect service...");
+        const initialized = await hashConnectService.initialize();
+        if (!initialized) {
+          throw new Error("Failed to initialize HashConnect");
+        }
+      }
+
       // Check if we can connect directly or need dApp connection
       if (hederaScan.needsDAppConnection || !hederaScan.canConnectDirectly) {
         console.log("No direct Hedera wallet connection available - showing dApp guide");
