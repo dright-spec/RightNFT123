@@ -474,11 +474,11 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Create Right Modal */}
-        <CreateRightModal 
-          open={showCreateModal} 
-          onOpenChange={setShowCreateModal} 
-        />
+          {/* Create Right Modal */}
+          <CreateRightModal 
+            open={showCreateModal} 
+            onOpenChange={setShowCreateModal} 
+          />
         </div>
       </div>
     </div>

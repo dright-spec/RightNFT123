@@ -56,13 +56,37 @@ class HederaWalletDetector {
   private detectHashPackExtension(providers: HederaWalletProvider[]) {
     console.log('Checking for HashPack extension...');
     
+    // First check if HashPack is actually injected by the extension
+    if ((window as any).hashconnect || (window as any).HashConnect) {
+      console.log('✓ HashConnect API detected - HashPack extension is installed');
+      providers.push({
+        name: 'HashPack Extension',
+        type: 'hashpack',
+        connectionMethod: 'extension',
+        provider: (window as any).hashconnect || (window as any).HashConnect,
+        available: true
+      });
+      return;
+    }
+
+    // Check for HashPack in the document/DOM (extension injection)
+    const extensionScripts = document.querySelectorAll('script[src*="hashpack"], script[src*="HashPack"]');
+    if (extensionScripts.length > 0) {
+      console.log('✓ HashPack extension scripts detected in DOM');
+      providers.push({
+        name: 'HashPack Extension (DOM)',
+        type: 'hashpack',
+        connectionMethod: 'extension',
+        provider: null, // Will be resolved via HashConnect
+        available: true
+      });
+      return;
+    }
+
     // Comprehensive window object scan for HashPack
     const hashpackChecks = [
       { key: 'hashpack', name: 'HashPack Direct' },
-      { key: 'hashconnect', name: 'HashConnect' },
       { key: 'HashPack', name: 'HashPack Capitalized' },
-      { key: 'hashConnect', name: 'HashConnect Camel' },
-      { key: 'HashConnect', name: 'HashConnect Full Caps' },
       { key: 'HASHPACK', name: 'HashPack All Caps' },
       { key: 'hedera', name: 'Hedera Object' },
       { key: 'Hedera', name: 'Hedera Capitalized' }

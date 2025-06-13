@@ -48,7 +48,7 @@ const formSchema = z.object({
   contentUrl: z.string().optional(),
   tags: z.array(z.string()).default([]),
   listingType: z.enum(["fixed", "auction"]).default("fixed"),
-  price: z.string().min(1, "Price is required"),
+  price: z.string().optional(),
   currency: z.string().default("ETH"),
   auctionDuration: z.number().optional(),
   minBidAmount: z.string().optional(),
@@ -59,6 +59,19 @@ const formSchema = z.object({
   distributionPercentage: z.string().optional(),
   minimumDistribution: z.string().optional(),
   distributionDetails: z.string().optional(),
+}).refine((data) => {
+  // Fixed price requires price field
+  if (data.listingType === "fixed" && !data.price) {
+    return false;
+  }
+  // Auction requires minBidAmount and auctionDuration
+  if (data.listingType === "auction" && (!data.minBidAmount || !data.auctionDuration)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Price is required for fixed listing, Starting bid and duration are required for auction",
+  path: ["price"]
 });
 
 type FormData = z.infer<typeof formSchema>;
