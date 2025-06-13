@@ -4,30 +4,29 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { connectWallet, disconnectWallet, getWalletStatus, checkWalletConnection } from "@/lib/web3";
+import { hederaService, formatAccountId, type HederaWalletStatus } from "@/lib/hederaSimple";
 import { Wallet, Loader2, User, Settings, Shield, LogOut, BarChart3, AlertCircle, CheckCircle } from "lucide-react";
 
 export function WalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [chainId, setChainId] = useState<number | undefined>(undefined);
-  const [hasWallet, setHasWallet] = useState(false);
+  const [walletStatus, setWalletStatus] = useState<HederaWalletStatus>({
+    isConnected: false,
+    accountId: null,
+    network: 'testnet'
+  });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const address = await connectWallet();
-      setWalletAddress(address);
-      
-      // Get updated status including chain info
-      const status = getWalletStatus();
-      setChainId(status.chainId);
+      const accountId = await hederaService.connectWallet();
+      const status = hederaService.getWalletStatus();
+      setWalletStatus(status);
       
       toast({
         title: "Wallet Connected",
-        description: `Connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
+        description: `Connected to ${formatAccountId(accountId)}`,
       });
       
       // Redirect to dashboard after successful connection
@@ -35,10 +34,10 @@ export function WalletButton() {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to connect wallet";
       
-      if (errorMessage.includes("No wallet detected")) {
+      if (errorMessage.includes("timeout")) {
         toast({
-          title: "No Wallet Found",
-          description: "Please install MetaMask or another Web3 wallet to continue.",
+          title: "Connection Timeout",
+          description: "Please make sure HashPack wallet is installed and try again.",
           variant: "destructive",
         });
       } else if (errorMessage.includes("User rejected")) {
@@ -50,7 +49,7 @@ export function WalletButton() {
       } else {
         toast({
           title: "Connection Failed",
-          description: errorMessage,
+          description: "Please install HashPack or Blade wallet to continue.",
           variant: "destructive",
         });
       }
@@ -60,9 +59,12 @@ export function WalletButton() {
   };
 
   const handleDisconnect = () => {
-    disconnectWallet();
-    setWalletAddress(null);
-    setChainId(undefined);
+    hederaService.disconnectWallet();
+    setWalletStatus({
+      isConnected: false,
+      accountId: null,
+      network: 'testnet'
+    });
     toast({
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected successfully.",
@@ -70,76 +72,38 @@ export function WalletButton() {
     setLocation("/");
   };
 
-  // Check wallet status and detect wallet on component mount
+  // Check wallet status on component mount
   useEffect(() => {
-    const initializeWallet = async () => {
-      // Check if wallet is available
-      setHasWallet(!!window.ethereum);
-      
-      // Check existing connection
-      const status = getWalletStatus();
-      if (status.isConnected && status.address) {
-        setWalletAddress(status.address);
-        setChainId(status.chainId);
-      } else {
-        // Try to detect existing connection
-        try {
-          const isConnected = await checkWalletConnection();
-          if (isConnected) {
-            const updatedStatus = getWalletStatus();
-            setWalletAddress(updatedStatus.address);
-            setChainId(updatedStatus.chainId);
-          }
-        } catch (error) {
-          console.log("No existing wallet connection found");
-        }
-      }
-    };
-
-    initializeWallet();
+    const status = hederaService.getWalletStatus();
+    setWalletStatus(status);
   }, []);
 
   // Get network name for display
-  const getNetworkName = (chainId?: number) => {
-    switch (chainId) {
-      case 1: return "Ethereum";
-      case 137: return "Polygon";
-      case 56: return "BSC";
-      case 43114: return "Avalanche";
-      default: return chainId ? `Chain ${chainId}` : "Unknown";
+  const getNetworkName = (network: string) => {
+    switch (network) {
+      case 'mainnet': return "Hedera Mainnet";
+      case 'testnet': return "Hedera Testnet";
+      case 'previewnet': return "Hedera Previewnet";
+      default: return "Hedera Network";
     }
   };
 
-  if (!walletAddress) {
+  if (!walletStatus.isConnected || !walletStatus.accountId) {
     return (
-      <div className="flex items-center gap-2">
-        {!hasWallet && (
-          <Badge variant="destructive" className="text-xs">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            No Wallet
-          </Badge>
+      <Button
+        onClick={handleConnect}
+        disabled={isConnecting}
+        className="flex items-center space-x-2"
+      >
+        {isConnecting ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Wallet className="w-4 h-4" />
         )}
-        <Button
-          onClick={handleConnect}
-          disabled={isConnecting || !hasWallet}
-          className="flex items-center space-x-2"
-          variant={hasWallet ? "default" : "outline"}
-        >
-          {isConnecting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Wallet className="w-4 h-4" />
-          )}
-          <span>
-            {isConnecting 
-              ? "Connecting..." 
-              : !hasWallet 
-                ? "Install Wallet" 
-                : "Connect Wallet"
-            }
-          </span>
-        </Button>
-      </div>
+        <span>
+          {isConnecting ? "Connecting..." : "Connect HashPack"}
+        </span>
+      </Button>
     );
   }
 
@@ -149,12 +113,10 @@ export function WalletButton() {
         <Button variant="outline" className="flex items-center space-x-2">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-500" />
-            <span>{`${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}</span>
-            {chainId && (
-              <Badge variant="secondary" className="text-xs">
-                {getNetworkName(chainId)}
-              </Badge>
-            )}
+            <span>{formatAccountId(walletStatus.accountId)}</span>
+            <Badge variant="secondary" className="text-xs">
+              {getNetworkName(walletStatus.network)}
+            </Badge>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -162,20 +124,18 @@ export function WalletButton() {
         {/* Wallet Info */}
         <div className="px-3 py-2 border-b">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Connected Wallet</span>
+            <span className="text-sm font-medium">HashPack Wallet</span>
             <Badge variant="outline" className="text-xs bg-green-50 border-green-200 text-green-700">
               <CheckCircle className="w-3 h-3 mr-1" />
               Connected
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground mt-1">
-            {walletAddress}
+            {walletStatus.accountId}
           </div>
-          {chainId && (
-            <div className="text-xs text-muted-foreground">
-              Network: {getNetworkName(chainId)}
-            </div>
-          )}
+          <div className="text-xs text-muted-foreground">
+            Network: {getNetworkName(walletStatus.network)}
+          </div>
         </div>
 
         {/* Navigation Items */}
