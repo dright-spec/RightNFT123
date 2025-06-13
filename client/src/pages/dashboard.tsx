@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateRightModal } from "@/components/create-right-modal";
+import { WalletButton } from "@/components/wallet-button";
 import { 
   TrendingUp, 
   DollarSign, 
@@ -22,7 +24,8 @@ import {
   Download,
   ExternalLink,
   Crown,
-  Zap
+  Zap,
+  Menu
 } from "lucide-react";
 import { RightCard } from "@/components/right-card";
 import { VerificationBadge } from "@/components/verification-badge";
@@ -98,21 +101,62 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Manage your digital rights portfolio and track performance
-            </p>
+    <div className="min-h-screen bg-background">
+      {/* Header Navigation */}
+      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex-shrink-0">
+                <h1 className="text-xl font-bold text-primary">
+                  D<span className="text-accent">right</span>
+                </h1>
+              </Link>
+            </div>
+            
+            <nav className="hidden md:flex space-x-8">
+              <Link href="/" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Home
+              </Link>
+              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Marketplace
+              </Link>
+              <Link href="/auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Auctions
+              </Link>
+              <Link href="/dashboard" className="text-primary border-b-2 border-primary font-medium">
+                Dashboard
+              </Link>
+              <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Docs
+              </Link>
+              <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                About
+              </Link>
+            </nav>
+
+            <div className="flex items-center space-x-4">
+              <WalletButton />
+            </div>
           </div>
-          <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4" />
-            Create New Right
-          </Button>
         </div>
+      </header>
+
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="container mx-auto p-6 space-y-8">
+          {/* Header Section */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground">
+                Manage your digital rights portfolio and track performance
+              </p>
+            </div>
+            <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4" />
+              Create New Right
+            </Button>
+          </div>
 
         {/* User Profile Card */}
         {userProfile && (
@@ -435,6 +479,7 @@ export default function Dashboard() {
           open={showCreateModal} 
           onOpenChange={setShowCreateModal} 
         />
+        </div>
       </div>
     </div>
   );
