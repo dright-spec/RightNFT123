@@ -64,31 +64,66 @@ class HederaService {
   }
 
   private async checkHashPackAvailability(): Promise<boolean> {
-    // Wait for extensions to load
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait longer for extensions to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Check for HashPack wallet
-    const hashPack = (window as any).hashpack;
-    if (hashPack) {
-      console.log('HashPack wallet detected');
-      return true;
+    console.log('Checking for wallet extensions...');
+    console.log('Window object keys:', Object.keys(window));
+    
+    // Check for HashPack wallet (multiple possible injection points)
+    const hashPackChecks = [
+      (window as any).hashpack,
+      (window as any).HashPack,
+      (window as any).hedera?.hashpack,
+      (window as any).ethereum?.isHashPack
+    ];
+    
+    for (const check of hashPackChecks) {
+      if (check) {
+        console.log('HashPack wallet detected:', check);
+        return true;
+      }
     }
 
-    // Check for Blade wallet
-    const blade = (window as any).bladeSDK || (window as any).blade;
-    if (blade) {
-      console.log('Blade wallet detected');
-      return true;
+    // Check for Blade wallet (multiple possible injection points)
+    const bladeChecks = [
+      (window as any).bladeSDK,
+      (window as any).blade,
+      (window as any).BladeSDK,
+      (window as any).Blade,
+      (window as any).hedera?.blade
+    ];
+    
+    for (const check of bladeChecks) {
+      if (check) {
+        console.log('Blade wallet detected:', check);
+        return true;
+      }
     }
 
     // Check for HashConnect (legacy)
-    const hashConnect = (window as any).hashconnect;
-    if (hashConnect) {
-      console.log('HashConnect detected');
-      return true;
+    const hashConnectChecks = [
+      (window as any).hashconnect,
+      (window as any).HashConnect,
+      (window as any).hedera?.hashconnect
+    ];
+    
+    for (const check of hashConnectChecks) {
+      if (check) {
+        console.log('HashConnect detected:', check);
+        return true;
+      }
     }
 
-    console.log('No Hedera wallet extension detected');
+    console.log('No Hedera wallet extension detected after checking all injection points');
+    console.log('Available wallet-related objects:', {
+      hashpack: (window as any).hashpack,
+      blade: (window as any).blade,
+      bladeSDK: (window as any).bladeSDK,
+      ethereum: (window as any).ethereum,
+      hedera: (window as any).hedera
+    });
+    
     return false;
   }
 
