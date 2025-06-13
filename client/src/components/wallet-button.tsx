@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { hederaService, formatAccountId, type HederaWalletStatus } from "@/lib/hederaSimple";
-import { modernWalletDetector, type WalletDetectionResult } from "@/lib/modernWalletDetection";
+import { hederaWalletDetector, type HederaWalletScan } from "@/lib/hederaWalletDetection";
 import { WalletConnectionHelper } from "@/components/wallet-connection-helper";
 import { HashPackDAppGuide } from "@/components/hashpack-dapp-guide";
 import { Wallet, Loader2, User, Settings, Shield, LogOut, BarChart3, AlertCircle, CheckCircle } from "lucide-react";
@@ -15,11 +15,12 @@ export function WalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showConnectionHelper, setShowConnectionHelper] = useState(false);
   const [showDAppGuide, setShowDAppGuide] = useState(false);
-  const [walletDetection, setWalletDetection] = useState<WalletDetectionResult>({
+  const [hederaScan, setHederaScan] = useState<HederaWalletScan>({
     providers: [],
-    hasHederaWallet: false,
-    hasBraveWallet: false,
-    hasAnyWallet: false
+    hasHashPack: false,
+    hasBlade: false,
+    canConnectDirectly: false,
+    needsDAppConnection: true
   });
   const [walletStatus, setWalletStatus] = useState<HederaWalletStatus>({
     isConnected: false,
@@ -31,24 +32,25 @@ export function WalletButton() {
 
   const handleConnect = async () => {
     setIsConnecting(true);
-    console.log("Starting wallet connection with modern detection system");
-    console.log("Current detection state:", walletDetection);
+    console.log("Starting Hedera wallet connection");
+    console.log("Current Hedera scan:", hederaScan);
     
     try {
-      // Use modern wallet detection system
-      if (!walletDetection.hasAnyWallet) {
-        console.log("No wallets detected - showing dApp connection guide");
+      // Check if we can connect directly or need dApp connection
+      if (hederaScan.needsDAppConnection || !hederaScan.canConnectDirectly) {
+        console.log("No direct Hedera wallet connection available - showing dApp guide");
         setShowDAppGuide(true);
         setIsConnecting(false);
         return;
       }
       
-      // Log detected wallets
-      if (walletDetection.providers.length > 0) {
-        console.log("Detected wallets:", walletDetection.providers.map(p => ({
+      // Log detected Hedera wallets
+      if (hederaScan.providers.length > 0) {
+        console.log("Available Hedera providers:", hederaScan.providers.map(p => ({
           name: p.name,
-          isHedera: p.isHedera,
-          detected: p.detected
+          type: p.type,
+          method: p.connectionMethod,
+          available: p.available
         })));
       }
       
@@ -121,35 +123,36 @@ export function WalletButton() {
     const status = hederaService.getWalletStatus();
     setWalletStatus(status);
     
-    // Initialize modern wallet detection
-    const initializeWalletDetection = async () => {
-      console.log('Initializing modern wallet detection system...');
+    // Initialize Hedera wallet detection
+    const initializeWalletDetection = () => {
+      console.log('Starting Hedera wallet detection...');
       
-      // Get initial detection result
-      const result = modernWalletDetector.getDetectionResult();
-      setWalletDetection(result);
+      // Initial scan
+      const scanResult = hederaWalletDetector.scanForHederaWallets();
+      setHederaScan(scanResult);
       
-      console.log('Initial wallet detection result:', result);
+      // Set up connection listener
+      const cleanup = hederaWalletDetector.listenForConnection(() => {
+        const newScan = hederaWalletDetector.scanForHederaWallets();
+        setHederaScan(newScan);
+      });
       
-      // Set up listener for new wallet detections
-      const handleWalletDetected = () => {
-        const newResult = modernWalletDetector.getDetectionResult();
-        console.log('Wallet detection updated:', newResult);
-        setWalletDetection(newResult);
-      };
-      
-      modernWalletDetector.onWalletDetected(handleWalletDetected);
-      
-      // Refresh detection after a delay to catch late-loading extensions
-      setTimeout(async () => {
-        const refreshedResult = await modernWalletDetector.refreshDetection();
-        setWalletDetection(refreshedResult);
-        console.log('Refreshed wallet detection:', refreshedResult);
+      // Periodic rescan for late-loading extensions
+      const interval = setInterval(() => {
+        const newScan = hederaWalletDetector.scanForHederaWallets();
+        if (newScan.providers.length !== scanResult.providers.length) {
+          console.log('New Hedera wallets detected');
+          setHederaScan(newScan);
+        }
       }, 2000);
       
-      return () => {
-        modernWalletDetector.removeListener(handleWalletDetected);
-      };
+      // Final scan after delay
+      setTimeout(() => {
+        const finalScan = hederaWalletDetector.scanForHederaWallets();
+        setHederaScan(finalScan);
+        clearInterval(interval);
+        cleanup();
+      }, 5000);
     };
     
     initializeWalletDetection();

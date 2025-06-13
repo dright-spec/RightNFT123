@@ -84,10 +84,18 @@ class ModernWalletDetector {
   }
 
   private async detectBraveWallet() {
-    // Brave wallet detection
+    // Brave wallet detection - more comprehensive approach
     const ethereum = (window as any).ethereum;
     
     if (ethereum) {
+      console.log('Ethereum object found:', {
+        isBraveWallet: ethereum.isBraveWallet,
+        isMetaMask: ethereum.isMetaMask,
+        isHashPack: ethereum.isHashPack,
+        isBlade: ethereum.isBlade,
+        providers: ethereum.providers?.length || 0
+      });
+
       // Check if it's Brave's wallet
       const isBrave = ethereum.isBraveWallet || 
                      ethereum._metamask?.isBrave ||
@@ -100,13 +108,29 @@ class ModernWalletDetector {
           uuid: 'brave-wallet',
           provider: ethereum,
           detected: true,
-          isHedera: false // Brave doesn't natively support Hedera
+          isHedera: false // Brave doesn't natively support Hedera but can be used
         };
 
-        console.log('Brave Wallet detected:', braveWallet);
+        console.log('✓ Brave Wallet detected and added');
         this.providers.set('brave-wallet', braveWallet);
         this.notifyListeners();
+      } else if (ethereum) {
+        // Any ethereum provider should be detected
+        const genericWallet: WalletProvider = {
+          name: 'Web3 Wallet',
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="%236366f1"/></svg>',
+          uuid: 'ethereum-generic',
+          provider: ethereum,
+          detected: true,
+          isHedera: ethereum.isHashPack || ethereum.isBlade
+        };
+
+        console.log('✓ Generic Web3 wallet detected');
+        this.providers.set('ethereum-generic', genericWallet);
+        this.notifyListeners();
       }
+    } else {
+      console.log('No ethereum object found in window');
     }
   }
 
