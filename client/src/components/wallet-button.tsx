@@ -13,6 +13,7 @@ import { Wallet, Loader2, User, Settings, Shield, LogOut, BarChart3, AlertCircle
 export function WalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showConnectionHelper, setShowConnectionHelper] = useState(false);
+  const [showDAppGuide, setShowDAppGuide] = useState(false);
   const [walletStatus, setWalletStatus] = useState<HederaWalletStatus>({
     isConnected: false,
     accountId: null,
@@ -51,7 +52,9 @@ export function WalletButton() {
       console.error("Wallet connection error:", error);
       
       if (errorMessage.includes("not found") || errorMessage.includes("install") || errorMessage.includes("not detected")) {
-        setShowConnectionHelper(true);
+        setShowDAppGuide(true);
+      } else if (errorMessage.includes("dApp") || errorMessage.includes("HashPack wallet")) {
+        setShowDAppGuide(true);
       } else if (errorMessage.includes("timeout")) {
         toast({
           title: "Connection Timeout",
@@ -144,6 +147,18 @@ export function WalletButton() {
                 }
               }, 500);
             }
+          }}
+        />
+
+        <HashPackDAppGuide
+          open={showDAppGuide}
+          onOpenChange={setShowDAppGuide}
+          onConnectionSuccess={() => {
+            setShowDAppGuide(false);
+            // Retry connection after user indicates they've connected
+            setTimeout(() => {
+              handleConnect();
+            }, 1000);
           }}
         />
       </>
