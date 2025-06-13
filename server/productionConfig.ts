@@ -113,9 +113,9 @@ export const dbConfig = {
 
 // Error logging and monitoring
 export function setupErrorHandling(app: Express) {
-  // Global error handler
-  app.use((err: any, req: any, res: any, next: any) => {
-    console.error('Global error handler:', {
+  // Global error handler for API routes only
+  app.use('/api/*', (err: any, req: any, res: any, next: any) => {
+    console.error('API error handler:', {
       error: err.message,
       stack: err.stack,
       url: req.url,
@@ -132,7 +132,7 @@ export function setupErrorHandling(app: Express) {
     });
   });
 
-  // 404 handler - only for API routes
+  // 404 handler for API routes only
   app.use('/api/*', (req, res) => {
     res.status(404).json({
       error: 'API endpoint not found',
