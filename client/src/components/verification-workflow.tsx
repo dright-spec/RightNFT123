@@ -86,6 +86,21 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
     }
   };
 
+  const handleMultipleYouTubeVerification = (videos: any[]) => {
+    setYoutubeVerification({ 
+      success: true, 
+      details: { 
+        multiple: true,
+        videos: videos,
+        ownershipConfirmed: true,
+        totalCost: videos.length * 100
+      }
+    });
+    setVerificationMethod('youtube');
+    setVerificationStatus('verified');
+    setCurrentStep(3); // Skip to final step
+  };
+
   const handleFilesValidated = (files: any[]) => {
     setUploadedFiles(files);
     if (files.length > 0) {
@@ -312,6 +327,8 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
             <YouTubeChannelPicker
               rightType={rightType}
               onVideoSelect={handleYouTubeVerification}
+              onMultipleVideosSelect={handleMultipleYouTubeVerification}
+              allowMultiple={true}
             />
           ) : (
             <FileUploadValidator

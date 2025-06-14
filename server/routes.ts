@@ -167,8 +167,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mockVideos = [
         {
           id: "dQw4w9WgXcQ",
-          title: "Epic Music Video - Original Creation",
-          description: "My latest music video featuring original composition and visuals. This represents months of creative work and would make an excellent NFT.",
+          title: "Epic Music Video",
+          description: "Original music composition and visuals",
           thumbnails: {
             default: { url: "https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg" },
             medium: { url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg" },
@@ -182,8 +182,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         {
           id: "ScMzIvxBSi4",
-          title: "Behind the Scenes Documentary",
-          description: "Exclusive behind-the-scenes content showing my creative process. Perfect for fans who want deeper access to my work.",
+          title: "Behind the Scenes",
+          description: "Creative process documentary",
           thumbnails: {
             default: { url: "https://img.youtube.com/vi/ScMzIvxBSi4/default.jpg" },
             medium: { url: "https://img.youtube.com/vi/ScMzIvxBSi4/mqdefault.jpg" },
@@ -197,8 +197,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
         {
           id: "J---aiyznGQ",
-          title: "Tutorial: Digital Art Techniques",
-          description: "Comprehensive tutorial covering advanced digital art techniques I use in my work. Educational content with commercial value.",
+          title: "Digital Art Tutorial",
+          description: "Advanced techniques and tips",
           thumbnails: {
             default: { url: "https://img.youtube.com/vi/J---aiyznGQ/default.jpg" },
             medium: { url: "https://img.youtube.com/vi/J---aiyznGQ/mqdefault.jpg" },
@@ -207,21 +207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           publishedAt: "2024-03-10T09:15:00Z",
           viewCount: "67890",
           duration: "PT25M33S",
-          channelTitle: "Creator's Channel",
-          channelId: "UC_mock_channel_id"
-        },
-        {
-          id: "L_jWHffIx5E",
-          title: "Live Performance Recording",
-          description: "High-quality recording of my live performance at the Digital Arts Festival. Unique content perfect for collectors.",
-          thumbnails: {
-            default: { url: "https://img.youtube.com/vi/L_jWHffIx5E/default.jpg" },
-            medium: { url: "https://img.youtube.com/vi/L_jWHffIx5E/mqdefault.jpg" },
-            high: { url: "https://img.youtube.com/vi/L_jWHffIx5E/hqdefault.jpg" }
-          },
-          publishedAt: "2024-04-22T19:45:00Z",
-          viewCount: "12450",
-          duration: "PT45M12S",
           channelTitle: "Creator's Channel",
           channelId: "UC_mock_channel_id"
         }

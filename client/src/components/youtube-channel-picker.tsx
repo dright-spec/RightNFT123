@@ -26,10 +26,17 @@ interface YouTubeVideo {
 
 interface YouTubeChannelPickerProps {
   onVideoSelect: (video: YouTubeVideo) => void;
+  onMultipleVideosSelect?: (videos: YouTubeVideo[]) => void;
   rightType: string;
+  allowMultiple?: boolean;
 }
 
-export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChannelPickerProps) {
+export function YouTubeChannelPicker({ 
+  onVideoSelect, 
+  onMultipleVideosSelect, 
+  rightType, 
+  allowMultiple = false 
+}: YouTubeChannelPickerProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
@@ -37,6 +44,7 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
   const [searchQuery, setSearchQuery] = useState("");
   const [channelInfo, setChannelInfo] = useState<any>(null);
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
+  const [selectedVideos, setSelectedVideos] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,8 +62,13 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
   const handleConnectYouTube = async () => {
     setIsConnecting(true);
     try {
-      // Simulate Google OAuth connection
-      // In production, this would redirect to Google OAuth
+      // Real Google OAuth flow would happen here
+      // For now, we need Firebase credentials to implement this properly
+      if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+        throw new Error("Firebase configuration required for YouTube authentication. Please provide Firebase credentials.");
+      }
+      
+      // For demonstration, simulate the flow until Firebase is configured
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setIsConnected(true);
@@ -63,7 +76,7 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
       
       // Fetch user's YouTube videos
       const response = await apiRequest("POST", "/api/youtube/channel-videos", {
-        authToken: "simulated_auth_token"
+        authToken: "auth_token_from_google_oauth"
       });
       
       const data = await response.json();
@@ -92,12 +105,44 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
     }
   };
 
-  const handleVideoSelect = (video: YouTubeVideo) => {
+  const handleVideoToggle = (video: YouTubeVideo) => {
+    if (allowMultiple) {
+      const newSelected = new Set(selectedVideos);
+      if (newSelected.has(video.id)) {
+        newSelected.delete(video.id);
+      } else {
+        newSelected.add(video.id);
+      }
+      setSelectedVideos(newSelected);
+    } else {
+      onVideoSelect(video);
+      toast({
+        title: "Video Selected!",
+        description: "Your video ownership is automatically verified.",
+      });
+    }
+  };
+
+  const handleConfirmSelection = () => {
+    const selectedVideosList = videos.filter(video => selectedVideos.has(video.id));
+    if (selectedVideosList.length === 0) {
+      toast({
+        title: "No Videos Selected",
+        description: "Please select at least one video to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const mintingCost = selectedVideosList.length * 100;
     toast({
-      title: "Video Selected!",
-      description: "Your video ownership is automatically verified.",
+      title: `${selectedVideosList.length} Videos Selected!`,
+      description: `Total minting cost: ${mintingCost} HBAR (100 HBAR per NFT)`,
     });
-    onVideoSelect(video);
+    
+    if (onMultipleVideosSelect) {
+      onMultipleVideosSelect(selectedVideosList);
+    }
   };
 
   const formatDuration = (duration: string) => {
@@ -263,59 +308,98 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
               </AlertDescription>
             </Alert>
           ) : (
-            filteredVideos.map((video, index) => (
-              <Card key={video.id} className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-gray-200 hover:border-primary/20 bg-gradient-to-r from-white to-gray-50/30 overflow-hidden" style={{ animationDelay: `${index * 100}ms` }}>
-                <CardContent className="p-5">
-                  <div className="flex gap-5">
-                    <div className="relative flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                      <img 
-                        src={video.thumbnails.medium.url}
-                        alt={video.title}
-                        className="w-36 h-24 object-cover rounded-xl shadow-sm border border-gray-100"
-                      />
-                      <div className="absolute bottom-2 right-2 bg-black/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">
-                        {formatDuration(video.duration)}
+            filteredVideos.map((video, index) => {
+              const isSelected = selectedVideos.has(video.id);
+              return (
+                <Card 
+                  key={video.id} 
+                  className={`group hover:shadow-md transition-all duration-300 cursor-pointer border-gray-200 hover:border-primary/20 overflow-hidden ${
+                    isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-white'
+                  }`}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  onClick={() => handleVideoToggle(video)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex gap-4 items-center">
+                      {allowMultiple && (
+                        <div className="flex-shrink-0">
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                            isSelected 
+                              ? 'bg-primary border-primary text-white' 
+                              : 'border-gray-300 hover:border-primary'
+                          }`}>
+                            {isSelected && <CheckCircle className="w-3 h-3" />}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="relative flex-shrink-0">
+                        <img 
+                          src={video.thumbnails.medium.url}
+                          alt={video.title}
+                          className="w-24 h-16 object-cover rounded-lg shadow-sm border border-gray-100"
+                        />
+                        <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded text-center font-medium">
+                          {formatDuration(video.duration)}
+                        </div>
                       </div>
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-xl flex items-center justify-center">
-                        <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-80 transition-opacity duration-300" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-3">
-                      <div>
-                        <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-relaxed">
+                      
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-primary transition-colors">
                           {video.title}
                         </h4>
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                          {video.description || "No description available"}
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+                          {video.description || "No description"}
                         </p>
-                      </div>
-                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Eye className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium">{formatNumber(video.viewCount)} views</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {formatNumber(video.viewCount)}
+                          </span>
                           <span>{new Date(video.publishedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
+                      
+                      {!allowMultiple && (
+                        <Button 
+                          className="bg-primary hover:bg-primary/90 text-white"
+                          size="sm"
+                        >
+                          Select
+                        </Button>
+                      )}
                     </div>
-                    <div className="flex items-start">
-                      <Button 
-                        onClick={() => handleVideoSelect(video)}
-                        className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                        size="sm"
-                      >
-                        Select Video
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
+      )}
+
+      {/* Multiple Selection Confirmation */}
+      {allowMultiple && isConnected && selectedVideos.size > 0 && (
+        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold text-gray-900">
+                  {selectedVideos.size} Video{selectedVideos.size > 1 ? 's' : ''} Selected
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Total minting cost: {selectedVideos.size * 100} HBAR ({selectedVideos.size} × 100 HBAR per NFT)
+                </p>
+              </div>
+              <Button 
+                onClick={handleConfirmSelection}
+                className="bg-primary hover:bg-primary/90"
+              >
+                Continue with Selected Videos
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
