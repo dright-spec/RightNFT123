@@ -58,12 +58,18 @@ app.use((req, res, next) => {
   // Always setup deployment configuration first
   setupDeploymentFix(app);
   
-  // Configure frontend serving based on environment
-  if (isProduction) {
+  // Enhanced production detection for browser deployments
+  const hasReqlitCluster = !!process.env.REPLIT_CLUSTER;
+  const isLocalDev = !!process.env.REPL_HOME;
+  const forceProduction = hasReqlitCluster && !isLocalDev;
+  
+  if (isProduction || forceProduction) {
     // Production: serve static files
+    log("Serving static files for production/deployment", "express");
     serveStatic(app);
   } else {
-    // Development: use Vite dev server
+    // Development: use Vite dev server  
+    log("Using Vite dev server for development", "express");
     await setupVite(app, server);
   }
   

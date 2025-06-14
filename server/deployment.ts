@@ -1,7 +1,7 @@
 import { log } from "./vite";
 
 export function detectDeploymentEnvironment(): boolean {
-  // Check multiple indicators for production/deployment environment
+  // Enhanced deployment detection with fallback for browser access
   const indicators = [
     process.env.NODE_ENV === "production",
     process.env.REPLIT_DEPLOYMENT === "1",
@@ -19,7 +19,9 @@ export function detectDeploymentEnvironment(): boolean {
     process.env.PORT && process.env.PORT !== "5000"
   ];
 
-  const isProduction = indicators.some(Boolean);
+  // Force production mode if running in deployed context (browser access)
+  const isInBrowser = !!process.env.REPLIT_CLUSTER && !process.env.REPL_HOME;
+  const isProduction = indicators.some(Boolean) || isInBrowser;
   
   log(`Deployment detection:`, "deployment");
   log(`  NODE_ENV: ${process.env.NODE_ENV}`, "deployment");
