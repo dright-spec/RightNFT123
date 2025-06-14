@@ -239,12 +239,12 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
         <Input
           placeholder="Search your videos..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
+          className="pl-12 pr-4 py-3 text-base border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl shadow-sm"
         />
       </div>
 
@@ -263,46 +263,53 @@ export function YouTubeChannelPicker({ onVideoSelect, rightType }: YouTubeChanne
               </AlertDescription>
             </Alert>
           ) : (
-            filteredVideos.map((video) => (
-              <Card key={video.id} className="hover:shadow-md transition-shadow cursor-pointer group">
-                <CardContent className="p-4">
-                  <div className="flex gap-4">
-                    <div className="relative flex-shrink-0">
+            filteredVideos.map((video, index) => (
+              <Card key={video.id} className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-gray-200 hover:border-primary/20 bg-gradient-to-r from-white to-gray-50/30 overflow-hidden" style={{ animationDelay: `${index * 100}ms` }}>
+                <CardContent className="p-5">
+                  <div className="flex gap-5">
+                    <div className="relative flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
                       <img 
                         src={video.thumbnails.medium.url}
                         alt={video.title}
-                        className="w-32 h-24 object-cover rounded-lg"
+                        className="w-36 h-24 object-cover rounded-xl shadow-sm border border-gray-100"
                       />
-                      <div className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1 rounded">
+                      <div className="absolute bottom-2 right-2 bg-black/90 text-white text-xs px-2 py-1 rounded-md font-medium backdrop-blur-sm">
                         {formatDuration(video.duration)}
                       </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-xl flex items-center justify-center">
+                        <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-80 transition-opacity duration-300" />
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium mb-1 truncate group-hover:text-primary transition-colors">
-                        {video.title}
-                      </h4>
-                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                        {video.description || "No description"}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {formatNumber(video.viewCount)} views
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-300 leading-relaxed">
+                          {video.title}
+                        </h4>
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                          {video.description || "No description available"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-gray-400" />
+                          <span className="font-medium">{formatNumber(video.viewCount)} views</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {new Date(video.publishedAt).toLocaleDateString()}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span>{new Date(video.publishedAt).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
-                    <Button 
-                      onClick={() => handleVideoSelect(video)}
-                      className="self-start"
-                      size="sm"
-                    >
-                      Select Video
-                      <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
+                    <div className="flex items-start">
+                      <Button 
+                        onClick={() => handleVideoSelect(video)}
+                        className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        size="sm"
+                      >
+                        Select Video
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
