@@ -26,12 +26,12 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
   } | null>(null);
   const { toast } = useToast();
 
-  // Auto-verify if initial URL is provided
+  // Auto-verify if initial URL is provided (only on mount)
   useEffect(() => {
-    if (initialUrl && initialUrl.trim() && isValidYouTubeUrl(initialUrl)) {
+    if (initialUrl && initialUrl.trim() && isValidYouTubeUrl(initialUrl) && !verificationResult) {
       handleVerify();
     }
-  }, [initialUrl]);
+  }, []); // Empty dependency array to run only on mount
 
   const isVideoContent = rightType === "copyright" || rightType === "royalty";
 

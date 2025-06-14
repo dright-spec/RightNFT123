@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,37 +43,36 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
     }
   }, [initialYouTubeUrl]);
 
+  // Track verification state to prevent loops
+  const lastVerificationState = useRef<string>('');
+
   // Check if verification is complete and user can mint NFT
   useEffect(() => {
-    try {
-      const hasRequiredFiles = uploadedFiles.length > 0;
-      const isYouTubeVerified = youtubeVerification?.success;
-      const isVerified = verificationStatus === 'verified';
-      
-      // User can mint NFT only if:
-      // 1. They have YouTube verification (instant approval), OR
-      // 2. They have uploaded files AND admin has approved them
-      const canMint = isYouTubeVerified || (hasRequiredFiles && isVerified);
-      
-      setCanProceedToMint(canMint);
-      onCanMintNFT(canMint);
+    const hasRequiredFiles = uploadedFiles.length > 0;
+    const isYouTubeVerified = youtubeVerification?.success;
+    const isVerified = verificationStatus === 'verified';
+    
+    const canMint = isYouTubeVerified || (hasRequiredFiles && isVerified);
+    setCanProceedToMint(canMint);
 
-      // Update verification data
-      if (hasRequiredFiles || isYouTubeVerified) {
-        const verificationData: VerificationData = {
-          method: isYouTubeVerified ? 'youtube' : 'manual',
-          status: isYouTubeVerified ? 'verified' : (hasRequiredFiles ? 'pending' : 'incomplete'),
-          files: uploadedFiles,
-          youtubeData: youtubeVerification,
-          verifiedAt: isYouTubeVerified ? new Date() : undefined
-        };
-        
-        onVerificationComplete(verificationData);
-      }
-    } catch (error) {
-      console.error('Verification workflow error:', error);
+    // Create a state signature to detect actual changes
+    const currentState = `${uploadedFiles.length}-${isYouTubeVerified}-${verificationStatus}`;
+    
+    // Only update parent if state actually changed
+    if (currentState !== lastVerificationState.current && (hasRequiredFiles || isYouTubeVerified)) {
+      const verificationData: VerificationData = {
+        method: isYouTubeVerified ? 'youtube' : 'manual',
+        status: isYouTubeVerified ? 'verified' : (hasRequiredFiles ? 'pending' : 'incomplete'),
+        files: uploadedFiles,
+        youtubeData: youtubeVerification,
+        verifiedAt: isYouTubeVerified ? new Date() : undefined
+      };
+      
+      onVerificationComplete(verificationData);
+      onCanMintNFT(canMint);
+      lastVerificationState.current = currentState;
     }
-  }, [uploadedFiles, youtubeVerification, verificationStatus, onVerificationComplete, onCanMintNFT]);
+  }, [uploadedFiles.length, youtubeVerification?.success, verificationStatus]);
 
   const handleYouTubeVerification = (videoDetails: any) => {
     setYoutubeVerification({ success: true, details: videoDetails });
