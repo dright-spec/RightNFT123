@@ -47,6 +47,12 @@ export const staggerDelays = {
   
   // For activity feed items
   feed: (index: number) => ({ animationDelay: `${index * 75}ms` }),
+  
+  // For right listings
+  rightCard: (index: number) => ({ animationDelay: `${index * 120}ms` }),
+  
+  // For marketplace grid
+  marketplace: (index: number) => ({ animationDelay: `${index * 80}ms` }),
 };
 
 export const createStaggeredAnimation = (
@@ -75,6 +81,14 @@ export const presets = {
   grid: `${animationClasses.fadeInUp}`,
   form: `${animationClasses.smooth}`,
   icon: `${animationClasses.iconHover}`,
+  
+  // Right listing specific animations
+  rightCard: `${animationClasses.fadeInUp} ${animationClasses.cardHover}`,
+  rightGrid: `${animationClasses.fadeInUp}`,
+  rightDetails: `${animationClasses.fadeIn} ${animationClasses.smooth}`,
+  rightImage: `${animationClasses.scaleIn} ${animationClasses.hoverScale}`,
+  rightPrice: `${animationClasses.fadeInUp} ${animationClasses.pulseGlow}`,
+  rightStatus: `${animationClasses.fadeIn} ${animationClasses.smooth}`,
 };
 
 // High-value animation for special elements
