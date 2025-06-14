@@ -50,11 +50,11 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
         });
 
         toast({
-          title: "YouTube Video Verified!",
-          description: "Ownership confirmed successfully. Your right will be instantly approved.",
+          title: "Video Found!",
+          description: "Now authenticate with Google to verify you own this video.",
         });
 
-        onVerificationSuccess(data.data);
+        // Do NOT call onVerificationSuccess here - only after Google OAuth
       } else {
         throw new Error(data.error || "Verification failed");
       }
@@ -107,6 +107,17 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
           description: "Google authentication confirmed you own this video. Your right is approved for NFT minting.",
         });
 
+        // Update verification result with ownership confirmation
+        setVerificationResult({
+          success: true,
+          details: {
+            ...verificationResult.details,
+            ...authData.data,
+            originalUrl: youtubeUrl,
+            securelyVerified: true
+          }
+        });
+
         // Complete verification with authenticated data
         const completeVerificationData = {
           ...verificationResult.details,
@@ -133,7 +144,7 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
     }
   };
 
-  if (verificationResult?.success && verificationResult.details?.verified) {
+  if (verificationResult?.success && verificationResult.details?.ownershipConfirmed) {
     return (
       <Card className="border-green-200 bg-green-50">
         <CardHeader>
@@ -279,7 +290,7 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
         )}
 
         {/* Video Found - Requires Authentication */}
-        {verificationResult?.success && !verificationResult.details?.verified && (
+        {verificationResult?.success && !verificationResult.details?.ownershipConfirmed && (
           <div className="space-y-4">
             {/* Video Preview Card */}
             <div className="bg-white p-4 rounded-lg border">
