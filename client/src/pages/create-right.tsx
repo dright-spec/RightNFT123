@@ -441,6 +441,7 @@ export default function CreateRight() {
                   <Button
                     type="button"
                     onClick={() => setCurrentStep(3)}
+                    disabled={!canMintNFT}
                     className="px-8"
                   >
                     Next: Pricing
@@ -464,6 +465,9 @@ export default function CreateRight() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Fee Information */}
+                    <FeeInfo variant="detailed" className="mb-6" />
+                    
                     <div className="grid md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -626,10 +630,10 @@ export default function CreateRight() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isUploading}
+                    disabled={isUploading || !canMintNFT}
                     className="px-8 bg-gradient-to-r from-primary to-accent hover:scale-105 transition-all duration-300"
                   >
-                    {isUploading ? "Creating..." : "Create Right"}
+                    {isUploading ? "Creating..." : !canMintNFT ? "Complete Verification First" : "Create Right & Mint NFT"}
                     <Star className="w-4 h-4 ml-2" />
                   </Button>
                 </div>

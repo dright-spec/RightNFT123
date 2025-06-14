@@ -106,12 +106,8 @@ export function AdminLogin({ onAuthenticated }: AdminLoginProps) {
           </form>
           
           <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-medium text-sm mb-2">Demo Credentials:</h4>
-            <p className="text-xs text-muted-foreground mb-1">
-              Username: <code className="bg-background px-1 rounded">admin</code>
-            </p>
             <p className="text-xs text-muted-foreground">
-              Password: <code className="bg-background px-1 rounded">dright2024</code>
+              Contact system administrator for access credentials.
             </p>
           </div>
         </CardContent>

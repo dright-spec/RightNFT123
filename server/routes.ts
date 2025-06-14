@@ -11,18 +11,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // IPFS upload endpoints
   app.post('/api/ipfs/upload', async (req, res) => {
     try {
-      const { filename, size, type } = req.body;
+      const { file, filename, size, type } = req.body;
       
-      // Generate secure IPFS hash for production
-      const mockHash = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      if (!file) {
+        return res.status(400).json({ message: 'File data required for IPFS upload' });
+      }
       
-      res.json({
-        hash: mockHash,
-        url: `https://ipfs.io/ipfs/${mockHash}`,
-        filename,
-        size,
-        type,
-        success: true
+      // Note: In production, integrate with actual IPFS service
+      // For now, return error indicating IPFS service needs configuration
+      res.status(503).json({ 
+        message: 'IPFS service not configured. Please configure IPFS credentials.',
+        error: 'SERVICE_NOT_CONFIGURED'
       });
     } catch (error) {
       console.error('IPFS upload error:', error);
@@ -228,25 +227,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/rights", async (req, res) => {
     try {
-      // For MVP, we'll use a mock user ID. In production, this would come from authentication
-      const mockUserId = 1;
+      // Authentication required - get user ID from session
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
       
       const validatedData = insertRightSchema.parse(req.body);
+      
+      // Verify that verification is complete before allowing right creation
+      if (!validatedData.verificationStatus || validatedData.verificationStatus === 'incomplete') {
+        return res.status(400).json({ error: "Verification must be completed before creating right" });
+      }
+      
       const right = await storage.createRight({
         ...validatedData,
-        creatorId: mockUserId,
-        ownerId: mockUserId,
+        creatorId: userId,
+        ownerId: userId,
       });
       
-      // Create mint transaction
-      await storage.createTransaction({
-        rightId: right.id,
-        toUserId: mockUserId,
-        transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        price: right.price || "0",
-        currency: right.currency || "ETH",
-        type: "mint",
-      });
+      // Only create mint transaction if verification is verified
+      if (validatedData.verificationStatus === 'verified') {
+        await storage.createTransaction({
+          rightId: right.id,
+          toUserId: userId,
+          transactionHash: null, // Will be set when actual Hedera transaction occurs
+          price: right.price || "0",
+          currency: right.currency || "HBAR",
+          type: "mint",
+        });
+      }
       
       res.status(201).json(right);
     } catch (error) {
