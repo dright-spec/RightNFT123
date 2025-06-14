@@ -55,9 +55,12 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   const isProduction = detectDeploymentEnvironment();
   
-  if (!isProduction) {
+  // Try deployment fix first
+  const deploymentHandled = setupDeploymentFix(app);
+  
+  if (!deploymentHandled && !isProduction) {
     await setupVite(app, server);
-  } else {
+  } else if (!deploymentHandled && isProduction) {
     serveStatic(app);
   }
   
