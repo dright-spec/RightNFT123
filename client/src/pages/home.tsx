@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CreateRightModal } from "@/components/create-right-modal";
 import { WalletButton } from "@/components/wallet-button";
-import { RightCard } from "@/components/right-card";
+import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
@@ -668,11 +668,13 @@ export default function Home() {
                 </Card>
               ))}
             </div>
+          ) : featuredRights && featuredRights.length > 0 ? (
+            <div className="mb-12">
+              <AnimatedRightGrid rights={featuredRights} variant="featured" />
+            </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {featuredRights?.map((right) => (
-                <RightCard key={right.id} right={right} />
-              ))}
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No featured rights available at the moment</p>
             </div>
           )}
 
