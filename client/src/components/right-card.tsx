@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, X, TrendingUp, Sparkles, ArrowRight, FileCheck } from "lucide-react";
-import { VerificationBadge, TrustScore } from "./verification-badge";
+import { VerificationStatusBadge } from "./verification-status-badge";
 import type { RightWithCreator } from "@shared/schema";
 import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
 
@@ -46,9 +46,10 @@ export function RightCard({ right }: RightCardProps) {
               <Badge className={`${getBadgeColor(right.type)} transition-all duration-300 hover:scale-105`}>
                 {rightLabel}
               </Badge>
-              <VerificationBadge 
-                status={right.verificationStatus as "pending" | "verified" | "rejected" || "pending"} 
-                size="sm" 
+              <VerificationStatusBadge 
+                status={right.verificationStatus || "pending"}
+                hasFiles={right.contentFileHash ? true : false}
+                isYouTubeVerified={false}
               />
             </div>
           </div>
@@ -100,12 +101,10 @@ export function RightCard({ right }: RightCardProps) {
               </div>
               by {right.creator.username}
             </div>
-            <TrustScore 
-              verificationStatus={right.verificationStatus as "pending" | "verified" | "rejected" || "pending"}
-              hasContentFile={!!right.contentFileHash}
-              creatorVerified={right.creator.isVerified || false}
-              className="text-xs"
-            />
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <FileCheck className="w-3 h-3" />
+              <span>Verified Creator</span>
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
