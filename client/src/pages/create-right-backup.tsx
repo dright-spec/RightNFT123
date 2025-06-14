@@ -253,149 +253,164 @@ export default function CreateRight() {
                 </h1>
               </Link>
               <div className="h-6 w-px bg-border"></div>
-              <nav className="flex items-center space-x-1">
-                <Link href="/" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2 rounded-md transition-colors">
-                  Marketplace
-                </Link>
-                <span className="text-muted-foreground">/</span>
-                <span className="text-sm font-medium px-3 py-2">Create Right</span>
-              </nav>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard">Dashboard</Link>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Home
               </Button>
             </div>
+            
+            <nav className="hidden md:flex space-x-6">
+              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Marketplace
+              </Link>
+              <Link href="/auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Auctions
+              </Link>
+              <Link href="/dashboard" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Dashboard
+              </Link>
+              <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Docs
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="mb-8 animate-fade-in-up">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Create a New Right</h1>
+          <p className="text-muted-foreground">
+            Transform your creative work into a tradeable digital asset with built-in revenue distribution.
+          </p>
+        </div>
+
         {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between mb-4">
             {steps.map((step, index) => (
               <div key={step.number} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  currentStep >= step.number
-                    ? 'bg-primary border-primary text-primary-foreground'
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                  currentStep >= step.number 
+                    ? 'bg-primary border-primary text-primary-foreground' 
                     : 'border-muted-foreground text-muted-foreground'
                 }`}>
                   {currentStep > step.number ? (
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4" />
                   ) : (
                     <span className="text-sm font-medium">{step.number}</span>
                   )}
                 </div>
-                <div className="ml-3 hidden sm:block">
-                  <p className={`text-sm font-medium ${
-                    currentStep >= step.number ? 'text-foreground' : 'text-muted-foreground'
-                  }`}>
-                    {step.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{step.description}</p>
-                </div>
                 {index < steps.length - 1 && (
-                  <div className={`hidden sm:block w-16 h-px mx-4 ${
-                    currentStep > step.number ? 'bg-primary' : 'bg-border'
+                  <div className={`w-16 h-0.5 mx-2 ${
+                    currentStep > step.number ? 'bg-primary' : 'bg-muted'
                   }`} />
                 )}
               </div>
             ))}
           </div>
+          <div className="text-center">
+            <h3 className="font-medium text-foreground">{steps[currentStep - 1]?.title}</h3>
+            <p className="text-sm text-muted-foreground">{steps[currentStep - 1]?.description}</p>
+          </div>
         </div>
 
+        {/* Upload Progress */}
+        {isUploading && (
+          <Card className="mb-6 animate-fade-in">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3 mb-3">
+                <Upload className="w-5 h-5 text-primary animate-pulse" />
+                <span className="font-medium">Creating your right...</span>
+              </div>
+              <Progress value={uploadProgress} className="mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {uploadProgress < 100 ? `Uploading... ${uploadProgress}%` : "Finalizing creation..."}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main Form */}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Step 1: Content & Details */}
             {currentStep === 1 && (
               <div className="space-y-6 animate-fade-in">
+                {/* Right Type Selection */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5" />
-                      Right Information
+                      <Crown className="w-5 h-5" />
+                      Select Right Type
                     </CardTitle>
                     <CardDescription>
-                      Provide the basic details about your digital right
+                      Choose the type of legal right you want to tokenize
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Right Type Selection */}
+                  <CardContent>
                     <FormField
                       control={form.control}
                       name="type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Right Type *</FormLabel>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {rightTypes.map((type) => {
-                              const Icon = type.icon;
-                              return (
-                                <Card
+                          <FormControl>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {rightTypes.map((type) => (
+                                <div
                                   key={type.value}
-                                  className={`cursor-pointer transition-all hover:shadow-md ${
+                                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
                                     field.value === type.value
-                                      ? 'ring-2 ring-primary bg-primary/5'
-                                      : 'hover:bg-muted/50'
+                                      ? 'border-primary bg-primary/5 shadow-md'
+                                      : 'border-muted hover:border-muted-foreground/50'
                                   }`}
                                   onClick={() => field.onChange(type.value)}
                                 >
-                                  <CardContent className="p-4 text-center">
-                                    <Icon className="w-8 h-8 mx-auto mb-2 text-primary" />
-                                    <h4 className="font-medium text-sm">{type.label}</h4>
-                                    <p className="text-xs text-muted-foreground mt-1">{type.description}</p>
-                                  </CardContent>
-                                </Card>
-                              );
-                            })}
-                          </div>
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className="text-2xl">{type.symbol}</div>
+                                    <type.icon className="w-5 h-5 text-muted-foreground" />
+                                  </div>
+                                  <h3 className="font-medium mb-1">{type.label}</h3>
+                                  <p className="text-xs text-muted-foreground">{type.description}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </CardContent>
+                </Card>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Title *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter a descriptive title" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Content File</label>
-                        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*,video/*,audio/*,.pdf"
-                            onChange={(e) => handleFileUpload(e, 'main')}
-                            className="hidden"
-                          />
-                          <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                          <div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => fileInputRef.current?.click()}
-                            >
-                              Choose File
-                            </Button>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {selectedFile ? selectedFile.name : 'Support: images, videos, audio, documents'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                {/* Basic Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Basic Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Title *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter a descriptive title for your right" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
@@ -404,19 +419,82 @@ export default function CreateRight() {
                         <FormItem>
                           <FormLabel>Description *</FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Describe your right, its uniqueness, and what buyers will receive..."
-                              className="min-h-[120px] resize-none"
-                              {...field}
+                            <Textarea 
+                              placeholder="Provide detailed information about your right, including what it covers and any important terms"
+                              className="min-h-[120px]"
+                              {...field} 
                             />
                           </FormControl>
-                          <FormDescription>
-                            Provide details about ownership, usage rights, and any restrictions
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* YouTube URL Field */}
+                    <FormField
+                      control={form.control}
+                      name="youtubeUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Youtube className="w-4 h-4 text-red-500" />
+                            YouTube Video URL (Optional)
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <Zap className="w-3 h-3 mr-1" />
+                              Instant Verification
+                            </Badge>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="https://www.youtube.com/watch?v=..."
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm">
+                            <div className="bg-green-50 p-3 rounded-md border border-green-200">
+                              <div className="text-green-800 font-medium mb-1">Fast-track your verification!</div>
+                              <div className="text-green-700 text-xs">
+                                If your content is a YouTube video you own, paste the URL here for instant verification and approval. 
+                                Your NFT will be ready to mint immediately after Google authentication.
+                              </div>
+                            </div>
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    {/* File Upload */}
+                    <div>
+                      <FormLabel>Content File (Optional)</FormLabel>
+                      <div className="mt-2">
+                        <div
+                          className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          {selectedFile ? (
+                            <div className="flex items-center justify-center gap-2">
+                              <FileVideo className="w-5 h-5 text-primary" />
+                              <span className="text-sm font-medium">{selectedFile.name}</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                              <p className="text-sm text-muted-foreground">
+                                Click to upload your content file (images, videos, audio, documents)
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          className="hidden"
+                          accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                          onChange={(e) => handleFileUpload(e, 'main')}
+                        />
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -456,7 +534,7 @@ export default function CreateRight() {
                   <Button
                     type="button"
                     onClick={() => setCurrentStep(3)}
-                    disabled={!canMintNFT && selectedVideos.length === 0}
+                    disabled={!canMintNFT}
                     className="px-8"
                   >
                     Next: Pricing
@@ -476,7 +554,7 @@ export default function CreateRight() {
                     onPricingComplete={handlePricingComplete}
                   />
                 ) : (
-                  /* Single NFT pricing */
+                  <>
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -527,28 +605,45 @@ export default function CreateRight() {
                             </FormItem>
                           )}
                         />
-                      </div>
+                    </div>
 
-                      <FormField
-                        control={form.control}
-                        name="paysDividends"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">Revenue Distribution</FormLabel>
-                              <FormDescription>
-                                Enable automatic revenue sharing with NFT holders
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
+                    <FormField
+                      control={form.control}
+                      name="paysDividends"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Revenue Sharing</FormLabel>
+                            <FormDescription>
+                              Enable automatic dividend payments to token holders
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value || false}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch("paysDividends") && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg animate-fade-in">
+                        <div className="flex items-start gap-2">
+                          <Zap className="w-5 h-5 text-blue-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-blue-900 dark:text-blue-100">Revenue Sharing Enabled</h4>
+                            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                              Token holders will automatically receive their share of revenues generated by this right.
+                              All payments are distributed transparently on the Hedera blockchain.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 <div className="flex justify-between">
                   <Button
@@ -562,13 +657,15 @@ export default function CreateRight() {
                   <Button
                     type="button"
                     onClick={() => setCurrentStep(4)}
-                    disabled={selectedVideos.length > 0 ? videoPricingData.length === 0 : !form.watch("price")}
+                    disabled={!form.watch("price")}
                     className="px-8"
                   >
                     Review & Submit
                     <Eye className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
+                </>
+                )}
               </div>
             )}
 
@@ -579,78 +676,49 @@ export default function CreateRight() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Eye className="w-5 h-5" />
-                      Review & Confirm
+                      Review Your Right
                     </CardTitle>
                     <CardDescription>
-                      Review your submission before minting
+                      Please review all details before submitting
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    {selectedVideos.length > 0 ? (
-                      /* Multi-video summary */
-                      <div className="space-y-4">
-                        <h3 className="font-medium">Creating {selectedVideos.length} NFTs</h3>
-                        <div className="grid gap-3">
-                          {selectedVideos.slice(0, 3).map((video, index) => {
-                            const pricing = videoPricingData.find(p => p.videoId === video.id);
-                            return (
-                              <div key={video.id} className="flex items-center gap-3 p-3 border rounded">
-                                <img src={video.thumbnails.medium.url} alt="" className="w-16 h-12 object-cover rounded" />
-                                <div className="flex-1">
-                                  <p className="font-medium text-sm">{video.title}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {pricing?.listingType === 'auction' ? 'Auction' : 'Fixed Price'}: {pricing?.price} {pricing?.currency}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          {selectedVideos.length > 3 && (
-                            <p className="text-sm text-muted-foreground">+ {selectedVideos.length - 3} more videos</p>
+                  <CardContent className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium mb-2">Basic Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <div><span className="text-muted-foreground">Type:</span> {rightTypes.find(t => t.value === form.watch("type"))?.label}</div>
+                          <div><span className="text-muted-foreground">Title:</span> {form.watch("title")}</div>
+                          <div><span className="text-muted-foreground">Price:</span> {form.watch("price")} {form.watch("currency")}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">Verification Status</h4>
+                        <div className="space-y-2 text-sm">
+                          {youtubeUrl ? (
+                            <div className="flex items-center gap-2">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <span>YouTube verified</span>
+                            </div>
+                          ) : ownershipFiles.length > 0 ? (
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-yellow-600" />
+                              <span>Pending manual review</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <X className="w-4 h-4 text-red-600" />
+                              <span>No verification provided</span>
+                            </div>
                           )}
                         </div>
                       </div>
-                    ) : (
-                      /* Single NFT summary */
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="font-medium mb-3">Right Details</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Type:</span>
-                              <span className="capitalize">{form.watch("type")}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Title:</span>
-                              <span>{form.watch("title")}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Price:</span>
-                              <span>{form.watch("price")} {form.watch("currency")}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="font-medium mb-3">Verification Status</h4>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={canMintNFT ? "default" : "secondary"}>
-                              {canMintNFT ? "Verified" : "Pending"}
-                            </Badge>
-                            {canMintNFT && <Check className="w-4 h-4 text-green-600" />}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    </div>
 
-                    {isUploading && (
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span>Creating NFT{selectedVideos.length > 1 ? 's' : ''}...</span>
-                          <span>{uploadProgress}%</span>
-                        </div>
-                        <Progress value={uploadProgress} className="w-full" />
-                      </div>
-                    )}
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium mb-2">Description</h4>
+                      <p className="text-sm text-muted-foreground">{form.watch("description")}</p>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -659,7 +727,6 @@ export default function CreateRight() {
                     type="button"
                     variant="outline"
                     onClick={() => setCurrentStep(3)}
-                    disabled={isUploading}
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
@@ -667,10 +734,10 @@ export default function CreateRight() {
                   <Button
                     type="submit"
                     disabled={isUploading || !canMintNFT}
-                    className="px-8"
+                    className="px-8 bg-gradient-to-r from-primary to-accent hover:scale-105 transition-all duration-300"
                   >
-                    {isUploading ? 'Creating...' : `Create NFT${selectedVideos.length > 1 ? 's' : ''}`}
-                    <Zap className="w-4 h-4 ml-2" />
+                    {isUploading ? "Creating..." : !canMintNFT ? "Complete Verification First" : "Create Right & Mint NFT"}
+                    <Star className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               </div>
