@@ -55,13 +55,14 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   const isProduction = detectDeploymentEnvironment();
   
-  // Try deployment fix first
-  const deploymentHandled = setupDeploymentFix(app);
-  
-  if (!deploymentHandled && !isProduction) {
-    await setupVite(app, server);
-  } else if (!deploymentHandled && isProduction) {
+  // Configure frontend serving based on environment
+  if (isProduction) {
+    // Production: serve static files and handle deployment
+    setupDeploymentFix(app);
     serveStatic(app);
+  } else {
+    // Development: use Vite dev server
+    await setupVite(app, server);
   }
   
   // Fallback: if no static files served and no vite, serve basic HTML
@@ -101,15 +102,17 @@ app.use((req, res, next) => {
   // Configure production error handling AFTER frontend routing
   setupErrorHandling(app);
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Configure port for both development and deployment
+  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
+  const host = process.env.HOST || "0.0.0.0";
+  
   server.listen({
     port,
-    host: "0.0.0.0",
+    host,
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`serving on ${host}:${port}`);
+    log(`environment: ${process.env.NODE_ENV || 'development'}`);
+    log(`deployment: ${process.env.REPLIT_DEPLOYMENT || 'local'}`);
   });
 })();
