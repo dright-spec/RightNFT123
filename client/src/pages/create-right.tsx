@@ -545,7 +545,7 @@ export default function CreateRight() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Currency</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select currency" />
@@ -575,7 +575,7 @@ export default function CreateRight() {
                           </div>
                           <FormControl>
                             <Switch
-                              checked={field.value}
+                              checked={field.value || false}
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
