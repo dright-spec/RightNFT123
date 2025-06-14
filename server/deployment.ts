@@ -12,7 +12,11 @@ export function detectDeploymentEnvironment(): boolean {
     // Check if we're running from a built dist file
     process.argv[1]?.includes("dist/index.js"),
     // Check if package.json scripts suggest production
-    process.env.npm_lifecycle_event === "start"
+    process.env.npm_lifecycle_event === "start",
+    // Check if we're in a deployed Replit environment (no REPL_HOME in deployment)
+    !process.env.REPL_HOME && process.env.REPLIT_CLUSTER,
+    // Check if we have production-like environment
+    process.env.PORT && process.env.PORT !== "5000"
   ];
 
   const isProduction = indicators.some(Boolean);
@@ -20,6 +24,9 @@ export function detectDeploymentEnvironment(): boolean {
   log(`Deployment detection:`, "deployment");
   log(`  NODE_ENV: ${process.env.NODE_ENV}`, "deployment");
   log(`  REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT}`, "deployment");
+  log(`  REPL_HOME: ${process.env.REPL_HOME}`, "deployment");
+  log(`  REPLIT_CLUSTER: ${process.env.REPLIT_CLUSTER}`, "deployment");
+  log(`  PORT: ${process.env.PORT}`, "deployment");
   log(`  npm_lifecycle_event: ${process.env.npm_lifecycle_event}`, "deployment");
   log(`  process.argv[1]: ${process.argv[1]}`, "deployment");
   log(`  Final decision: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`, "deployment");

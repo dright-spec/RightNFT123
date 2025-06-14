@@ -4,6 +4,7 @@ import { setupVite, log } from "./vite";
 import { serveStatic } from "./static";
 import { configureProductionSecurity, setupErrorHandling, setupHealthCheck } from "./productionConfig";
 import { detectDeploymentEnvironment } from "./deployment";
+import { setupDeploymentFix } from "./deploymentFix";
 
 const app = express();
 

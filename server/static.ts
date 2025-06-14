@@ -47,11 +47,35 @@ export function serveStatic(app: Express) {
     }
     
     const indexPath = path.join(distPath, "index.html");
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        log(`Error serving index.html: ${err.message}`, "static");
-        res.status(500).send("Internal Server Error");
-      }
-    });
+    
+    // Check if index.html exists before trying to serve it
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          log(`Error serving index.html: ${err.message}`, "static");
+          res.status(500).send(`
+            <html>
+              <body>
+                <h1>Dright NFT Marketplace</h1>
+                <p>Error loading application: ${err.message}</p>
+                <p>Path attempted: ${indexPath}</p>
+              </body>
+            </html>
+          `);
+        }
+      });
+    } else {
+      log(`index.html not found at: ${indexPath}`, "static");
+      res.status(404).send(`
+        <html>
+          <body>
+            <h1>Dright NFT Marketplace</h1>
+            <p>Application not built for production deployment.</p>
+            <p>Expected file: ${indexPath}</p>
+            <p>Please run the build process before deployment.</p>
+          </body>
+        </html>
+      `);
+    }
   });
 }
