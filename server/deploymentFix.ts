@@ -5,7 +5,9 @@ import { log } from "./vite";
 
 export function setupDeploymentFix(app: Express) {
   // Force production mode detection for deployed environments
-  const isDeployed = !process.env.REPL_HOME || process.env.REPLIT_CLUSTER || process.env.NODE_ENV === "production";
+  const isDeployed = process.env.NODE_ENV === "production" || 
+                     process.env.REPLIT_DEPLOYMENT === "1" ||
+                     (!process.env.REPL_HOME && process.env.REPLIT_CLUSTER);
   
   if (isDeployed) {
     log("Deployment mode detected - setting up static file serving", "deployment");
