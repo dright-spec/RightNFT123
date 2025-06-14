@@ -53,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         options.userId = parseInt(req.query.creatorId as string);
       }
       
-      const rights = await marketplaceStorage.getRights(options);
+      const rights = await storage.getRights(options);
       res.json(rights);
     } catch (error) {
       console.error("Error fetching rights:", error);
@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-      const right = await marketplaceStorage.getRight(id, userId);
+      const right = await storage.getRight(id, userId);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
@@ -232,14 +232,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mockUserId = 1;
       
       const validatedData = insertRightSchema.parse(req.body);
-      const right = await marketplaceStorage.createRight({
+      const right = await storage.createRight({
         ...validatedData,
         creatorId: mockUserId,
         ownerId: mockUserId,
       });
       
       // Create mint transaction
-      await marketplaceStorage.createTransaction({
+      await storage.createTransaction({
         rightId: right.id,
         toUserId: mockUserId,
         transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`,
@@ -263,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const updates = req.body;
       
-      const right = await marketplaceStorage.updateRight(id, updates);
+      const right = await storage.updateRight(id, updates);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/rights/:id/verify", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const right = await marketplaceStorage.getRight(id);
+      const right = await storage.getRight(id);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
@@ -291,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update verification status to verified
-      const updatedRight = await marketplaceStorage.updateRight(id, {
+      const updatedRight = await storage.updateRight(id, {
         verificationStatus: "verified"
       });
 
@@ -316,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { hederaData } = req.body; // Contains minted NFT data from frontend
       
-      const right = await marketplaceStorage.getRight(id);
+      const right = await storage.getRight(id);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update right with Hedera NFT data
-      const updatedRight = await marketplaceStorage.updateRight(id, {
+      const updatedRight = await storage.updateRight(id, {
         hederaTokenId: hederaData.tokenId,
         hederaSerialNumber: hederaData.serialNumber,
         hederaTransactionId: hederaData.transactionId,
@@ -465,7 +465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await marketplaceStorage.getCategories();
+      const categories = await storage.getCategories();
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -484,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Search query is required" });
       }
       
-      const results = await marketplaceStorage.searchRights(query, { limit, offset });
+      const results = await storage.searchRights(query, { limit, offset });
       res.json(results);
     } catch (error) {
       console.error("Error searching rights:", error);
@@ -504,7 +504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Validate the right exists and is an auction
-      const right = await marketplaceStorage.getRight(rightId);
+      const right = await storage.getRight(rightId);
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
       }
@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const bid = await marketplaceStorage.placeBid({
+      const bid = await storage.placeBid({
         rightId,
         bidderId: mockUserId,
         amount,
@@ -549,7 +549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rights/:id/bids", async (req, res) => {
     try {
       const rightId = parseInt(req.params.id);
-      const bids = await marketplaceStorage.getBidsForRight(rightId);
+      const bids = await storage.getBidsForRight(rightId);
       res.json(bids);
     } catch (error) {
       console.error("Error fetching bids:", error);
@@ -563,7 +563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rightId = parseInt(req.params.id);
       const mockUserId = 1; // In production, get from authentication
       
-      await marketplaceStorage.addToFavorites(mockUserId, rightId);
+      await storage.addToFavorites(mockUserId, rightId);
       res.status(200).json({ message: "Added to favorites" });
     } catch (error) {
       console.error("Error adding to favorites:", error);
@@ -576,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rightId = parseInt(req.params.id);
       const mockUserId = 1; // In production, get from authentication
       
-      await marketplaceStorage.removeFromFavorites(mockUserId, rightId);
+      await storage.removeFromFavorites(mockUserId, rightId);
       res.status(200).json({ message: "Removed from favorites" });
     } catch (error) {
       console.error("Error removing from favorites:", error);
@@ -610,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/stats', async (req, res) => {
     try {
       // Use the existing storage to get stats
-      const allRights = await marketplaceStorage.getRights({ limit: 1000 });
+      const allRights = await storage.getRights({ limit: 1000 });
       const pendingRights = allRights.filter(r => r.verificationStatus === 'pending');
       
       const stats = {
@@ -638,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         options.search = search as string;
       }
       
-      let rightsData = await marketplaceStorage.getRights(options);
+      let rightsData = await storage.getRights(options);
       
       // Filter by verification status if specified
       if (status && status !== 'all') {
@@ -671,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.verifiedBy = 'Dright Team';
       }
 
-      await marketplaceStorage.updateRight(parseInt(id), updateData);
+      await storage.updateRight(parseInt(id), updateData);
       res.json({ message: "Verification status updated successfully" });
     } catch (error) {
       console.error("Error updating verification status:", error);
@@ -1277,7 +1277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortOrder: "desc" as const
       };
 
-      let rights = await marketplaceStorage.getRights(options);
+      let rights = await storage.getRights(options);
       
       // Filter by status if specified
       if (status && status !== "all") {

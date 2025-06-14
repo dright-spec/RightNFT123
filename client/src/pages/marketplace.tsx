@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { RightCard } from "@/components/right-card";
+import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { WalletButton } from "@/components/wallet-button";
 import { ActivityFeed } from "@/components/activity-feed";
 import { ArrowLeft, Filter, TrendingUp, Zap } from "lucide-react";
@@ -186,17 +186,7 @@ export default function Marketplace() {
                 </div>
                 
                 {sortedRights && sortedRights.length > 0 ? (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {sortedRights.map((right, index) => (
-                      <div 
-                        key={right.id} 
-                        className="animate-fade-in-up"
-                        style={{ animationDelay: `${index * 100}ms` }}
-                      >
-                        <RightCard right={right} />
-                      </div>
-                    ))}
-                  </div>
+                  <AnimatedRightGrid rights={sortedRights} variant="grid" />
                 ) : (
                   <Card className="text-center py-12">
                     <CardContent>
