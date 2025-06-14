@@ -80,6 +80,9 @@ export function configureProductionSecurity(app: Express) {
     legacyHeaders: false,
   });
 
+  // Configure trust proxy for Replit environment
+  app.set('trust proxy', 1);
+
   // Apply rate limiting
   app.use('/api/', apiLimiter);
   app.use('/api/auth/', authLimiter);
