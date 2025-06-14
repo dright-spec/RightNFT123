@@ -95,18 +95,12 @@ export default function Home() {
 
             {/* Primary CTAs with Enhanced Visual Impact */}
             <div className="mt-16 flex flex-col sm:flex-row items-center justify-center gap-8">
-              <Button 
-                size="lg" 
-                className="group relative bg-gradient-to-r from-primary via-accent to-primary hover:from-primary/90 hover:via-accent/90 hover:to-primary/90 text-white px-16 py-8 text-2xl font-black rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 min-w-[280px] border-0 overflow-hidden"
-                asChild
-              >
-                <Link href="/create-right">
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                  <Upload className="w-8 h-8 mr-4 relative z-10" />
-                  <span className="relative z-10">Create Your Right</span>
-                  <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
+              <Link href="/create-right" className="group relative bg-gradient-to-r from-primary via-accent to-primary hover:from-primary/90 hover:via-accent/90 hover:to-primary/90 text-white px-16 py-8 text-2xl font-black rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 min-w-[280px] border-0 overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <Upload className="w-8 h-8 mr-4 relative z-10" />
+                <span className="relative z-10">Create Your Right</span>
+                <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+              </Link>
               
               <Button 
                 variant="outline" 
