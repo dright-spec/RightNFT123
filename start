@@ -1,0 +1,17 @@
+#!/bin/bash
+# Custom start script for Replit deployment
+echo "🚀 Starting production deployment..."
+
+# Set production environment variables
+export NODE_ENV=production
+export REPLIT_DEPLOYMENT=1
+
+# Ensure build exists
+if [ ! -f "dist/index.js" ]; then
+    echo "🔧 Building production server..."
+    ./build
+fi
+
+# Start the production server
+echo "🌐 Starting production server..."
+node dist/index.js
