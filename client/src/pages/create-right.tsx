@@ -372,6 +372,40 @@ export default function CreateRight() {
                       )}
                     />
 
+                    {/* YouTube URL Field */}
+                    <FormField
+                      control={form.control}
+                      name="youtubeUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Youtube className="w-4 h-4 text-red-500" />
+                            YouTube Video URL (Optional)
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              <Zap className="w-3 h-3 mr-1" />
+                              Instant Verification
+                            </Badge>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="https://www.youtube.com/watch?v=..."
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm">
+                            <div className="bg-green-50 p-3 rounded-md border border-green-200">
+                              <div className="text-green-800 font-medium mb-1">Fast-track your verification!</div>
+                              <div className="text-green-700 text-xs">
+                                If your content is a YouTube video you own, paste the URL here for instant verification and approval. 
+                                Your NFT will be ready to mint immediately after Google authentication.
+                              </div>
+                            </div>
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     {/* File Upload */}
                     <div>
                       <FormLabel>Content File (Optional)</FormLabel>
@@ -425,6 +459,7 @@ export default function CreateRight() {
               <div className="space-y-6 animate-fade-in">
                 <VerificationWorkflow 
                   rightType={form.watch("type") || "copyright"}
+                  initialYouTubeUrl={form.watch("youtubeUrl")}
                   onVerificationComplete={handleVerificationComplete}
                   onCanMintNFT={handleCanMintNFT}
                 />
