@@ -9,6 +9,7 @@ import Auctions from "@/pages/auctions";
 import RightDetail from "@/pages/right-detail";
 import Admin from "@/pages/admin";
 import Dashboard from "@/pages/dashboard";
+import CreateRight from "@/pages/create-right";
 import GoogleCallback from "@/pages/google-callback";
 import Docs from "@/pages/docs";
 import About from "@/pages/about";
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/auctions" component={Auctions} />
+      <Route path="/create-right" component={CreateRight} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
       <Route path="/docs" component={Docs} />
