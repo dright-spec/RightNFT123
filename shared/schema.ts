@@ -66,9 +66,13 @@ export const rights = pgTable("rights", {
   isListed: boolean("is_listed").default(false),
   listingType: text("listing_type").default("fixed"), // fixed, auction
   auctionEndTime: timestamp("auction_end_time"),
+  auctionDuration: integer("auction_duration"), // duration in hours
+  startingBid: decimal("starting_bid", { precision: 18, scale: 8 }),
+  reservePrice: decimal("reserve_price", { precision: 18, scale: 8 }),
   minBidAmount: decimal("min_bid_amount", { precision: 18, scale: 8 }),
   highestBidAmount: decimal("highest_bid_amount", { precision: 18, scale: 8 }),
   highestBidderId: integer("highest_bidder_id").references(() => users.id),
+  royaltyPercentage: decimal("royalty_percentage", { precision: 5, scale: 2 }).default("7.5"),
   views: integer("views").default(0),
   favorites: integer("favorites").default(0),
   

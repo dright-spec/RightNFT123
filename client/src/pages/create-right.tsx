@@ -48,8 +48,10 @@ export default function CreateRight() {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoDetails, setVideoDetails] = useState<any>(null);
+  const [selectedVideos, setSelectedVideos] = useState<any[]>([]);
   const [verificationData, setVerificationData] = useState<any>(null);
   const [canMintNFT, setCanMintNFT] = useState(false);
+  const [videoPricingData, setVideoPricingData] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ownershipInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -124,15 +126,31 @@ export default function CreateRight() {
 
   const handleVerificationComplete = (data: any) => {
     setVerificationData(data);
+    if (data.youtubeData && data.youtubeData.videos) {
+      setSelectedVideos(data.youtubeData.videos);
+      setCurrentStep(3); // Move to pricing step for multiple videos
+    } else {
+      setCurrentStep(3); // Move to regular pricing step
+    }
   };
 
   const handleCanMintNFT = (canMint: boolean) => {
     setCanMintNFT(canMint);
   };
 
+  const handleMultipleVideosSelected = (videos: any[]) => {
+    setSelectedVideos(videos);
+    setCurrentStep(3); // Move to pricing step
+  };
+
+  const handlePricingComplete = (pricingData: any[]) => {
+    setVideoPricingData(pricingData);
+    setCurrentStep(4); // Move to final confirmation step
+  };
+
   const onSubmit = async (data: CreateRightFormData) => {
     // Verify that verification is complete before allowing submission
-    if (!canMintNFT) {
+    if (!canMintNFT && selectedVideos.length === 0) {
       toast({
         title: "Verification Required",
         description: "Please complete the verification process before minting your NFT.",
@@ -145,25 +163,64 @@ export default function CreateRight() {
     setUploadProgress(0);
 
     try {
-      // Simulate upload progress
-      const progressSteps = [20, 40, 60, 80, 100];
-      for (const step of progressSteps) {
-        setUploadProgress(step);
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // Handle multiple video NFT creation with individual pricing
+      if (selectedVideos.length > 0 && videoPricingData.length > 0) {
+        const progressIncrement = 100 / selectedVideos.length;
+        
+        for (let i = 0; i < selectedVideos.length; i++) {
+          const video = selectedVideos[i];
+          const pricing = videoPricingData.find(p => p.videoId === video.id);
+          
+          if (pricing) {
+            const rightData = {
+              title: video.title,
+              description: video.description || `YouTube video: ${video.title}`,
+              type: data.type,
+              imageUrl: video.thumbnails.high.url,
+              contentFileUrl: `https://www.youtube.com/watch?v=${video.id}`,
+              tags: [video.channelTitle, 'YouTube', 'Video Content'],
+              listingType: pricing.listingType,
+              price: pricing.price,
+              currency: pricing.currency,
+              royaltyPercentage: pricing.royaltyPercentage.toString(),
+              paysDividends: pricing.paysDividends,
+              startingBid: pricing.startingBid,
+              reservePrice: pricing.reservePrice,
+              auctionDuration: pricing.auctionDuration,
+              verificationStatus: 'verified', // YouTube videos are auto-verified
+              isListed: true,
+            };
+
+            await createRightMutation.mutateAsync(rightData);
+            setUploadProgress((i + 1) * progressIncrement);
+          }
+        }
+
+        toast({
+          title: `${selectedVideos.length} NFTs Created Successfully!`,
+          description: `All video NFTs have been minted with ${videoPricingData.filter(p => p.listingType === 'auction').length} auctions and ${videoPricingData.filter(p => p.listingType === 'fixed').length} fixed price listings.`,
+        });
+      } else {
+        // Single NFT creation (existing flow)
+        const progressSteps = [20, 40, 60, 80, 100];
+        for (const step of progressSteps) {
+          setUploadProgress(step);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        const rightData = {
+          ...data,
+          imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : null,
+          youtubeUrl: youtubeUrl || null,
+          verificationStatus: verificationData?.status || "pending",
+          verificationMethod: verificationData?.method || "manual",
+          verificationFiles: verificationData?.files || [],
+          youtubeData: verificationData?.youtubeData,
+          isListed: true,
+        };
+
+        await createRightMutation.mutateAsync(rightData);
       }
-
-      const rightData = {
-        ...data,
-        imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : null,
-        youtubeUrl: youtubeUrl || null,
-        verificationStatus: verificationData?.status || "pending",
-        verificationMethod: verificationData?.method || "manual",
-        verificationFiles: verificationData?.files || [],
-        youtubeData: verificationData?.youtubeData,
-        isListed: true,
-      };
-
-      await createRightMutation.mutateAsync(rightData);
     } catch (error) {
       toast({
         title: "Upload Failed",
@@ -490,56 +547,65 @@ export default function CreateRight() {
             {/* Step 3: Pricing & Terms */}
             {currentStep === 3 && (
               <div className="space-y-6 animate-fade-in">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="w-5 h-5" />
-                      Pricing & Revenue
-                    </CardTitle>
-                    <CardDescription>
-                      Set your pricing strategy and revenue distribution
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Fee Information */}
-                    <FeeInfo variant="detailed" className="mb-6" />
-                    
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Price *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="0.00" value={field.value || ""} onChange={field.onChange} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="currency"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Currency</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                {/* Multi-video pricing for YouTube channel selection */}
+                {selectedVideos.length > 0 ? (
+                  <MultiVideoPricing 
+                    videos={selectedVideos}
+                    onPricingComplete={handlePricingComplete}
+                  />
+                ) : (
+                  /* Single NFT pricing */
+                  <>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <DollarSign className="w-5 h-5" />
+                        Pricing & Revenue
+                      </CardTitle>
+                      <CardDescription>
+                        Set your pricing strategy and revenue distribution
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Fee Information */}
+                      <FeeInfo variant="detailed" className="mb-6" />
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="price"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Price *</FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select currency" />
-                                </SelectTrigger>
+                                <Input placeholder="0.00" value={field.value || ""} onChange={field.onChange} />
                               </FormControl>
-                              <SelectContent>
-                                <SelectItem value="HBAR">HBAR</SelectItem>
-                                <SelectItem value="USD">USD</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="currency"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Currency</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select currency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="HBAR">HBAR</SelectItem>
+                                  <SelectItem value="USD">USD</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                     </div>
 
                     <FormField
@@ -599,6 +665,8 @@ export default function CreateRight() {
                     <Eye className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
+                </>
+                )}
               </div>
             )}
 
