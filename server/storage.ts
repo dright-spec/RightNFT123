@@ -41,34 +41,63 @@ export class MemStorage implements IStorage {
     this.currentTransactionId = 1;
     this.currentTokenId = 1;
     
-    // Seed with sample data
-    this.seedData();
+    // Only seed minimal data - no mock users that interfere with real wallet connections
+    this.seedMinimalData();
+  }
+
+  private seedMinimalData() {
+    // No pre-seeded users - they will be created when real wallets connect
+    // This ensures the wallet connects to your actual browser wallet, not test data
+    
+    // Only add one sample right for admin testing purposes
+    const testRight: Right = {
+      id: this.currentRightId++,
+      tokenId: this.currentTokenId++,
+      title: "Test Right for Admin Panel",
+      type: "copyright",
+      description: "Test right to verify admin functionality is working properly",
+      symbol: "📄",
+      paysDividends: false,
+      price: "1.0",
+      currency: "HBAR",
+      verificationStatus: "pending",
+      listingType: "fixed",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      creatorId: 999, // Will be replaced when real user connects
+      ownerId: 999,
+      categoryId: null,
+      tags: null,
+      imageUrl: null,
+      paymentAddress: null,
+      paymentFrequency: null,
+      revenueDistributionMethod: null,
+      distributionPercentage: null,
+      minimumDistribution: null,
+      distributionDetails: null,
+      contentFileHash: null,
+      contentFileUrl: null,
+      verifiedAt: null,
+      verifiedBy: null,
+      verificationNotes: null,
+      legalDocumentHash: null,
+      legalDocumentUrl: null,
+      ownershipDocumentHash: null,
+      ownershipDocumentUrl: null,
+      hederaAccountId: null,
+      hederaTokenId: null,
+      hederaTransactionId: null,
+      hederaNftSerialNumber: null,
+      hederaNetwork: null
+    };
+    
+    this.rights.set(testRight.id, testRight);
   }
 
   private seedData() {
-    // Create sample users
-    const user1: User = {
-      id: this.currentUserId++,
-      username: "creator1",
-      password: "hashed_password",
-      walletAddress: "0x1234567890123456789012345678901234567890",
-      createdAt: new Date(),
-    };
-    
-    const user2: User = {
-      id: this.currentUserId++,
-      username: "creator2", 
-      password: "hashed_password",
-      walletAddress: "0x2345678901234567890123456789012345678901",
-      createdAt: new Date(),
-    };
-
-    this.users.set(user1.id, user1);
-    this.users.set(user2.id, user2);
-
-    // Create sample rights - music featured prominently to attract broader audience
-    const sampleRights: (InsertRight & { creatorId: number; ownerId: number })[] = [
-      {
+    // Legacy method - not used to avoid mock data interference
+    // All data will be created when real users connect with actual wallets
+  }
         title: 'Streaming Rights: "Midnight Vibes"',
         type: "copyright",
         description: "Exclusive streaming royalty rights for the viral hit 'Midnight Vibes' across Spotify, Apple Music, YouTube Music, and all major platforms. Track has 2.5M+ streams.",

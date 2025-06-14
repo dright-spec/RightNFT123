@@ -82,19 +82,54 @@ export default function Admin() {
   }
 
   // Fetch admin stats
-  const { data: stats } = useQuery<AdminStats>({
+  const { data: stats, isLoading: loadingStats, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
+    retry: 3,
   });
 
   // Fetch pending verifications
-  const { data: pendingRights, isLoading: loadingRights } = useQuery<RightWithCreator[]>({
+  const { data: pendingRights, isLoading: loadingRights, error: rightsError } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/admin/rights", { status: statusFilter, search: searchTerm }],
+    retry: 3,
   });
 
   // Fetch users for management
-  const { data: users, isLoading: loadingUsers } = useQuery<User[]>({
+  const { data: users, isLoading: loadingUsers, error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    retry: 3,
   });
+
+  // Show loading state
+  if (loadingStats && loadingRights && loadingUsers) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (statsError || rightsError || usersError) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Error Loading Dashboard</h3>
+            <p className="text-muted-foreground mb-4">
+              Failed to load admin data. Please try refreshing the page.
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Verification mutation
   const verifyRightMutation = useMutation({
