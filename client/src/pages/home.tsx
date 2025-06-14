@@ -135,29 +135,17 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Enhanced Legal Compliance Notice */}
-            <div className="mt-20 p-8 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-yellow-950/20 border-3 border-amber-200 dark:border-amber-700 rounded-3xl max-w-6xl mx-auto shadow-xl backdrop-blur-sm">
-              <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Shield className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-left flex-1">
-                  <h3 className="text-2xl font-bold text-amber-900 dark:text-amber-100 mb-4">Utility-First Legal Platform</h3>
-                  <div className="space-y-3 text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
-                    <p>
-                      <strong>Legal Ownership Transfer:</strong> This platform facilitates the transfer of usage rights and licensing access - not securities or investment products.
-                    </p>
-                    <p>
-                      <strong>Utility-Based Assets:</strong> All tokenized rights represent utility for access, licensing, and usage purposes. No expectation of profits derived from the efforts of others.
-                    </p>
-                    <p>
-                      <strong>Creator Control:</strong> Original rights owners maintain full control over income streams and licensing terms. Platform serves as marketplace facilitator only.
-                    </p>
-                  </div>
-                  <div className="mt-4 flex items-center gap-2">
-                    <Check className="w-5 h-5 text-green-600" />
-                    <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Compliant with utility asset regulations</span>
-                  </div>
+            {/* Legal Compliance Notice */}
+            <div className="mt-12 p-4 bg-muted/30 border border-muted rounded-lg max-w-4xl mx-auto">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-muted-foreground">
+                  <p className="mb-2">
+                    <strong>Legal Platform:</strong> This platform facilitates the transfer of usage rights and licensing access for utility purposes. All tokenized rights represent legal ownership transfer of licensing and usage rights, not investment products.
+                  </p>
+                  <p>
+                    Rights owners maintain control over income streams and licensing terms. Platform serves as marketplace facilitator only.
+                  </p>
                 </div>
               </div>
             </div>
@@ -610,7 +598,7 @@ export default function Home() {
             </div>
             <h3 className="text-2xl font-bold mb-4">Start Earning From Your Rights Today</h3>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Join the first wave of creators building sustainable income streams. Zero platform fees for early adopters.
+              Join the first wave of creators building sustainable income streams. Simple fees only when you sell.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/create-right">
