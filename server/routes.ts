@@ -146,6 +146,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
+  // Get user's YouTube channel videos
+  app.post("/api/youtube/channel-videos", async (req, res) => {
+    try {
+      const { authToken } = req.body;
+      
+      if (!authToken) {
+        return res.status(400).json({ error: "Authentication token required" });
+      }
+
+      // Simulate fetching user's YouTube channel videos
+      // In production, this would use YouTube Data API v3 with authenticated user's token
+      const mockChannelInfo = {
+        id: "UC_mock_channel_id",
+        title: "Creator's Channel",
+        subscriberCount: "125000",
+        videoCount: "47"
+      };
+
+      const mockVideos = [
+        {
+          id: "dQw4w9WgXcQ",
+          title: "Epic Music Video - Original Creation",
+          description: "My latest music video featuring original composition and visuals. This represents months of creative work and would make an excellent NFT.",
+          thumbnails: {
+            default: { url: "https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg" },
+            medium: { url: "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg" },
+            high: { url: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg" }
+          },
+          publishedAt: "2024-01-15T10:30:00Z",
+          viewCount: "45230",
+          duration: "PT3M42S",
+          channelTitle: "Creator's Channel",
+          channelId: "UC_mock_channel_id"
+        },
+        {
+          id: "ScMzIvxBSi4",
+          title: "Behind the Scenes Documentary",
+          description: "Exclusive behind-the-scenes content showing my creative process. Perfect for fans who want deeper access to my work.",
+          thumbnails: {
+            default: { url: "https://img.youtube.com/vi/ScMzIvxBSi4/default.jpg" },
+            medium: { url: "https://img.youtube.com/vi/ScMzIvxBSi4/mqdefault.jpg" },
+            high: { url: "https://img.youtube.com/vi/ScMzIvxBSi4/hqdefault.jpg" }
+          },
+          publishedAt: "2024-02-03T14:20:00Z",
+          viewCount: "28100",
+          duration: "PT12M18S",
+          channelTitle: "Creator's Channel",
+          channelId: "UC_mock_channel_id"
+        },
+        {
+          id: "J---aiyznGQ",
+          title: "Tutorial: Digital Art Techniques",
+          description: "Comprehensive tutorial covering advanced digital art techniques I use in my work. Educational content with commercial value.",
+          thumbnails: {
+            default: { url: "https://img.youtube.com/vi/J---aiyznGQ/default.jpg" },
+            medium: { url: "https://img.youtube.com/vi/J---aiyznGQ/mqdefault.jpg" },
+            high: { url: "https://img.youtube.com/vi/J---aiyznGQ/hqdefault.jpg" }
+          },
+          publishedAt: "2024-03-10T09:15:00Z",
+          viewCount: "67890",
+          duration: "PT25M33S",
+          channelTitle: "Creator's Channel",
+          channelId: "UC_mock_channel_id"
+        },
+        {
+          id: "L_jWHffIx5E",
+          title: "Live Performance Recording",
+          description: "High-quality recording of my live performance at the Digital Arts Festival. Unique content perfect for collectors.",
+          thumbnails: {
+            default: { url: "https://img.youtube.com/vi/L_jWHffIx5E/default.jpg" },
+            medium: { url: "https://img.youtube.com/vi/L_jWHffIx5E/mqdefault.jpg" },
+            high: { url: "https://img.youtube.com/vi/L_jWHffIx5E/hqdefault.jpg" }
+          },
+          publishedAt: "2024-04-22T19:45:00Z",
+          viewCount: "12450",
+          duration: "PT45M12S",
+          channelTitle: "Creator's Channel",
+          channelId: "UC_mock_channel_id"
+        }
+      ];
+
+      res.json({
+        success: true,
+        channel: mockChannelInfo,
+        videos: mockVideos,
+        message: "Channel videos retrieved successfully"
+      });
+      
+    } catch (error) {
+      console.error("Channel videos fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch channel videos" });
+    }
+  });
+
   // IPFS upload endpoints
   app.post('/api/ipfs/upload', async (req, res) => {
     try {

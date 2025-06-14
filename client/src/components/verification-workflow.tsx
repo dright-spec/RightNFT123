@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { VerificationStatusBadge } from "@/components/verification-status-badge";
 import { FileUploadValidator } from "@/components/file-upload-validator";
 import { YouTubeVerificationWizard } from "@/components/youtube-verification-wizard";
+import { YouTubeChannelPicker } from "@/components/youtube-channel-picker";
 import { CheckCircle, Clock, AlertTriangle, FileText, Youtube, Shield, Zap } from "lucide-react";
 
 interface VerificationWorkflowProps {
@@ -308,13 +309,9 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
       {currentStep === 2 && (
         <div className="space-y-6">
           {verificationMethod === 'youtube' ? (
-            <YouTubeVerificationWizard
+            <YouTubeChannelPicker
               rightType={rightType}
-              initialUrl={initialYouTubeUrl}
-              onVerificationSuccess={handleYouTubeVerification}
-              onSkip={() => {
-                setVerificationMethod('manual');
-              }}
+              onVideoSelect={handleYouTubeVerification}
             />
           ) : (
             <FileUploadValidator
