@@ -51,7 +51,7 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
 
         toast({
           title: "Video Found!",
-          description: "Now authenticate with Google to verify you own this video.",
+          description: "Please sign in with Google to confirm you own this video.",
         });
 
         // Do NOT call onVerificationSuccess here - only after Google OAuth
@@ -317,41 +317,19 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
                   <p className="text-sm text-gray-600 mb-2">
                     By {verificationResult.details?.channelTitle}
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span>Video ID: {verificationResult.details?.videoId}</span>
-                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Security Notice */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-amber-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-amber-800 mb-2">Ownership Verification Required</p>
-                  <p className="text-sm text-amber-700 mb-3">
-                    To ensure platform integrity, you must authenticate with Google to prove you own this YouTube channel. 
-                    We will verify this specific video exists in your channel.
-                  </p>
-                  <div className="bg-amber-100 p-3 rounded border border-amber-200">
-                    <p className="text-xs font-medium text-amber-800 mb-1">Security Process:</p>
-                    <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside">
-                      <li>Sign in with your Google account</li>
-                      <li>We verify the video exists in your YouTube channel</li>
-                      <li>Ownership confirmation is cryptographically secured</li>
-                      <li>Only authentic owners can complete verification</li>
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Authentication Button */}
-            <div className="flex gap-3">
+            {/* Simple Call to Action */}
+            <div className="text-center space-y-3">
+              <p className="text-sm text-gray-600">
+                Please sign in to your Google account to confirm you own this video.
+              </p>
+              
               <Button 
                 onClick={handleGoogleSignIn}
-                className="flex-1 bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 px-8"
                 disabled={isAuthenticating}
               >
                 {isAuthenticating ? (
@@ -367,18 +345,9 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
                       <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                       <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                     </svg>
-                    Authenticate with Google
+                    Sign in with Google
                   </>
                 )}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setVerificationResult(null);
-                  setYoutubeUrl('');
-                }}
-              >
-                Try Different Video
               </Button>
             </div>
           </div>

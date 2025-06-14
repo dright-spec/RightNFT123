@@ -49,36 +49,40 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
   // Check if verification is complete and user can mint NFT
   useEffect(() => {
     const hasRequiredFiles = uploadedFiles.length > 0;
-    const isYouTubeVerified = youtubeVerification?.success;
+    const isYouTubeFullyVerified = youtubeVerification?.success && youtubeVerification?.details?.ownershipConfirmed;
     const isVerified = verificationStatus === 'verified';
     
-    const canMint = isYouTubeVerified || (hasRequiredFiles && isVerified);
+    const canMint = isYouTubeFullyVerified || (hasRequiredFiles && isVerified);
     setCanProceedToMint(canMint);
 
     // Create a state signature to detect actual changes
-    const currentState = `${uploadedFiles.length}-${isYouTubeVerified}-${verificationStatus}`;
+    const currentState = `${uploadedFiles.length}-${isYouTubeFullyVerified}-${verificationStatus}`;
     
     // Only update parent if state actually changed
-    if (currentState !== lastVerificationState.current && (hasRequiredFiles || isYouTubeVerified)) {
+    if (currentState !== lastVerificationState.current && (hasRequiredFiles || isYouTubeFullyVerified)) {
       const verificationData: VerificationData = {
-        method: isYouTubeVerified ? 'youtube' : 'manual',
-        status: isYouTubeVerified ? 'verified' : (hasRequiredFiles ? 'pending' : 'incomplete'),
+        method: isYouTubeFullyVerified ? 'youtube' : 'manual',
+        status: isYouTubeFullyVerified ? 'verified' : (hasRequiredFiles ? 'pending' : 'incomplete'),
         files: uploadedFiles,
         youtubeData: youtubeVerification,
-        verifiedAt: isYouTubeVerified ? new Date() : undefined
+        verifiedAt: isYouTubeFullyVerified ? new Date() : undefined
       };
       
       onVerificationComplete(verificationData);
       onCanMintNFT(canMint);
       lastVerificationState.current = currentState;
     }
-  }, [uploadedFiles.length, youtubeVerification?.success, verificationStatus]);
+  }, [uploadedFiles.length, youtubeVerification?.success, youtubeVerification?.details?.ownershipConfirmed, verificationStatus]);
 
   const handleYouTubeVerification = (videoDetails: any) => {
     setYoutubeVerification({ success: true, details: videoDetails });
     setVerificationMethod('youtube');
-    setVerificationStatus('verified');
-    setCurrentStep(3); // Skip to final step
+    
+    // Only mark as verified and advance if ownership is confirmed
+    if (videoDetails.ownershipConfirmed) {
+      setVerificationStatus('verified');
+      setCurrentStep(3); // Skip to final step
+    }
   };
 
   const handleFilesValidated = (files: any[]) => {
@@ -95,7 +99,7 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
   };
 
   const getVerificationProgress = () => {
-    if (youtubeVerification?.success) return 100;
+    if (youtubeVerification?.success && youtubeVerification?.details?.ownershipConfirmed) return 100;
     if (uploadedFiles.length > 0 && verificationStatus === 'verified') return 100;
     if (uploadedFiles.length > 0) return 75;
     if (currentStep >= 2) return 50;
