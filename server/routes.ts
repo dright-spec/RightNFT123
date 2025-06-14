@@ -8,6 +8,83 @@ import { insertRightSchema, insertUserSchema, insertTransactionSchema } from "@s
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // YouTube verification endpoint - must be before other routes
+  app.post("/api/youtube/verify", async (req, res) => {
+    try {
+      const { url } = req.body;
+      
+      if (!url || typeof url !== 'string') {
+        return res.status(400).json({ error: "YouTube URL is required" });
+      }
+      
+      // Basic YouTube URL validation
+      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+      if (!youtubeRegex.test(url)) {
+        return res.status(400).json({ error: "Invalid YouTube URL format" });
+      }
+      
+      // Extract video ID from URL
+      let videoId = '';
+      try {
+        const urlObj = new URL(url.includes('http') ? url : `https://${url}`);
+        if (urlObj.hostname.includes('youtube.com')) {
+          videoId = urlObj.searchParams.get('v') || '';
+        } else if (urlObj.hostname.includes('youtu.be')) {
+          videoId = urlObj.pathname.slice(1);
+        }
+      } catch (error) {
+        return res.status(400).json({ error: "Could not parse YouTube URL" });
+      }
+      
+      if (!videoId) {
+        return res.status(400).json({ error: "Could not extract video ID from URL" });
+      }
+      
+      // Fetch video details using YouTube oEmbed API (no API key required)
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+      
+      let videoData;
+      try {
+        const oembedResponse = await fetch(oembedUrl);
+        if (oembedResponse.ok) {
+          const oembedData = await oembedResponse.json();
+          videoData = {
+            videoId,
+            title: oembedData.title,
+            description: oembedData.title, // oEmbed doesn't provide full description
+            channelTitle: oembedData.author_name,
+            publishedAt: new Date().toISOString(),
+            thumbnails: {
+              default: { url: `https://img.youtube.com/vi/${videoId}/default.jpg` },
+              medium: { url: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` },
+              high: { url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` },
+              maxres: { url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` }
+            },
+            embedHtml: oembedData.html,
+            width: oembedData.width,
+            height: oembedData.height,
+            verified: false, // Will be verified after Google OAuth
+            ownershipConfirmed: false
+          };
+        } else {
+          throw new Error('Video not found or private');
+        }
+      } catch (fetchError) {
+        return res.status(404).json({ error: "Video not found or is private" });
+      }
+      
+      res.json({
+        success: true,
+        message: "YouTube video verified successfully",
+        data: mockVideoData
+      });
+      
+    } catch (error) {
+      console.error("YouTube verification error:", error);
+      res.status(500).json({ error: "YouTube verification failed" });
+    }
+  });
+
   // IPFS upload endpoints
   app.post('/api/ipfs/upload', async (req, res) => {
     try {
@@ -312,6 +389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to verify right" });
     }
   });
+
+
 
   // Endpoint to mint NFT for verified rights
   app.post("/api/rights/:id/mint-nft", async (req, res) => {

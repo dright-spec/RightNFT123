@@ -31,19 +31,24 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
 
     setIsVerifying(true);
     try {
-      const response = await apiRequest("/api/youtube/verify", "POST", { url: youtubeUrl });
+      const response = await apiRequest("POST", "/api/youtube/verify", { url: youtubeUrl });
+      const data = await response.json();
       
-      setVerificationResult({
-        success: true,
-        details: response
-      });
+      if (data.success) {
+        setVerificationResult({
+          success: true,
+          details: data.data
+        });
 
-      toast({
-        title: "YouTube Video Verified!",
-        description: "Ownership confirmed successfully. Your right will be instantly approved.",
-      });
+        toast({
+          title: "YouTube Video Verified!",
+          description: "Ownership confirmed successfully. Your right will be instantly approved.",
+        });
 
-      onVerificationSuccess(response);
+        onVerificationSuccess(data.data);
+      } else {
+        throw new Error(data.error || "Verification failed");
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Verification failed";
       setVerificationResult({
