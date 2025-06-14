@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { signInWithGoogle } from "@/lib/firebase";
 import { CheckCircle, Youtube, Search, Play, Clock, Users, Eye, Loader2, ArrowRight, Shield } from "lucide-react";
 
 interface YouTubeVideo {
@@ -62,16 +63,24 @@ export function YouTubeChannelPicker({
   const handleConnectYouTube = async () => {
     setIsConnecting(true);
     try {
-      // Simulating Google OAuth connection process
-      // In production, this would redirect to Google OAuth for real authentication
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Real Google OAuth authentication with YouTube scope
+      const authResult = await signInWithGoogle();
+      
+      if (!authResult.success) {
+        throw new Error(authResult.error || "Authentication failed");
+      }
+
+      if (!authResult.accessToken) {
+        throw new Error("No access token received from Google");
+      }
       
       setIsConnected(true);
       setIsLoadingVideos(true);
       
       // Fetch user's YouTube videos using authenticated API
       const response = await apiRequest("POST", "/api/youtube/channel-videos", {
-        authToken: "authenticated_user_token"
+        authToken: authResult.accessToken,
+        userId: authResult.user?.uid
       });
       
       const data = await response.json();
