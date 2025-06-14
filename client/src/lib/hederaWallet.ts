@@ -236,11 +236,6 @@ class HederaWalletManager {
   // Disconnect wallet
   async disconnect(): Promise<void> {
     try {
-      // Disconnect from HashConnect service if available
-      if (hashConnectService && hashConnectService.disconnect) {
-        await hashConnectService.disconnect();
-      }
-
       // Clear state
       this.updateState({
         isConnected: false,
