@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { serveStatic } from "./static";
 import { configureProductionSecurity, setupErrorHandling, setupHealthCheck } from "./productionConfig";
+import { detectDeploymentEnvironment } from "./deployment";
 
 const app = express();
 
@@ -51,14 +52,47 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  const isProduction = process.env.NODE_ENV === "production" || process.env.REPLIT_DEPLOYMENT === "1";
-  log(`Environment check - NODE_ENV: ${process.env.NODE_ENV}, REPLIT_DEPLOYMENT: ${process.env.REPLIT_DEPLOYMENT}, isProduction: ${isProduction}`, "server");
+  const isProduction = detectDeploymentEnvironment();
   
   if (!isProduction) {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+  
+  // Fallback: if no static files served and no vite, serve basic HTML
+  app.get("*", (req, res) => {
+    if (!req.path.startsWith("/api")) {
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Dright - Loading...</title>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+              .loading { color: #666; }
+            </style>
+          </head>
+          <body>
+            <h1>Dright NFT Marketplace</h1>
+            <p class="loading">Environment: ${isProduction ? 'Production' : 'Development'}</p>
+            <p class="loading">Please wait while the application loads...</p>
+            <script>
+              console.log('Deployment debug info:', {
+                isProduction: ${isProduction},
+                nodeEnv: '${process.env.NODE_ENV}',
+                replitDeployment: '${process.env.REPLIT_DEPLOYMENT}',
+                lifecycle: '${process.env.npm_lifecycle_event}'
+              });
+              setTimeout(() => window.location.reload(), 3000);
+            </script>
+          </body>
+        </html>
+      `);
+    }
+  });
 
   // Configure production error handling AFTER frontend routing
   setupErrorHandling(app);
