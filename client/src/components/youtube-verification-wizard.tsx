@@ -12,10 +12,11 @@ interface YouTubeVerificationWizardProps {
   onVerificationSuccess: (videoDetails: any) => void;
   onSkip: () => void;
   rightType: string;
+  initialUrl?: string;
 }
 
-export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, rightType }: YouTubeVerificationWizardProps) {
-  const [youtubeUrl, setYoutubeUrl] = useState("");
+export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, rightType, initialUrl }: YouTubeVerificationWizardProps) {
+  const [youtubeUrl, setYoutubeUrl] = useState(initialUrl || "");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
@@ -24,6 +25,13 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
     error?: string;
   } | null>(null);
   const { toast } = useToast();
+
+  // Auto-verify if initial URL is provided
+  useEffect(() => {
+    if (initialUrl && initialUrl.trim() && isValidYouTubeUrl(initialUrl)) {
+      handleVerify();
+    }
+  }, [initialUrl]);
 
   const isVideoContent = rightType === "copyright" || rightType === "royalty";
 

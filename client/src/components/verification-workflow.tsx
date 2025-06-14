@@ -11,6 +11,7 @@ import { CheckCircle, Clock, AlertTriangle, FileText, Youtube, Shield, Zap } fro
 
 interface VerificationWorkflowProps {
   rightType: string;
+  initialYouTubeUrl?: string;
   onVerificationComplete: (verificationData: VerificationData) => void;
   onCanMintNFT: (canMint: boolean) => void;
 }
@@ -24,13 +25,23 @@ interface VerificationData {
   verifiedAt?: Date;
 }
 
-export function VerificationWorkflow({ rightType, onVerificationComplete, onCanMintNFT }: VerificationWorkflowProps) {
+export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificationComplete, onCanMintNFT }: VerificationWorkflowProps) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [verificationMethod, setVerificationMethod] = useState<'youtube' | 'manual' | 'hybrid'>('manual');
+  const [verificationMethod, setVerificationMethod] = useState<'youtube' | 'manual' | 'hybrid'>(() => {
+    // Auto-select YouTube verification if URL is provided
+    return initialYouTubeUrl && initialYouTubeUrl.trim() ? 'youtube' : 'manual';
+  });
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [youtubeVerification, setYoutubeVerification] = useState<any>(null);
   const [verificationStatus, setVerificationStatus] = useState<'incomplete' | 'pending' | 'verified' | 'rejected'>('incomplete');
   const [canProceedToMint, setCanProceedToMint] = useState(false);
+
+  // Auto-advance to step 2 if YouTube URL is provided
+  useEffect(() => {
+    if (initialYouTubeUrl && initialYouTubeUrl.trim()) {
+      setCurrentStep(2);
+    }
+  }, [initialYouTubeUrl]);
 
   // Check if verification is complete and user can mint NFT
   useEffect(() => {
@@ -296,6 +307,7 @@ export function VerificationWorkflow({ rightType, onVerificationComplete, onCanM
           {verificationMethod === 'youtube' ? (
             <YouTubeVerificationWizard
               rightType={rightType}
+              initialUrl={initialYouTubeUrl}
               onVerificationSuccess={handleYouTubeVerification}
               onSkip={() => {
                 setVerificationMethod('manual');
