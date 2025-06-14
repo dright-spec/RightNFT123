@@ -15,6 +15,8 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { insertRightSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { VerificationWorkflow } from "@/components/verification-workflow";
+import { FeeInfo } from "@/components/fee-info";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -45,6 +47,8 @@ export default function CreateRight() {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [videoDetails, setVideoDetails] = useState<any>(null);
+  const [verificationData, setVerificationData] = useState<any>(null);
+  const [canMintNFT, setCanMintNFT] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const ownershipInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -117,7 +121,25 @@ export default function CreateRight() {
     }
   };
 
+  const handleVerificationComplete = (data: any) => {
+    setVerificationData(data);
+  };
+
+  const handleCanMintNFT = (canMint: boolean) => {
+    setCanMintNFT(canMint);
+  };
+
   const onSubmit = async (data: CreateRightFormData) => {
+    // Verify that verification is complete before allowing submission
+    if (!canMintNFT) {
+      toast({
+        title: "Verification Required",
+        description: "Please complete the verification process before minting your NFT.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -133,7 +155,10 @@ export default function CreateRight() {
         ...data,
         imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : null,
         youtubeUrl: youtubeUrl || null,
-        verificationStatus: youtubeUrl ? "verified" : "pending",
+        verificationStatus: verificationData?.status || "pending",
+        verificationMethod: verificationData?.method || "manual",
+        verificationFiles: verificationData?.files || [],
+        youtubeData: verificationData?.youtubeData,
         isListed: true,
       };
 
@@ -398,96 +423,11 @@ export default function CreateRight() {
             {/* Step 2: Verification */}
             {currentStep === 2 && (
               <div className="space-y-6 animate-fade-in">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="w-5 h-5" />
-                      Verify Ownership
-                    </CardTitle>
-                    <CardDescription>
-                      Verify that you own the rights to this content
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* YouTube Verification */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Youtube className="w-5 h-5 text-red-600" />
-                        <h3 className="font-medium">YouTube Verification (Recommended)</h3>
-                        <Badge variant="secondary">Instant</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        If this is YouTube content, paste the URL for instant verification
-                      </p>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="https://www.youtube.com/watch?v=..."
-                          value={youtubeUrl}
-                          onChange={(e) => setYoutubeUrl(e.target.value)}
-                          className="flex-1"
-                        />
-                        <Button
-                          type="button"
-                          onClick={verifyYouTube}
-                          disabled={!youtubeUrl || isVerifying}
-                          variant="outline"
-                        >
-                          {isVerifying ? "Verifying..." : "Verify"}
-                        </Button>
-                      </div>
-                      {videoDetails && (
-                        <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg">
-                          <Check className="w-4 h-4 text-green-600" />
-                          <span className="text-sm text-green-700 dark:text-green-300">
-                            YouTube ownership verified for: {videoDetails.title}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Manual Verification */}
-                    <div className="space-y-4 pt-4 border-t">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-primary" />
-                        <h3 className="font-medium">Document Verification</h3>
-                        <Badge variant="outline">Manual Review</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Upload documents proving your ownership (contracts, receipts, registration certificates)
-                      </p>
-                      <div
-                        className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
-                        onClick={() => ownershipInputRef.current?.click()}
-                      >
-                        {ownershipFiles.length > 0 ? (
-                          <div className="space-y-2">
-                            {ownershipFiles.map((file, index) => (
-                              <div key={index} className="flex items-center justify-center gap-2">
-                                <FileText className="w-4 h-4 text-primary" />
-                                <span className="text-sm">{file.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div>
-                            <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
-                            <p className="text-sm text-muted-foreground">
-                              Click to upload ownership documents
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      <input
-                        ref={ownershipInputRef}
-                        type="file"
-                        className="hidden"
-                        multiple
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileUpload(e, 'ownership')}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                <VerificationWorkflow 
+                  rightType={form.watch("type") || "copyright"}
+                  onVerificationComplete={handleVerificationComplete}
+                  onCanMintNFT={handleCanMintNFT}
+                />
 
                 <div className="flex justify-between">
                   <Button
