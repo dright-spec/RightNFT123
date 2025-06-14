@@ -1,4 +1,4 @@
-import { users, rights, transactions, type User, type InsertUser, type Right, type InsertRight, type RightWithCreator, type Transaction, type InsertTransaction } from "@shared/schema";
+import type { User, Right, Transaction, InsertUser, InsertRight, InsertTransaction, RightWithCreator } from "@shared/schema";
 
 export interface IStorage {
   // User methods
@@ -30,7 +30,6 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentRightId: number;
   private currentTransactionId: number;
-  private currentTokenId: number;
 
   constructor() {
     this.users = new Map();
@@ -39,204 +38,8 @@ export class MemStorage implements IStorage {
     this.currentUserId = 1;
     this.currentRightId = 1;
     this.currentTransactionId = 1;
-    this.currentTokenId = 1;
     
-    // Only seed minimal data - no mock users that interfere with real wallet connections
-    this.seedMinimalData();
-  }
-
-  private seedMinimalData() {
-    // No pre-seeded users - they will be created when real wallets connect
-    // This ensures the wallet connects to your actual browser wallet, not test data
-    
-    // Only add one sample right for admin testing purposes
-    const testRight: Right = {
-      id: this.currentRightId++,
-      tokenId: this.currentTokenId++,
-      title: "Test Right for Admin Panel",
-      type: "copyright",
-      description: "Test right to verify admin functionality is working properly",
-      symbol: "📄",
-      paysDividends: false,
-      price: "1.0",
-      currency: "HBAR",
-      verificationStatus: "pending",
-      listingType: "fixed",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      creatorId: 999, // Will be replaced when real user connects
-      ownerId: 999,
-      categoryId: null,
-      tags: null,
-      imageUrl: null,
-      paymentAddress: null,
-      paymentFrequency: null,
-      revenueDistributionMethod: null,
-      distributionPercentage: null,
-      minimumDistribution: null,
-      distributionDetails: null,
-      contentFileHash: null,
-      contentFileUrl: null,
-      verifiedAt: null,
-      verifiedBy: null,
-      verificationNotes: null,
-      legalDocumentHash: null,
-      legalDocumentUrl: null,
-      ownershipDocumentHash: null,
-      ownershipDocumentUrl: null,
-      hederaAccountId: null,
-      hederaTokenId: null,
-      hederaTransactionId: null,
-      hederaNftSerialNumber: null,
-      hederaNetwork: null
-    };
-    
-    this.rights.set(testRight.id, testRight);
-  }
-
-  private seedData() {
-    // Legacy method - not used to avoid mock data interference
-    // All data will be created when real users connect with actual wallets
-  }
-        title: 'Streaming Rights: "Midnight Vibes"',
-        type: "copyright",
-        description: "Exclusive streaming royalty rights for the viral hit 'Midnight Vibes' across Spotify, Apple Music, YouTube Music, and all major platforms. Track has 2.5M+ streams.",
-        symbol: "📄",
-        paysDividends: true,
-        paymentAddress: "0x1234567890123456789012345678901234567890",
-        paymentFrequency: "monthly",
-        price: "3.2",
-        currency: "ETH",
-        legalDocumentHash: "QmHash1",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash1",
-        creatorId: user1.id,
-        ownerId: user1.id,
-      },
-      {
-        title: "TikTok Viral Song Rights",
-        type: "copyright",
-        description: "Rights to 'Summer Bounce' - the 15-second clip that went viral on TikTok with 45M+ uses. Includes all social media platform rights.",
-        symbol: "📄",
-        paysDividends: true,
-        paymentAddress: "0x2345678901234567890123456789012345678901",
-        paymentFrequency: "streaming",
-        price: "15.8",
-        currency: "ETH",
-        legalDocumentHash: "QmHash2",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash2",
-        creatorId: user1.id,
-        ownerId: user1.id,
-      },
-      {
-        title: "YouTube Channel Revenue Share",
-        type: "royalty",
-        description: "20% share of ad revenue from 'BeatMaker Studios' YouTube channel with 850K subscribers. Monthly AdSense payouts included.",
-        symbol: "💰",
-        paysDividends: true,
-        paymentAddress: "0x3456789012345678901234567890123456789012",
-        paymentFrequency: "monthly",
-        price: "12.5",
-        currency: "ETH",
-        legalDocumentHash: "QmHash3",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash3",
-        creatorId: user1.id,
-        ownerId: user1.id,
-      },
-      {
-        title: "Music Producer Sample Pack",
-        type: "ownership",
-        description: "50% ownership of 'Lo-Fi Dreams' sample pack used by 500+ producers. Royalties from all beats created using these samples.",
-        symbol: "🏢",
-        paysDividends: true,
-        paymentAddress: "0x4567890123456789012345678901234567890123",
-        paymentFrequency: "monthly",
-        price: "6.9",
-        currency: "ETH",
-        legalDocumentHash: "QmHash4",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash4",
-        creatorId: user2.id,
-        ownerId: user2.id,
-      },
-      {
-        title: "Real Estate Income Share",
-        type: "royalty",
-        description: "25% profit share from luxury apartment building in downtown Miami. Quarterly distributions from rental income and property appreciation.",
-        symbol: "💰",
-        paysDividends: true,
-        paymentAddress: "0x5678901234567890123456789012345678901234",
-        paymentFrequency: "quarterly",
-        price: "18.0",
-        currency: "ETH",
-        legalDocumentHash: "QmHash5",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash5",
-        creatorId: user2.id,
-        ownerId: user2.id,
-      },
-      {
-        title: "Patent License: AI Music Generator",
-        type: "license",
-        description: "Commercial licensing rights for patented AI music generation algorithm. Used by 15+ music production companies worldwide.",
-        symbol: "📜",
-        paysDividends: true,
-        paymentAddress: "0x6789012345678901234567890123456789012345",
-        paymentFrequency: "quarterly",
-        price: "45.2",
-        currency: "ETH",
-        legalDocumentHash: "QmHash6",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash6",
-        creatorId: user2.id,
-        ownerId: user2.id,
-      },
-      {
-        title: "Trademark Rights: 'EcoWave'",
-        type: "ownership",
-        description: "Full trademark ownership for 'EcoWave' brand in renewable energy sector. Includes licensing opportunities across 15 countries.",
-        symbol: "🏢",
-        paysDividends: true,
-        paymentAddress: "0x7890123456789012345678901234567890123456",
-        paymentFrequency: "yearly",
-        price: "22.1",
-        currency: "ETH",
-        legalDocumentHash: "QmHash7",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash7",
-        creatorId: user1.id,
-        ownerId: user1.id,
-      },
-      {
-        title: "VIP Event Access Pass",
-        type: "access",
-        description: "Lifetime VIP access to all TechCon events worldwide, including backstage passes and exclusive speaker dinners.",
-        symbol: "🔐",
-        paysDividends: false,
-        price: "2.8",
-        currency: "ETH",
-        legalDocumentHash: "QmHash8",
-        legalDocumentUrl: "https://ipfs.io/ipfs/QmHash8",
-        creatorId: user2.id,
-        ownerId: user2.id,
-      },
-    ];
-
-    sampleRights.forEach(rightData => {
-      const right: Right = {
-        ...rightData,
-        id: this.currentRightId++,
-        tokenId: this.currentTokenId++,
-        paysDividends: rightData.paysDividends || false,
-        paymentAddress: rightData.paymentAddress || null,
-        paymentFrequency: rightData.paymentFrequency || null,
-        price: rightData.price || null,
-        currency: rightData.currency || null,
-        legalDocumentHash: rightData.legalDocumentHash || null,
-        legalDocumentUrl: rightData.legalDocumentUrl || null,
-        metadataHash: `QmMetadata${this.currentRightId - 1}`,
-        metadataUrl: `https://ipfs.io/ipfs/QmMetadata${this.currentRightId - 1}`,
-        isListed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      this.rights.set(right.id, right);
-    });
+    // Clean start - no mock data to interfere with real wallet connections
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -244,22 +47,48 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    for (const user of Array.from(this.users.values())) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    return undefined;
   }
 
   async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.walletAddress === walletAddress);
+    for (const user of Array.from(this.users.values())) {
+      if (user.walletAddress === walletAddress) {
+        return user;
+      }
+    }
+    return undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
     const user: User = { 
-      ...insertUser, 
-      id, 
+      id: this.currentUserId++,
+      username: insertUser.username,
+      password: insertUser.password || "",
       walletAddress: insertUser.walletAddress || null,
-      createdAt: new Date() 
+      email: insertUser.email || null,
+      profileImageUrl: insertUser.profileImageUrl || null,
+      coverImageUrl: null,
+      bio: insertUser.bio || null,
+      website: insertUser.website || null,
+      twitter: insertUser.twitter || null,
+      instagram: insertUser.instagram || null,
+      youtube: null,
+      isVerified: false,
+      isBanned: false,
+      totalEarnings: "0",
+      totalSales: 0,
+      followerCount: 0,
+      followingCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
-    this.users.set(id, user);
+    
+    this.users.set(user.id, user);
     return user;
   }
 
@@ -270,29 +99,31 @@ export class MemStorage implements IStorage {
   async getRightWithCreator(id: number): Promise<RightWithCreator | undefined> {
     const right = this.rights.get(id);
     if (!right) return undefined;
-    
-    const creator = this.users.get(right.creatorId!);
-    const owner = this.users.get(right.ownerId!);
+
+    const creator = this.users.get(right.creatorId);
+    const owner = this.users.get(right.ownerId);
     
     if (!creator || !owner) return undefined;
-    
-    return { ...right, creator, owner };
+
+    return {
+      ...right,
+      creator,
+      owner
+    };
   }
 
   async getRights(limit = 20, offset = 0, type?: string, isListed?: boolean): Promise<Right[]> {
-    let allRights = Array.from(this.rights.values());
+    let rights = Array.from(this.rights.values());
     
     if (type) {
-      allRights = allRights.filter(right => right.type === type);
+      rights = rights.filter(r => r.type === type);
     }
     
     if (isListed !== undefined) {
-      allRights = allRights.filter(right => right.isListed === isListed);
+      rights = rights.filter(r => r.listingType !== null);
     }
     
-    return allRights
-      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
-      .slice(offset, offset + limit);
+    return rights.slice(offset, offset + limit);
   }
 
   async getRightsWithCreator(limit = 20, offset = 0, type?: string, isListed?: boolean): Promise<RightWithCreator[]> {
@@ -300,11 +131,15 @@ export class MemStorage implements IStorage {
     const rightsWithCreator: RightWithCreator[] = [];
     
     for (const right of rights) {
-      const creator = this.users.get(right.creatorId!);
-      const owner = this.users.get(right.ownerId!);
+      const creator = this.users.get(right.creatorId);
+      const owner = this.users.get(right.ownerId);
       
       if (creator && owner) {
-        rightsWithCreator.push({ ...right, creator, owner });
+        rightsWithCreator.push({
+          ...right,
+          creator,
+          owner
+        });
       }
     }
     
@@ -312,43 +147,63 @@ export class MemStorage implements IStorage {
   }
 
   async getRightsByCreator(creatorId: number): Promise<Right[]> {
-    return Array.from(this.rights.values()).filter(right => right.creatorId === creatorId);
+    return Array.from(this.rights.values()).filter(r => r.creatorId === creatorId);
   }
 
   async getRightsByOwner(ownerId: number): Promise<Right[]> {
-    return Array.from(this.rights.values()).filter(right => right.ownerId === ownerId);
+    return Array.from(this.rights.values()).filter(r => r.ownerId === ownerId);
   }
 
   async createRight(rightData: InsertRight & { creatorId: number; ownerId: number }): Promise<Right> {
-    const id = this.currentRightId++;
-    const tokenId = this.currentTokenId++;
-    
     const right: Right = {
-      ...rightData,
-      id,
-      tokenId,
+      id: this.currentRightId++,
+      tokenId: null,
+      title: rightData.title,
+      type: rightData.type,
+      description: rightData.description,
+      symbol: rightData.symbol,
+      categoryId: rightData.categoryId || null,
+      tags: rightData.tags || null,
+      imageUrl: rightData.imageUrl || null,
       paysDividends: rightData.paysDividends || false,
       paymentAddress: rightData.paymentAddress || null,
       paymentFrequency: rightData.paymentFrequency || null,
+      revenueDistributionMethod: rightData.revenueDistributionMethod || null,
+      distributionPercentage: rightData.distributionPercentage || null,
+      minimumDistribution: rightData.minimumDistribution || null,
+      distributionDetails: rightData.distributionDetails || null,
+      listingType: rightData.listingType || null,
       price: rightData.price || null,
       currency: rightData.currency || null,
+      contentFileHash: rightData.contentFileHash || null,
+      contentFileUrl: rightData.contentFileUrl || null,
+      verificationStatus: "pending",
+      verifiedAt: null,
+      verifiedBy: null,
+      verificationNotes: rightData.verificationNotes || null,
       legalDocumentHash: rightData.legalDocumentHash || null,
       legalDocumentUrl: rightData.legalDocumentUrl || null,
-      metadataHash: `QmMetadata${id}`,
-      metadataUrl: `https://ipfs.io/ipfs/QmMetadata${id}`,
-      isListed: false,
+      ownershipDocumentHash: rightData.ownershipDocumentHash || null,
+      ownershipDocumentUrl: rightData.ownershipDocumentUrl || null,
+      hederaAccountId: null,
+      hederaTokenId: null,
+      hederaTransactionId: null,
+      hederaNftSerialNumber: null,
+      hederaNetwork: null,
+      creatorId: rightData.creatorId,
+      ownerId: rightData.ownerId,
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     };
     
-    this.rights.set(id, right);
+    this.rights.set(right.id, right);
     return right;
   }
 
   async updateRight(id: number, updates: Partial<Right>): Promise<Right | undefined> {
     const right = this.rights.get(id);
     if (!right) return undefined;
-    
+
     const updatedRight = { ...right, ...updates, updatedAt: new Date() };
     this.rights.set(id, updatedRight);
     return updatedRight;
@@ -359,23 +214,24 @@ export class MemStorage implements IStorage {
   }
 
   async getTransactionsByRight(rightId: number): Promise<Transaction[]> {
-    return Array.from(this.transactions.values()).filter(tx => tx.rightId === rightId);
+    return Array.from(this.transactions.values()).filter(t => t.rightId === rightId);
   }
 
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
-    const id = this.currentTransactionId++;
     const transaction: Transaction = {
-      ...insertTransaction,
-      id,
-      price: insertTransaction.price || null,
-      currency: insertTransaction.currency || null,
+      id: this.currentTransactionId++,
       rightId: insertTransaction.rightId || null,
       fromUserId: insertTransaction.fromUserId || null,
       toUserId: insertTransaction.toUserId || null,
+      type: insertTransaction.type,
+      price: insertTransaction.price || null,
+      currency: insertTransaction.currency || null,
       transactionHash: insertTransaction.transactionHash || null,
       createdAt: new Date(),
+      updatedAt: new Date()
     };
-    this.transactions.set(id, transaction);
+    
+    this.transactions.set(transaction.id, transaction);
     return transaction;
   }
 }

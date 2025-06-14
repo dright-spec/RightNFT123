@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { marketplaceStorage } from "./marketplaceStorage";
+import { marketplaceStorage as storage } from "./marketplaceStorage";
 import { db } from "./db";
 import { users, rights } from "@shared/schema";
 import { eq, desc, or, ilike, sql } from "drizzle-orm";
