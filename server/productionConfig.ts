@@ -147,6 +147,7 @@ export function setupErrorHandling(app: Express) {
 
 // Health check endpoint for deployment monitoring
 export function setupHealthCheck(app: Express) {
+  // Health check endpoints (no root endpoint to avoid conflicts with frontend)
   app.get('/health', (req, res) => {
     res.status(200).json({
       status: 'healthy',
