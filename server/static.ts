@@ -1,9 +1,25 @@
 import express, { type Express } from "express";
 import path from "path";
+import fs from "fs";
 import { log } from "./vite";
 
 export function serveStatic(app: Express) {
   const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
+  
+  log(`Setting up static file serving from: ${distPath}`, "static");
+  
+  // Check if the directory exists
+  try {
+    if (fs.existsSync(distPath)) {
+      log(`Static directory exists: ${distPath}`, "static");
+      const files = fs.readdirSync(distPath);
+      log(`Files in static directory: ${files.join(', ')}`, "static");
+    } else {
+      log(`Static directory does not exist: ${distPath}`, "static");
+    }
+  } catch (error) {
+    log(`Error checking static directory: ${error}`, "static");
+  }
   
   // Serve static files from the built frontend
   app.use(express.static(distPath, {
