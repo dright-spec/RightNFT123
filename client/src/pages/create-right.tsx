@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { insertRightSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { VerificationWorkflow } from "@/components/verification-workflow";
+import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";

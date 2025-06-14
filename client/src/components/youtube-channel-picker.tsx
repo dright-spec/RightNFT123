@@ -138,10 +138,9 @@ export function YouTubeChannelPicker({
       return;
     }
 
-    const mintingCost = selectedVideosList.length * 100;
     toast({
       title: `${selectedVideosList.length} Videos Selected!`,
-      description: `Total minting cost: ${mintingCost} HBAR (100 HBAR per NFT)`,
+      description: `Ready for free NFT minting with royalties on future sales`,
     });
     
     if (onMultipleVideosSelect) {
@@ -391,7 +390,7 @@ export function YouTubeChannelPicker({
                   {selectedVideos.size} Video{selectedVideos.size > 1 ? 's' : ''} Selected
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Total minting cost: {selectedVideos.size * 100} HBAR ({selectedVideos.size} × 100 HBAR per NFT)
+                  Free NFT minting • Royalties on future sales only
                 </p>
               </div>
               <Button 
