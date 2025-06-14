@@ -55,10 +55,12 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   const isProduction = detectDeploymentEnvironment();
   
+  // Always setup deployment configuration first
+  setupDeploymentFix(app);
+  
   // Configure frontend serving based on environment
   if (isProduction) {
-    // Production: serve static files and handle deployment
-    setupDeploymentFix(app);
+    // Production: serve static files
     serveStatic(app);
   } else {
     // Development: use Vite dev server
