@@ -5,8 +5,30 @@ import { serveStatic } from "./static";
 import { configureProductionSecurity, setupErrorHandling, setupHealthCheck } from "./productionConfig";
 import { detectDeploymentEnvironment } from "./deployment";
 import { setupDeploymentFix } from "./deploymentFix";
+import path from "path";
+import fs from "fs";
 
 const app = express();
+
+// CRITICAL: Browser deployment detection MUST come before everything else
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const host = req.get('host') || '';
+  const userAgent = req.get('user-agent') || '';
+  const isFromBrowser = userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari');
+  const isDeployedDomain = host.includes('.replit.app') || host.includes('.repl.co');
+  
+  // Force static file serving for browser deployment requests
+  if (isFromBrowser && isDeployedDomain && !req.path.startsWith('/api')) {
+    log(`Browser deployment detected: ${host} - serving static file`, "deployment");
+    
+    const staticPath = path.resolve(import.meta.dirname, "..", "dist", "public", "index.html");
+    if (fs.existsSync(staticPath)) {
+      return res.sendFile(staticPath);
+    }
+  }
+  
+  next();
+});
 
 // Configure production-level security
 configureProductionSecurity(app);
@@ -55,6 +77,8 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   const isProduction = detectDeploymentEnvironment();
   
+
+
   // Always setup deployment configuration first
   setupDeploymentFix(app);
   
