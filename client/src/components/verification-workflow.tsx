@@ -204,8 +204,17 @@ export function VerificationWorkflow({ rightType, onVerificationComplete, onCanM
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">
-                        Connect your YouTube account to instantly verify video ownership. No waiting period required.
+                        <strong>Perfect for YouTube videos!</strong> Connect your Google account to automatically verify you own the video. Your NFT will be ready to mint immediately.
                       </p>
+                      <div className="bg-green-50 p-3 rounded-md mb-3">
+                        <p className="text-xs text-green-800 font-medium mb-2">How YouTube verification works:</p>
+                        <ol className="text-xs text-green-700 space-y-1 list-decimal list-inside">
+                          <li>Paste your YouTube video URL</li>
+                          <li>Sign in with your Google account</li>
+                          <li>We verify you own the channel</li>
+                          <li>Instant approval - mint your NFT right away!</li>
+                        </ol>
+                      </div>
                       <div className="flex items-center gap-4 text-xs text-green-700">
                         <span className="flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
@@ -213,7 +222,7 @@ export function VerificationWorkflow({ rightType, onVerificationComplete, onCanM
                         </span>
                         <span className="flex items-center gap-1">
                           <Shield className="w-3 h-3" />
-                          100% verified
+                          100% secure
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -239,20 +248,30 @@ export function VerificationWorkflow({ rightType, onVerificationComplete, onCanM
                         <Badge variant="outline">1-3 Days</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mb-3">
-                        Upload ownership documents for manual review by our verification team.
+                        <strong>For all other content types:</strong> Music, images, documents, patents, trademarks, and more. Upload legal documents proving ownership for expert review.
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="bg-blue-50 p-3 rounded-md mb-3">
+                        <p className="text-xs text-blue-800 font-medium mb-2">Document verification process:</p>
+                        <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                          <li>Upload ownership certificates, contracts, or legal docs</li>
+                          <li>Our verification experts review your submission</li>
+                          <li>Additional documents may be requested if needed</li>
+                          <li>Approval typically takes 24-48 hours</li>
+                          <li>Once approved, your NFT is ready to mint</li>
+                        </ol>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-blue-700">
                         <span className="flex items-center gap-1">
                           <FileText className="w-3 h-3" />
-                          Document upload
+                          Expert review
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Admin review
+                          24-48 hours
                         </span>
                         <span className="flex items-center gap-1">
                           <Shield className="w-3 h-3" />
-                          Secure process
+                          Legal compliance
                         </span>
                       </div>
                     </div>

@@ -76,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         success: true,
         message: "YouTube video verified successfully",
-        data: mockVideoData
+        data: videoData
       });
       
     } catch (error) {

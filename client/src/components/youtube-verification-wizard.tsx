@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Youtube, CheckCircle, XCircle, Loader2, Clock, ArrowRight, Zap, Shield } from "lucide-react";
+import { Youtube, CheckCircle, XCircle, Loader2, Clock, ArrowRight, Zap, Shield, AlertTriangle, ExternalLink } from "lucide-react";
 
 interface YouTubeVerificationWizardProps {
   onVerificationSuccess: (videoDetails: any) => void;
