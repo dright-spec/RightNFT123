@@ -56,6 +56,9 @@ export function YouTubeVerificationWizard({ onVerificationSuccess, onSkip, right
         description: errorMessage,
         variant: "destructive",
       });
+      
+      // Log error for debugging
+      console.error('YouTube verification error:', error);
     } finally {
       setIsVerifying(false);
     }

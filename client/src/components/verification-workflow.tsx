@@ -34,29 +34,33 @@ export function VerificationWorkflow({ rightType, onVerificationComplete, onCanM
 
   // Check if verification is complete and user can mint NFT
   useEffect(() => {
-    const hasRequiredFiles = uploadedFiles.length > 0;
-    const isYouTubeVerified = youtubeVerification?.success;
-    const isVerified = verificationStatus === 'verified';
-    
-    // User can mint NFT only if:
-    // 1. They have YouTube verification (instant approval), OR
-    // 2. They have uploaded files AND admin has approved them
-    const canMint = isYouTubeVerified || (hasRequiredFiles && isVerified);
-    
-    setCanProceedToMint(canMint);
-    onCanMintNFT(canMint);
-
-    // Update verification data
-    if (hasRequiredFiles || isYouTubeVerified) {
-      const verificationData: VerificationData = {
-        method: isYouTubeVerified ? 'youtube' : 'manual',
-        status: isYouTubeVerified ? 'verified' : (hasRequiredFiles ? 'pending' : 'incomplete'),
-        files: uploadedFiles,
-        youtubeData: youtubeVerification,
-        verifiedAt: isYouTubeVerified ? new Date() : undefined
-      };
+    try {
+      const hasRequiredFiles = uploadedFiles.length > 0;
+      const isYouTubeVerified = youtubeVerification?.success;
+      const isVerified = verificationStatus === 'verified';
       
-      onVerificationComplete(verificationData);
+      // User can mint NFT only if:
+      // 1. They have YouTube verification (instant approval), OR
+      // 2. They have uploaded files AND admin has approved them
+      const canMint = isYouTubeVerified || (hasRequiredFiles && isVerified);
+      
+      setCanProceedToMint(canMint);
+      onCanMintNFT(canMint);
+
+      // Update verification data
+      if (hasRequiredFiles || isYouTubeVerified) {
+        const verificationData: VerificationData = {
+          method: isYouTubeVerified ? 'youtube' : 'manual',
+          status: isYouTubeVerified ? 'verified' : (hasRequiredFiles ? 'pending' : 'incomplete'),
+          files: uploadedFiles,
+          youtubeData: youtubeVerification,
+          verifiedAt: isYouTubeVerified ? new Date() : undefined
+        };
+        
+        onVerificationComplete(verificationData);
+      }
+    } catch (error) {
+      console.error('Verification workflow error:', error);
     }
   }, [uploadedFiles, youtubeVerification, verificationStatus, onVerificationComplete, onCanMintNFT]);
 
