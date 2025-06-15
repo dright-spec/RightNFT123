@@ -26,6 +26,7 @@ const createRightFormSchema = insertRightSchema.extend({
   tags: z.array(z.string()).optional(),
   youtubeUrl: z.string().optional(),
   verificationMethod: z.enum(["youtube", "manual", "documents"]).optional(),
+  contentSource: z.enum(["youtube", "upload", "other"]).default("youtube"),
 });
 
 type CreateRightFormData = z.infer<typeof createRightFormSchema>;
@@ -67,6 +68,7 @@ export default function CreateRight() {
       currency: "HBAR",
       paysDividends: false,
       tags: [],
+      contentSource: "youtube",
     },
   });
 
@@ -310,6 +312,113 @@ export default function CreateRight() {
             {/* Step 1: Content & Details */}
             {currentStep === 1 && (
               <div className="space-y-6 animate-fade-in">
+                {/* Content Source Selection - Prominent YouTube Option */}
+                <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <Youtube className="w-6 h-6 text-red-600" />
+                      What are you selling?
+                    </CardTitle>
+                    <CardDescription className="text-base">
+                      Choose your content source to get started with streamlined verification
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <FormField
+                      control={form.control}
+                      name="contentSource"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* YouTube Video Copyright - Featured Option */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'youtube'
+                                  ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('youtube');
+                                form.setValue('type', 'copyright');
+                              }}
+                            >
+                              <CardContent className="p-6 text-center">
+                                <div className="relative">
+                                  <Youtube className="w-12 h-12 mx-auto mb-3 text-red-600" />
+                                  {field.value === 'youtube' && (
+                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                                      <Check className="w-4 h-4 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-lg mb-2">YouTube Video Copyright</h3>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Sell the copyright of your YouTube videos with instant verification
+                                </p>
+                                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                                  ⚡ Auto-Verified
+                                </Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Upload Content */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'upload'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => field.onChange('upload')}
+                            >
+                              <CardContent className="p-6 text-center">
+                                <div className="relative">
+                                  <Upload className="w-12 h-12 mx-auto mb-3 text-primary" />
+                                  {field.value === 'upload' && (
+                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-4 h-4 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-lg mb-2">Upload Files</h3>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Upload your own content files for any type of digital right
+                                </p>
+                                <Badge variant="outline">Manual Review</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Other Content */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'other'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => field.onChange('other')}
+                            >
+                              <CardContent className="p-6 text-center">
+                                <div className="relative">
+                                  <FileText className="w-12 h-12 mx-auto mb-3 text-primary" />
+                                  {field.value === 'other' && (
+                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-4 h-4 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-lg mb-2">Other Rights</h3>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  License agreements, royalties, or other intellectual property
+                                </p>
+                                <Badge variant="outline">Documentation Required</Badge>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -317,106 +426,172 @@ export default function CreateRight() {
                       Right Information
                     </CardTitle>
                     <CardDescription>
-                      Provide the basic details about your digital right
+                      {form.watch("contentSource") === "youtube" 
+                        ? "Since you're selling YouTube video copyright, we'll help you select and verify your videos in the next step"
+                        : "Provide the basic details about your digital right"
+                      }
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Right Type Selection */}
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Right Type *</FormLabel>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {rightTypes.map((type) => {
-                              const Icon = type.icon;
-                              return (
-                                <Card
-                                  key={type.value}
-                                  className={`cursor-pointer transition-all hover:shadow-md ${
-                                    field.value === type.value
-                                      ? 'ring-2 ring-primary bg-primary/5'
-                                      : 'hover:bg-muted/50'
-                                  }`}
-                                  onClick={() => field.onChange(type.value)}
-                                >
-                                  <CardContent className="p-4 text-center">
-                                    <Icon className="w-8 h-8 mx-auto mb-2 text-primary" />
-                                    <h4 className="font-medium text-sm">{type.label}</h4>
-                                    <p className="text-xs text-muted-foreground mt-1">{type.description}</p>
-                                  </CardContent>
-                                </Card>
-                              );
-                            })}
+                    {/* Right Type Selection - Auto-filled for YouTube */}
+                    {form.watch("contentSource") === "youtube" ? (
+                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-green-600 dark:text-green-400" />
                           </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Title *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter a descriptive title" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Content File</label>
-                        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*,video/*,audio/*,.pdf"
-                            onChange={(e) => handleFileUpload(e, 'main')}
-                            className="hidden"
-                          />
-                          <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
                           <div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => fileInputRef.current?.click()}
-                            >
-                              Choose File
-                            </Button>
-                            <p className="text-xs text-muted-foreground mt-2">
-                              {selectedFile ? selectedFile.name : 'Support: images, videos, audio, documents'}
+                            <h4 className="font-medium text-green-800 dark:text-green-200">Copyright Selected</h4>
+                            <p className="text-sm text-green-600 dark:text-green-400">
+                              Perfect for YouTube video ownership rights
                             </p>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Right Type *</FormLabel>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {rightTypes.map((type) => {
+                                const Icon = type.icon;
+                                return (
+                                  <Card
+                                    key={type.value}
+                                    className={`cursor-pointer transition-all hover:shadow-md ${
+                                      field.value === type.value
+                                        ? 'ring-2 ring-primary bg-primary/5'
+                                        : 'hover:bg-muted/50'
+                                    }`}
+                                    onClick={() => field.onChange(type.value)}
+                                  >
+                                    <CardContent className="p-4 text-center">
+                                      <Icon className="w-8 h-8 mx-auto mb-2 text-primary" />
+                                      <h4 className="font-medium text-sm">{type.label}</h4>
+                                      <p className="text-xs text-muted-foreground mt-1">{type.description}</p>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description *</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Describe your right, its uniqueness, and what buyers will receive..."
-                              className="min-h-[120px] resize-none"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Provide details about ownership, usage rights, and any restrictions
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* Conditional Fields Based on Content Source */}
+                    {form.watch("contentSource") === "youtube" ? (
+                      // YouTube-specific simplified form
+                      <div className="space-y-4">
+                        <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Youtube className="w-5 h-5 text-blue-600 mt-0.5" />
+                            <div>
+                              <p className="font-medium text-blue-800 dark:text-blue-200">
+                                Quick Setup for YouTube Videos
+                              </p>
+                              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                                We'll help you select your videos and auto-fill details in the next step. 
+                                For now, just provide a brief overview of what you're selling.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>What are you selling? *</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Briefly describe the YouTube video copyright you're selling (e.g., 'Copyright to my tutorial series on web development' or 'Ownership rights to my music videos')"
+                                  className="min-h-[100px] resize-none"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Keep it simple - we'll add video-specific details automatically
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ) : (
+                      // Standard form for other content types
+                      <div className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Title *</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter a descriptive title" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {form.watch("contentSource") === "upload" && (
+                            <div>
+                              <label className="text-sm font-medium mb-2 block">Content File</label>
+                              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                                <input
+                                  ref={fileInputRef}
+                                  type="file"
+                                  accept="image/*,video/*,audio/*,.pdf"
+                                  onChange={(e) => handleFileUpload(e, 'main')}
+                                  className="hidden"
+                                />
+                                <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
+                                <div>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                  >
+                                    Choose File
+                                  </Button>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    {selectedFile ? selectedFile.name : 'Support: images, videos, audio, documents'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description *</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder="Describe your right, its uniqueness, and what buyers will receive..."
+                                  className="min-h-[120px] resize-none"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Provide details about ownership, usage rights, and any restrictions
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -424,10 +599,17 @@ export default function CreateRight() {
                   <Button
                     type="button"
                     onClick={() => setCurrentStep(2)}
-                    disabled={!form.watch("title") || !form.watch("description")}
+                    disabled={
+                      form.watch("contentSource") === "youtube" 
+                        ? !form.watch("description")
+                        : !form.watch("title") || !form.watch("description")
+                    }
                     className="px-8"
                   >
-                    Next: Verification
+                    {form.watch("contentSource") === "youtube" 
+                      ? "Next: Connect YouTube" 
+                      : "Next: Verification"
+                    }
                     <Shield className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
@@ -541,7 +723,7 @@ export default function CreateRight() {
                               </FormDescription>
                             </div>
                             <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                              <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
                             </FormControl>
                           </FormItem>
                         )}
