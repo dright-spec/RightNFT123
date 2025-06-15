@@ -20,6 +20,13 @@ provider.addScope('https://www.googleapis.com/auth/youtube.channel-memberships.c
 
 export const signInWithGoogle = async () => {
   try {
+    console.log('Firebase config check:', {
+      hasApiKey: !!import.meta.env.VITE_FIREBASE_API_KEY,
+      hasProjectId: !!import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      hasAppId: !!import.meta.env.VITE_FIREBASE_APP_ID,
+      authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`
+    });
+    
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     const token = credential?.accessToken;
@@ -31,9 +38,23 @@ export const signInWithGoogle = async () => {
     };
   } catch (error: any) {
     console.error('Google sign-in error:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      customData: error.customData
+    });
+    
+    // Provide specific error guidance
+    let userMessage = error.message;
+    if (error.code === 'auth/internal-error') {
+      userMessage = 'Firebase authentication configuration error. Please check domain authorization in Firebase Console.';
+    } else if (error.code === 'auth/unauthorized-domain') {
+      userMessage = 'Domain not authorized. Add this domain to Firebase Console > Authentication > Settings > Authorized domains.';
+    }
+    
     return {
       success: false,
-      error: error.message
+      error: userMessage
     };
   }
 };
