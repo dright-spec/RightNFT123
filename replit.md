@@ -22,11 +22,12 @@ Dright is a comprehensive web3 marketplace for tokenizing and trading legal righ
 - **File Processing**: IPFS integration for metadata storage
 
 ### Blockchain Integration
-- **Blockchain**: Hedera Hashgraph (testnet/mainnet)
-- **NFT Standard**: Hedera Token Service (HTS)
-- **Wallet**: HashPack integration via HashConnect
+- **Blockchain**: Ethereum (mainnet/sepolia testnet)
+- **NFT Standard**: ERC-721 with ERC-2981 royalty support
+- **Wallet**: MetaMask integration with Web3 provider
 - **Storage**: IPFS for NFT metadata and legal documents
-- **Currency**: HBAR (Hedera's native cryptocurrency)
+- **Currency**: ETH (Ethereum's native cryptocurrency)
+- **Smart Contracts**: Custom rights tokenization with automated revenue distribution
 
 ## Key Components
 
