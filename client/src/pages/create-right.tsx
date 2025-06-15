@@ -723,7 +723,7 @@ export default function CreateRight() {
                     )}
 
                     {/* Conditional Fields Based on Content Source */}
-                    {form.watch("contentSource") === "youtube" ? (
+                    {form.watch("contentSource") === "youtube_video" ? (
                       // YouTube-specific simplified form
                       <div className="space-y-4">
                         <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -780,7 +780,7 @@ export default function CreateRight() {
                             )}
                           />
 
-                          {form.watch("contentSource") === "upload" && (
+                          {form.watch("contentSource") !== "youtube_video" && (
                             <div>
                               <label className="text-sm font-medium mb-2 block">Content File</label>
                               <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
@@ -840,13 +840,13 @@ export default function CreateRight() {
                     type="button"
                     onClick={() => setCurrentStep(2)}
                     disabled={
-                      form.watch("contentSource") === "youtube" 
+                      form.watch("contentSource") === "youtube_video" 
                         ? !form.watch("description")
                         : !form.watch("title") || !form.watch("description")
                     }
                     className="px-8"
                   >
-                    {form.watch("contentSource") === "youtube" 
+                    {form.watch("contentSource") === "youtube_video" 
                       ? "Next: Connect YouTube" 
                       : "Next: Verification"
                     }
