@@ -7,21 +7,15 @@ import fs from "fs";
 
 const app = express();
 
-// CRITICAL: Browser deployment detection MUST come before everything else
+// Enhanced domain detection for Autoscale deployment
 app.use((req: Request, res: Response, next: NextFunction) => {
   const host = req.get('host') || '';
-  const userAgent = req.get('user-agent') || '';
-  const isFromBrowser = userAgent.includes('Mozilla') || userAgent.includes('Chrome') || userAgent.includes('Safari');
   const isDeployedDomain = host.includes('.replit.app') || host.includes('.repl.co');
   
-  // Force static file serving for browser deployment requests
-  if (isFromBrowser && isDeployedDomain && !req.path.startsWith('/api')) {
-    log(`Browser deployment detected: ${host} - serving static file`, "deployment");
-    
-    const staticPath = path.resolve(import.meta.dirname, "..", "dist", "public", "index.html");
-    if (fs.existsSync(staticPath)) {
-      return res.sendFile(staticPath);
-    }
+  if (isDeployedDomain) {
+    // Set deployment environment flag for Autoscale
+    process.env.DEPLOYMENT_DETECTED = 'true';
+    res.header('X-Deployment-Mode', 'autoscale');
   }
   
   next();
@@ -37,6 +31,7 @@ setupHealthCheck(app);
 app.get('/api/deployment/health', (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production' || 
                       process.env.REPLIT_DEPLOYMENT === '1' ||
+                      process.env.DEPLOYMENT_DETECTED === 'true' ||
                       (!process.env.REPL_HOME && !!process.env.REPLIT_CLUSTER);
   
   const staticPath = path.resolve(import.meta.dirname, "..", "dist", "public");
@@ -51,10 +46,13 @@ app.get('/api/deployment/health', (req, res) => {
     environment: {
       NODE_ENV: process.env.NODE_ENV,
       REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+      DEPLOYMENT_DETECTED: process.env.DEPLOYMENT_DETECTED,
       REPL_HOME: !!process.env.REPL_HOME,
       REPLIT_CLUSTER: !!process.env.REPLIT_CLUSTER
     },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    port: process.env.PORT || 5000,
+    host: '0.0.0.0'
   });
 });
 
@@ -97,6 +95,7 @@ app.use((req, res, next) => {
   // Simplified deployment detection as per Instructions.md
   const isProduction = process.env.NODE_ENV === 'production' || 
                       process.env.REPLIT_DEPLOYMENT === '1' ||
+                      process.env.DEPLOYMENT_DETECTED === 'true' ||
                       (!process.env.REPL_HOME && !!process.env.REPLIT_CLUSTER);
   
   log(`Deployment mode: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`, "deployment");
