@@ -28,7 +28,7 @@ const createRightFormSchema = insertRightSchema.extend({
   tags: z.array(z.string()).optional(),
   youtubeUrl: z.string().optional(),
   verificationMethod: z.enum(["youtube", "manual", "documents"]).optional(),
-  contentSource: z.enum(["youtube", "upload", "other"]).default("youtube"),
+  contentSource: z.enum(["youtube_video", "music_track", "patent", "real_estate", "artwork", "software", "brand", "book", "other"]).default("youtube_video"),
 });
 
 type CreateRightFormData = z.infer<typeof createRightFormSchema>;
@@ -70,7 +70,7 @@ export default function CreateRight() {
       currency: "HBAR",
       paysDividends: false,
       tags: [],
-      contentSource: "youtube",
+      contentSource: "youtube_video",
     },
   });
 
@@ -392,65 +392,242 @@ export default function CreateRight() {
                       name="contentSource"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {/* YouTube Video Copyright - Featured Option */}
                             <Card
                               className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
-                                field.value === 'youtube'
+                                field.value === 'youtube_video'
                                   ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
                                   : 'hover:bg-muted/50 border-border'
                               }`}
                               onClick={() => {
-                                field.onChange('youtube');
+                                field.onChange('youtube_video');
                                 form.setValue('type', 'copyright');
                               }}
                             >
-                              <CardContent className="p-6 text-center">
+                              <CardContent className="p-4 text-center">
                                 <div className="relative">
-                                  <Youtube className="w-12 h-12 mx-auto mb-3 text-red-600" />
-                                  {field.value === 'youtube' && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                                      <Check className="w-4 h-4 text-white" />
+                                  <Youtube className="w-10 h-10 mx-auto mb-2 text-red-600" />
+                                  {field.value === 'youtube_video' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
                                     </div>
                                   )}
                                 </div>
-                                <h3 className="font-semibold text-lg mb-2">YouTube Video Copyright</h3>
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  Sell the copyright of your YouTube videos with instant verification
+                                <h3 className="font-semibold text-base mb-1">YouTube Video</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Video copyright with instant verification
                                 </p>
-                                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                                  ⚡ Auto-Verified
+                                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs">
+                                  Auto-Verified
                                 </Badge>
                               </CardContent>
                             </Card>
 
-                            {/* Upload Content */}
+                            {/* Music Track */}
                             <Card
                               className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
-                                field.value === 'upload'
+                                field.value === 'music_track'
                                   ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
                                   : 'hover:bg-muted/50 border-border'
                               }`}
-                              onClick={() => field.onChange('upload')}
+                              onClick={() => {
+                                field.onChange('music_track');
+                                form.setValue('type', 'copyright');
+                              }}
                             >
-                              <CardContent className="p-6 text-center">
+                              <CardContent className="p-4 text-center">
                                 <div className="relative">
-                                  <Upload className="w-12 h-12 mx-auto mb-3 text-primary" />
-                                  {field.value === 'upload' && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                                      <Check className="w-4 h-4 text-white" />
+                                  <Music className="w-10 h-10 mx-auto mb-2 text-primary" />
+                                  {field.value === 'music_track' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
                                     </div>
                                   )}
                                 </div>
-                                <h3 className="font-semibold text-lg mb-2">Upload Files</h3>
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  Upload your own content files for any type of digital right
+                                <h3 className="font-semibold text-base mb-1">Music Track</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Song, album, or musical composition
                                 </p>
-                                <Badge variant="outline">Manual Review</Badge>
+                                <Badge variant="outline" className="text-xs">Upload Required</Badge>
                               </CardContent>
                             </Card>
 
-                            {/* Other Content */}
+                            {/* Patent */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'patent'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('patent');
+                                form.setValue('type', 'license');
+                              }}
+                            >
+                              <CardContent className="p-4 text-center">
+                                <div className="relative">
+                                  <Shield className="w-10 h-10 mx-auto mb-2 text-blue-600" />
+                                  {field.value === 'patent' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-base mb-1">Patent</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Technology, invention, or process patent
+                                </p>
+                                <Badge variant="outline" className="text-xs">Documentation</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Real Estate */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'real_estate'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('real_estate');
+                                form.setValue('type', 'ownership');
+                              }}
+                            >
+                              <CardContent className="p-4 text-center">
+                                <div className="relative">
+                                  <Crown className="w-10 h-10 mx-auto mb-2 text-purple-600" />
+                                  {field.value === 'real_estate' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-base mb-1">Real Estate</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Property ownership or rental rights
+                                </p>
+                                <Badge variant="outline" className="text-xs">Legal Docs</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Artwork */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'artwork'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('artwork');
+                                form.setValue('type', 'copyright');
+                              }}
+                            >
+                              <CardContent className="p-4 text-center">
+                                <div className="relative">
+                                  <Star className="w-10 h-10 mx-auto mb-2 text-orange-600" />
+                                  {field.value === 'artwork' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-base mb-1">Artwork</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Digital art, photography, or design
+                                </p>
+                                <Badge variant="outline" className="text-xs">Upload Image</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Software */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'software'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('software');
+                                form.setValue('type', 'license');
+                              }}
+                            >
+                              <CardContent className="p-4 text-center">
+                                <div className="relative">
+                                  <FileText className="w-10 h-10 mx-auto mb-2 text-green-600" />
+                                  {field.value === 'software' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-base mb-1">Software</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Code, app, or software licensing
+                                </p>
+                                <Badge variant="outline" className="text-xs">Repository</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Brand */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'brand'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('brand');
+                                form.setValue('type', 'license');
+                              }}
+                            >
+                              <CardContent className="p-4 text-center">
+                                <div className="relative">
+                                  <Zap className="w-10 h-10 mx-auto mb-2 text-yellow-600" />
+                                  {field.value === 'brand' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-base mb-1">Brand</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Trademark, logo, or brand licensing
+                                </p>
+                                <Badge variant="outline" className="text-xs">Trademark</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Book */}
+                            <Card
+                              className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                                field.value === 'book'
+                                  ? 'ring-2 ring-primary bg-primary/5 border-primary/50'
+                                  : 'hover:bg-muted/50 border-border'
+                              }`}
+                              onClick={() => {
+                                field.onChange('book');
+                                form.setValue('type', 'copyright');
+                              }}
+                            >
+                              <CardContent className="p-4 text-center">
+                                <div className="relative">
+                                  <FileText className="w-10 h-10 mx-auto mb-2 text-indigo-600" />
+                                  {field.value === 'book' && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-base mb-1">Book</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Written work, e-book, or publication
+                                </p>
+                                <Badge variant="outline" className="text-xs">Copyright</Badge>
+                              </CardContent>
+                            </Card>
+
+                            {/* Other */}
                             <Card
                               className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
                                 field.value === 'other'
@@ -459,20 +636,20 @@ export default function CreateRight() {
                               }`}
                               onClick={() => field.onChange('other')}
                             >
-                              <CardContent className="p-6 text-center">
+                              <CardContent className="p-4 text-center">
                                 <div className="relative">
-                                  <FileText className="w-12 h-12 mx-auto mb-3 text-primary" />
+                                  <Upload className="w-10 h-10 mx-auto mb-2 text-gray-600" />
                                   {field.value === 'other' && (
-                                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                                      <Check className="w-4 h-4 text-white" />
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                      <Check className="w-3 h-3 text-white" />
                                     </div>
                                   )}
                                 </div>
-                                <h3 className="font-semibold text-lg mb-2">Other Rights</h3>
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  License agreements, royalties, or other intellectual property
+                                <h3 className="font-semibold text-base mb-1">Other</h3>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Custom or specialized rights
                                 </p>
-                                <Badge variant="outline">Documentation Required</Badge>
+                                <Badge variant="outline" className="text-xs">Manual Review</Badge>
                               </CardContent>
                             </Card>
                           </div>
@@ -489,7 +666,7 @@ export default function CreateRight() {
                       Right Information
                     </CardTitle>
                     <CardDescription>
-                      {form.watch("contentSource") === "youtube" 
+                      {form.watch("contentSource") === "youtube_video" 
                         ? "Since you're selling YouTube video copyright, we'll help you select and verify your videos in the next step"
                         : "Provide the basic details about your digital right"
                       }
@@ -497,7 +674,7 @@ export default function CreateRight() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Right Type Selection - Auto-filled for YouTube */}
-                    {form.watch("contentSource") === "youtube" ? (
+                    {form.watch("contentSource") === "youtube_video" ? (
                       <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
