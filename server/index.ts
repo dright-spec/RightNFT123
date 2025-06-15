@@ -135,15 +135,10 @@ app.use((req, res, next) => {
   setupErrorHandling(app);
 
   // Configure port for both development and deployment
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-  const host = process.env.HOST || "0.0.0.0";
+  const port = parseInt(process.env.PORT || '5000', 10);
   
-  server.listen({
-    port,
-    host,
-    reusePort: true,
-  }, () => {
-    log(`serving on ${host}:${port}`);
+  server.listen(port, '0.0.0.0', () => {
+    log(`serving on 0.0.0.0:${port}`);
     log(`environment: ${process.env.NODE_ENV || 'development'}`);
     log(`deployment: ${process.env.REPLIT_DEPLOYMENT || 'local'}`);
   });
