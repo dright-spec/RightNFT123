@@ -162,14 +162,12 @@ class EthereumService {
   async uploadToIPFS(metadata: RightMetadata): Promise<string> {
     try {
       const metadataString = JSON.stringify(metadata, null, 2);
-      const metadataBuffer = Buffer.from(metadataString, 'utf-8');
+      const encoder = new TextEncoder();
+      const metadataBuffer = encoder.encode(metadataString);
       
-      const result = await ipfs.add(metadataBuffer, {
-        pin: true,
-        cidVersion: 1
-      });
+      const result = await ipfs.add(metadataBuffer);
 
-      const ipfsUri = `ipfs://${result.cid}`;
+      const ipfsUri = `ipfs://${result.path}`;
       console.log('Metadata uploaded to IPFS:', ipfsUri);
       return ipfsUri;
     } catch (error) {
@@ -181,12 +179,11 @@ class EthereumService {
   async uploadFileToIPFS(file: File): Promise<string> {
     try {
       const buffer = await file.arrayBuffer();
-      const result = await ipfs.add(buffer, {
-        pin: true,
-        cidVersion: 1
-      });
+      const uint8Array = new Uint8Array(buffer);
+      
+      const result = await ipfs.add(uint8Array);
 
-      const ipfsUri = `ipfs://${result.cid}`;
+      const ipfsUri = `ipfs://${result.path}`;
       console.log('File uploaded to IPFS:', ipfsUri);
       return ipfsUri;
     } catch (error) {
