@@ -86,13 +86,13 @@ export const rights = pgTable("rights", {
   ownershipDocumentHash: text("ownership_document_hash"), // IPFS hash of ownership documents metadata
   ownershipDocumentUrl: text("ownership_document_url"), // IPFS URL of ownership documents metadata
   
-  // Hedera blockchain integration
-  hederaTokenId: text("hedera_token_id"), // Hedera token ID (e.g., "0.0.123456")
-  hederaSerialNumber: integer("hedera_serial_number"), // NFT serial number
-  hederaTransactionId: text("hedera_transaction_id"), // Mint transaction ID
-  hederaMetadataUri: text("hedera_metadata_uri"), // IPFS URI for NFT metadata
-  hederaAccountId: text("hedera_account_id"), // Current NFT holder account
-  hederaNetwork: text("hedera_network").default("testnet"), // mainnet, testnet, previewnet
+  // Ethereum blockchain integration
+  ethereumTokenId: text("ethereum_token_id"), // ERC-721 token ID
+  ethereumContractAddress: text("ethereum_contract_address"), // Smart contract address
+  ethereumTransactionHash: text("ethereum_transaction_hash"), // Mint transaction hash
+  ethereumMetadataUri: text("ethereum_metadata_uri"), // IPFS URI for NFT metadata
+  ethereumWalletAddress: text("ethereum_wallet_address"), // Current NFT holder address
+  ethereumNetwork: text("ethereum_network").default("sepolia"), // mainnet, sepolia, goerli
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

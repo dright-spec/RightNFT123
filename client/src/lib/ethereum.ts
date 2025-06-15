@@ -2,8 +2,8 @@ import { ethers } from 'ethers';
 import { create } from './ipfs-wrapper';
 
 // Ethereum network configuration
-const ETHEREUM_NETWORK = process.env.NODE_ENV === 'production' ? 'mainnet' : 'sepolia';
-const ETHEREUM_RPC_URL = process.env.VITE_ETHEREUM_RPC_URL || 
+const ETHEREUM_NETWORK = import.meta.env.MODE === 'production' ? 'mainnet' : 'sepolia';
+const ETHEREUM_RPC_URL = import.meta.env.VITE_ETHEREUM_RPC_URL || 
   (ETHEREUM_NETWORK === 'mainnet' ? 'https://eth-mainnet.g.alchemy.com/v2/demo' : 'https://eth-sepolia.g.alchemy.com/v2/demo');
 
 // IPFS configuration
@@ -11,7 +11,7 @@ const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const ipfs = create({ 
   url: 'https://ipfs.infura.io:5001/api/v0',
   headers: {
-    authorization: process.env.VITE_IPFS_AUTH ? `Basic ${process.env.VITE_IPFS_AUTH}` : undefined
+    authorization: import.meta.env.VITE_IPFS_AUTH ? `Basic ${import.meta.env.VITE_IPFS_AUTH}` : undefined
   }
 });
 

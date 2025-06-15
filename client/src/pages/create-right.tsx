@@ -18,6 +18,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { VerificationWorkflow } from "@/components/verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
+import { ethereumService } from "@/lib/ethereum";
+import { ethereumWallet } from "@/lib/ethereumWallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -151,6 +153,17 @@ export default function CreateRight() {
   };
 
   const onSubmit = async (data: CreateRightFormData) => {
+    // Check wallet connection
+    const walletState = ethereumWallet.getState();
+    if (!walletState.isConnected) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your MetaMask wallet to create rights NFTs.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Verify that verification is complete before allowing submission
     if (!canMintNFT && selectedVideos.length === 0) {
       toast({
@@ -174,6 +187,25 @@ export default function CreateRight() {
           const pricing = videoPricingData.find(p => p.videoId === video.id);
           
           if (pricing) {
+            setUploadProgress((i + 0.3) * progressIncrement);
+            
+            // Create NFT metadata
+            const metadata = {
+              title: video.title,
+              description: video.description || `YouTube video: ${video.title}`,
+              type: data.type as any,
+              dividends: pricing.paysDividends,
+              payout_address: walletState.accountAddress!,
+              image_uri: video.thumbnails.high.url,
+              creator: walletState.accountAddress!,
+              created_at: new Date().toISOString()
+            };
+
+            // Mint NFT on Ethereum
+            const mintResult = await ethereumService.mintNFT(metadata);
+            
+            setUploadProgress((i + 0.7) * progressIncrement);
+
             const rightData = {
               title: video.title,
               description: video.description || `YouTube video: ${video.title}`,
@@ -183,14 +215,21 @@ export default function CreateRight() {
               tags: [video.channelTitle, 'YouTube', 'Video Content'],
               listingType: pricing.listingType,
               price: pricing.price,
-              currency: pricing.currency,
+              currency: "ETH",
               royaltyPercentage: pricing.royaltyPercentage.toString(),
               paysDividends: pricing.paysDividends,
               startingBid: pricing.startingBid,
               reservePrice: pricing.reservePrice,
               auctionDuration: pricing.auctionDuration,
-              verificationStatus: 'verified', // YouTube videos are auto-verified
+              verificationStatus: 'verified',
               isListed: true,
+              // Ethereum NFT data
+              ethereumTokenId: mintResult.tokenId,
+              ethereumContractAddress: mintResult.contractAddress,
+              ethereumTransactionHash: mintResult.transactionHash,
+              ethereumMetadataUri: mintResult.metadataUri,
+              ethereumWalletAddress: walletState.accountAddress,
+              ethereumNetwork: walletState.network,
             };
 
             await createRightMutation.mutateAsync(rightData);
@@ -200,15 +239,29 @@ export default function CreateRight() {
 
         toast({
           title: `${selectedVideos.length} NFTs Created Successfully!`,
-          description: `All video NFTs have been minted with ${videoPricingData.filter(p => p.listingType === 'auction').length} auctions and ${videoPricingData.filter(p => p.listingType === 'fixed').length} fixed price listings.`,
+          description: `All video NFTs have been minted on Ethereum with smart contract automation.`,
         });
       } else {
         // Single NFT creation (existing flow)
-        const progressSteps = [20, 40, 60, 80, 100];
-        for (const step of progressSteps) {
-          setUploadProgress(step);
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+        setUploadProgress(20);
+        
+        // Create NFT metadata
+        const metadata = {
+          title: data.title,
+          description: data.description,
+          type: data.type as any,
+          dividends: data.paysDividends || false,
+          payout_address: walletState.accountAddress!,
+          creator: walletState.accountAddress!,
+          created_at: new Date().toISOString()
+        };
+
+        setUploadProgress(40);
+
+        // Mint NFT on Ethereum
+        const mintResult = await ethereumService.mintNFT(metadata, selectedFile || undefined);
+        
+        setUploadProgress(70);
 
         const rightData = {
           ...data,
@@ -219,14 +272,24 @@ export default function CreateRight() {
           verificationFiles: verificationData?.files || [],
           youtubeData: verificationData?.youtubeData,
           isListed: true,
+          currency: "ETH",
+          // Ethereum NFT data
+          ethereumTokenId: mintResult.tokenId,
+          ethereumContractAddress: mintResult.contractAddress,
+          ethereumTransactionHash: mintResult.transactionHash,
+          ethereumMetadataUri: mintResult.metadataUri,
+          ethereumWalletAddress: walletState.accountAddress,
+          ethereumNetwork: walletState.network,
         };
 
+        setUploadProgress(90);
         await createRightMutation.mutateAsync(rightData);
+        setUploadProgress(100);
       }
     } catch (error) {
       toast({
-        title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Failed to create right",
+        title: "NFT Creation Failed",
+        description: error instanceof Error ? error.message : "Failed to create rights NFT",
         variant: "destructive",
       });
     } finally {
