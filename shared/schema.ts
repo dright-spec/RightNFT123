@@ -141,6 +141,17 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const abTestChoices = pgTable("ab_test_choices", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(), // Browser session ID
+  userAgent: text("user_agent"), // For analytics
+  ipAddress: text("ip_address"), // For analytics (anonymized)
+  variant: text("variant").notNull(), // "original" or "minimalist"
+  duration: integer("duration"), // How long user spent on page (seconds)
+  converted: boolean("converted").default(false), // Did user click "Create Right" button
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,

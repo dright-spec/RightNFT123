@@ -260,9 +260,9 @@ export default function HomeMinimalist() {
           </div>
           <p className="text-gray-400 mb-6">Making creativity profitable for everyone</p>
           <div className="flex justify-center gap-8 text-sm text-gray-400">
-            <Link href="/about"><a className="hover:text-white transition-colors">About</a></Link>
-            <Link href="/docs"><a className="hover:text-white transition-colors">How It Works</a></Link>
-            <Link href="/marketplace"><a className="hover:text-white transition-colors">Marketplace</a></Link>
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
+            <Link href="/docs" className="hover:text-white transition-colors">How It Works</Link>
+            <Link href="/marketplace" className="hover:text-white transition-colors">Marketplace</Link>
           </div>
         </div>
       </footer>
