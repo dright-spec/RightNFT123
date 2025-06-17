@@ -36,8 +36,8 @@ export default function Home() {
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
               </Link>
-              <Link href="/auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
-                Auctions
+              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Live Auctions
               </Link>
               <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Docs
