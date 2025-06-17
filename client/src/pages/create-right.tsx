@@ -18,6 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { VerificationWorkflow } from "@/components/verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
+import { ManualYouTubeVerification } from "@/components/manual-youtube-verification";
 import { ethereumService } from "@/lib/ethereum";
 import { ethereumWallet } from "@/lib/ethereumWallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
@@ -859,12 +860,25 @@ export default function CreateRight() {
             {/* Step 2: Verification */}
             {currentStep === 2 && (
               <div className="space-y-6 animate-fade-in">
-                <VerificationWorkflow 
-                  rightType={form.watch("type") || "copyright"}
-                  initialYouTubeUrl={form.watch("youtubeUrl")}
-                  onVerificationComplete={handleVerificationComplete}
-                  onCanMintNFT={handleCanMintNFT}
-                />
+                {form.watch("contentSource") === "youtube_video" ? (
+                  <ManualYouTubeVerification
+                    onVerified={(videoData) => {
+                      setSelectedVideos([videoData]);
+                      setCanMintNFT(true);
+                      form.setValue("title", videoData.title);
+                      form.setValue("description", videoData.description);
+                      form.setValue("youtubeUrl", videoData.url);
+                    }}
+                    onSkip={() => setCurrentStep(3)}
+                  />
+                ) : (
+                  <VerificationWorkflow 
+                    rightType={form.watch("type") || "copyright"}
+                    initialYouTubeUrl={form.watch("youtubeUrl")}
+                    onVerificationComplete={handleVerificationComplete}
+                    onCanMintNFT={handleCanMintNFT}
+                  />
+                )}
 
                 <div className="flex justify-between">
                   <Button
