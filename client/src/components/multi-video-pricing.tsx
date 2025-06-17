@@ -14,9 +14,9 @@ interface YouTubeVideo {
   title: string;
   description: string;
   thumbnails: {
-    default: { url: string };
-    medium: { url: string };
-    high: { url: string };
+    default?: { url: string };
+    medium?: { url: string };
+    high?: { url: string };
   };
   publishedAt: string;
   viewCount: string;
@@ -292,7 +292,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
                 <div className="flex gap-4">
                   <div className="relative flex-shrink-0">
                     <img 
-                      src={video.thumbnails.medium.url}
+                      src={video.thumbnails?.medium?.url || video.thumbnails?.high?.url || video.thumbnails?.default?.url || ''}
                       alt={video.title}
                       className="w-32 h-20 object-cover rounded-lg border border-gray-100"
                     />
