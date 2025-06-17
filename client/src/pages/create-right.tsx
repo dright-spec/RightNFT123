@@ -84,106 +84,284 @@ const getRightGuidance = (rightType: string, contentSource: string) => {
     }
   }
   
-  // Guidance for other content types
-  switch (rightType) {
-    case "copyright":
-      if (contentSource === "artwork") {
-        return {
-          descriptionPlaceholder: "Describe the artwork you're selling. Include creation date, medium, dimensions, and what ownership rights the buyer receives.",
-          descriptionHelper: "Buyers want to know: Original vs print rights? Commercial use allowed? Reproduction rights included?",
-          requiredFields: ["title", "description", "price"],
-          optionalFields: ["tags"],
-          pricingGuidance: "Digital art typically sells for $100-$10,000+ based on artist reputation and usage rights"
-        };
-      }
-      if (contentSource === "book") {
-        return {
-          descriptionPlaceholder: "Detail the book/manuscript you're selling. Include genre, length, publication status, and what rights are included.",
-          descriptionHelper: "Specify what's included: Publishing rights? Translation rights? Film adaptation rights?",
-          requiredFields: ["title", "description", "price"],
-          optionalFields: ["tags"],
-          pricingGuidance: "Book rights range from $500-$100,000+ depending on genre, length, and market potential"
-        };
-      }
+  // Comprehensive guidance for all content types and right combinations
+  switch (contentSource) {
+    case "youtube_video":
       return {
-        descriptionPlaceholder: "Describe the intellectual property you're selling. Include what the buyer will own and any usage restrictions.",
-        descriptionHelper: "Be clear about what ownership rights are being transferred and any limitations",
-        requiredFields: ["title", "description", "price"],
-        optionalFields: ["tags"],
-        pricingGuidance: "Copyright pricing varies widely based on content type and market value"
+        descriptionPlaceholder: "Briefly describe the YouTube video copyright you're selling (e.g., 'Copyright to my tutorial series on web development')",
+        descriptionHelper: "Keep it simple - we'll add video-specific details automatically after verification",
+        requiredFields: ["description"],
+        optionalFields: [],
+        pricingGuidance: "YouTube video rights typically sell for $100-$50,000+ based on views and monetization potential"
       };
 
-    case "royalty":
-      if (contentSource === "patent") {
-        return {
-          descriptionPlaceholder: "Explain the patent royalty stream. Include current licensees, revenue history, and the percentage being sold.",
-          descriptionHelper: "Buyers need: Which companies pay royalties? How much monthly? Patent expiration date?",
-          requiredFields: ["title", "description", "price", "paysDividends"],
-          optionalFields: ["tags"],
-          pricingGuidance: "Patent royalties often sell for 15-100x annual earnings based on patent strength"
-        };
+    case "patent":
+      switch (rightType) {
+        case "copyright":
+          return {
+            descriptionPlaceholder: "Describe the patent documentation and invention details you're selling. Include patent number, filing date, and scope of protection.",
+            descriptionHelper: "Buyers want to know: What exactly is patented? Patent status? Remaining protection period?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Patent ownership typically sells for $5,000-$1M+ depending on commercial potential and remaining term"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Explain the patent royalty stream. Include current licensees, revenue history, and the percentage being sold.",
+            descriptionHelper: "Buyers need: Which companies pay royalties? How much monthly? Patent expiration date?",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Patent royalties often sell for 15-100x annual earnings based on patent strength"
+          };
+        case "license":
+          return {
+            descriptionPlaceholder: "Define the patent licensing terms. Include usage scope, field restrictions, territory limits, and license duration.",
+            descriptionHelper: "Specify: Which industries? Geographic limitations? Exclusive or non-exclusive? Time period?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Patent licenses range from $10,000-$500,000+ based on exclusivity and field of use"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Detail the patent-related rights you're offering.",
+            descriptionHelper: "Specify what patent rights are being granted and any limitations",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Patent rights pricing varies based on commercial potential and protection scope"
+          };
       }
-      return {
-        descriptionPlaceholder: "Detail the ongoing revenue stream you're sharing. Include current earnings, sources, and percentage being sold.",
-        descriptionHelper: "Transparency is key: How much does this earn? From where? What percentage do buyers get?",
-        requiredFields: ["title", "description", "price", "paysDividends"],
-        optionalFields: ["tags"],
-        pricingGuidance: "Revenue shares typically sell for 10-50x monthly earnings depending on stability"
-      };
 
-    case "license":
-      if (contentSource === "software") {
-        return {
-          descriptionPlaceholder: "Define the software licensing rights. Include usage scope, user limits, territory restrictions, and license duration.",
-          descriptionHelper: "Specify: Commercial vs personal use? How many users? Which territories? Time limitations?",
-          requiredFields: ["title", "description", "price"],
-          optionalFields: ["tags"],
-          pricingGuidance: "Software licenses range from $50-$50,000+ based on functionality and user scope"
-        };
+    case "real_estate":
+      switch (rightType) {
+        case "ownership":
+          return {
+            descriptionPlaceholder: "Describe the property ownership stake. Include exact address, property type, ownership percentage, current value, and any rental income.",
+            descriptionHelper: "Buyers want: Exact location? What percentage? Any rental income? Property management included?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags", "paysDividends"],
+            pricingGuidance: "Property stakes typically priced at market value percentage minus 10-30% liquidity discount"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Detail the property income stream you're sharing. Include rental amounts, tenant details, lease terms, and percentage being sold.",
+            descriptionHelper: "Transparency needed: Monthly rental income? Lease duration? Tenant quality? What percentage of income?",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Rental income shares often sell for 100-200x monthly income based on property stability"
+          };
+        case "access":
+          return {
+            descriptionPlaceholder: "Explain the property access rights. Include usage terms, time periods, restrictions, and what spaces are accessible.",
+            descriptionHelper: "Define: Which areas? How often? What activities allowed? Duration of access?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Property access rights typically priced $500-$50,000+ based on location and usage scope"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Describe the real estate rights you're offering.",
+            descriptionHelper: "Be specific about what property rights are included",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Real estate rights priced based on property value and rights scope"
+          };
       }
-      if (contentSource === "brand") {
-        return {
-          descriptionPlaceholder: "Explain the brand/trademark licensing terms. Include usage rights, territories, duration, and any restrictions.",
-          descriptionHelper: "Be specific: What can be branded? Which markets? For how long? Any competitor restrictions?",
-          requiredFields: ["title", "description", "price"],
-          optionalFields: ["tags"],
-          pricingGuidance: "Brand licensing deals typically range from $1,000-$1M+ based on brand value and scope"
-        };
-      }
-      return {
-        descriptionPlaceholder: "Define the licensing terms you're granting. Include scope, duration, territories, and permitted uses.",
-        descriptionHelper: "Buyers need clarity on what they can and cannot do with this license",
-        requiredFields: ["title", "description", "price"],
-        optionalFields: ["tags"],
-        pricingGuidance: "License pricing depends on scope, duration, and exclusivity level"
-      };
 
-    case "ownership":
-      if (contentSource === "real_estate") {
-        return {
-          descriptionPlaceholder: "Describe the property ownership stake. Include location, property type, ownership percentage, and any rental income.",
-          descriptionHelper: "Buyers want: Exact location? What percentage? Any rental income? Property management included?",
-          requiredFields: ["title", "description", "price"],
-          optionalFields: ["tags", "paysDividends"],
-          pricingGuidance: "Property stakes typically priced at market value percentage minus liquidity discount"
-        };
+    case "artwork":
+      switch (rightType) {
+        case "copyright":
+          return {
+            descriptionPlaceholder: "Describe the artwork you're selling. Include creation date, medium, dimensions, current exhibitions, and what ownership rights the buyer receives.",
+            descriptionHelper: "Buyers want to know: Original vs print rights? Commercial use allowed? Reproduction rights included?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Digital art typically sells for $100-$10,000+ based on artist reputation and usage rights"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Explain the artwork revenue stream. Include current sales, licensing income, exhibition fees, and percentage being shared.",
+            descriptionHelper: "Detail: Gallery sales? Print licensing? Exhibition income? What percentage do buyers get?",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Art royalty shares typically sell for 20-100x annual earnings based on artist market trajectory"
+          };
+        case "license":
+          return {
+            descriptionPlaceholder: "Define the artwork licensing terms. Include usage rights, reproduction limits, commercial applications, and duration.",
+            descriptionHelper: "Specify: Print rights? Commercial use? Merchandise? Territory restrictions? Time period?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Art licensing deals range from $200-$20,000+ based on usage scope and artist recognition"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Detail the artwork rights you're offering.",
+            descriptionHelper: "Specify what artistic rights are being granted",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Artwork rights priced based on artistic value and commercial potential"
+          };
       }
-      return {
-        descriptionPlaceholder: "Detail the ownership stake you're selling. Include what percentage, any voting rights, and income distribution.",
-        descriptionHelper: "Specify ownership details: What percentage? Decision-making rights? Revenue sharing?",
-        requiredFields: ["title", "description", "price"],
-        optionalFields: ["tags", "paysDividends"],
-        pricingGuidance: "Ownership stakes priced based on asset value and rights included"
-      };
 
-    case "access":
-      return {
-        descriptionPlaceholder: "Describe the exclusive access you're providing. Include what content, how long, and any special privileges.",
-        descriptionHelper: "What exclusive content or experiences are buyers getting access to?",
-        requiredFields: ["title", "description", "price"],
-        optionalFields: ["tags"],
-        pricingGuidance: "Access rights typically priced $25-$5,000+ based on exclusivity and value"
-      };
+    case "software":
+      switch (rightType) {
+        case "copyright":
+          return {
+            descriptionPlaceholder: "Describe the software you're selling. Include functionality, programming language, documentation, and what ownership rights transfer.",
+            descriptionHelper: "Buyers need: Full source code? Documentation? Support obligations? Can they modify and resell?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Software ownership typically sells for $1,000-$500,000+ based on functionality and market potential"
+          };
+        case "license":
+          return {
+            descriptionPlaceholder: "Define the software licensing rights. Include usage scope, user limits, territory restrictions, modification rights, and license duration.",
+            descriptionHelper: "Specify: Commercial vs personal use? How many users? Which territories? Can they modify code?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Software licenses range from $50-$50,000+ based on functionality and user scope"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Explain the software revenue stream. Include current sales, subscription income, licensing fees, and percentage being shared.",
+            descriptionHelper: "Detail: Monthly revenue? User base? Growth rate? What percentage of income do buyers get?",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Software revenue shares often sell for 50-200x monthly earnings based on growth potential"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Detail the software rights you're offering.",
+            descriptionHelper: "Specify what software rights are being granted",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Software rights priced based on functionality and commercial value"
+          };
+      }
+
+    case "brand":
+      switch (rightType) {
+        case "copyright":
+          return {
+            descriptionPlaceholder: "Describe the brand assets you're selling. Include trademarks, logos, brand guidelines, customer base, and what ownership transfers.",
+            descriptionHelper: "Buyers want: Trademark registrations? Brand recognition? Customer database? Social media accounts?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Brand ownership typically sells for $5,000-$10M+ based on brand recognition and revenue history"
+          };
+        case "license":
+          return {
+            descriptionPlaceholder: "Explain the brand licensing terms. Include usage rights, territories, duration, product categories, and any restrictions.",
+            descriptionHelper: "Be specific: What can be branded? Which markets? For how long? Any competitor restrictions?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Brand licensing deals typically range from $1,000-$1M+ based on brand value and scope"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Detail the brand revenue stream. Include current licensing income, product sales, and percentage being shared.",
+            descriptionHelper: "Transparency needed: Monthly brand income? Revenue sources? Growth trajectory? What percentage?",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Brand revenue shares often sell for 100-500x monthly earnings based on brand strength"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Detail the brand rights you're offering.",
+            descriptionHelper: "Specify what brand rights are being granted",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Brand rights priced based on brand value and usage scope"
+          };
+      }
+
+    case "book":
+      switch (rightType) {
+        case "copyright":
+          return {
+            descriptionPlaceholder: "Detail the book/manuscript you're selling. Include genre, word count, publication status, ISBN, and what rights are included.",
+            descriptionHelper: "Specify what's included: Publishing rights? Translation rights? Film adaptation rights? Audio rights?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Book rights range from $500-$100,000+ depending on genre, length, and market potential"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Explain the book revenue stream. Include current sales, royalty rates, publisher details, and percentage being shared.",
+            descriptionHelper: "Buyers need: Monthly sales? Royalty percentage? Publisher terms? What share of income?",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Book royalty shares typically sell for 50-200x monthly earnings based on sales trajectory"
+          };
+        case "license":
+          return {
+            descriptionPlaceholder: "Define the book licensing terms. Include usage rights, territories, duration, format restrictions, and adaptation rights.",
+            descriptionHelper: "Specify: Which formats? Geographic limits? Translation rights? Film/TV adaptation included?",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Book licensing deals range from $500-$50,000+ based on content quality and market reach"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Detail the book rights you're offering.",
+            descriptionHelper: "Specify what literary rights are being granted",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Book rights priced based on literary value and commercial potential"
+          };
+      }
+
+    case "other":
+      switch (rightType) {
+        case "copyright":
+          return {
+            descriptionPlaceholder: "Describe the unique intellectual property you're selling. Include creation details, uniqueness factors, and ownership rights being transferred.",
+            descriptionHelper: "Be specific about what makes this IP valuable and what exactly the buyer will own",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Custom IP rights priced based on uniqueness, market potential, and commercial viability"
+          };
+        case "royalty":
+          return {
+            descriptionPlaceholder: "Explain the unique revenue stream you're sharing. Include income sources, payment frequency, and percentage being sold.",
+            descriptionHelper: "Provide full transparency about income sources and buyer's expected returns",
+            requiredFields: ["title", "description", "price", "paysDividends"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Custom revenue shares priced based on income stability and growth potential"
+          };
+        case "license":
+          return {
+            descriptionPlaceholder: "Define the specialized licensing terms. Include scope, restrictions, duration, and permitted uses.",
+            descriptionHelper: "Clearly outline what can and cannot be done with this specialized license",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Specialized licenses priced based on uniqueness and commercial value"
+          };
+        case "ownership":
+          return {
+            descriptionPlaceholder: "Detail the unique ownership stake. Include asset details, percentage ownership, and any associated rights or income.",
+            descriptionHelper: "Explain what unique asset is involved and what ownership benefits transfer",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags", "paysDividends"],
+            pricingGuidance: "Unique ownership stakes priced based on asset value and rights included"
+          };
+        case "access":
+          return {
+            descriptionPlaceholder: "Describe the unique access rights. Include what's being accessed, duration, frequency, and any special privileges.",
+            descriptionHelper: "Detail what exclusive access or experiences buyers will receive",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Unique access rights priced based on exclusivity and experiential value"
+          };
+        default:
+          return {
+            descriptionPlaceholder: "Describe your unique right and what buyers will receive.",
+            descriptionHelper: "Provide detailed information about this specialized right",
+            requiredFields: ["title", "description", "price"],
+            optionalFields: ["tags"],
+            pricingGuidance: "Custom rights priced based on uniqueness and market value"
+          };
+      }
 
     default:
       return {
