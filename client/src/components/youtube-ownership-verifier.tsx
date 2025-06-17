@@ -15,7 +15,7 @@ interface YouTubeOwnershipVerifierProps {
 
 export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnershipVerifierProps) {
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [verificationMethod, setVerificationMethod] = useState<"description" | "comment" | "title">("description");
+  const [verificationMethod, setVerificationMethod] = useState<"description" | "title">("description");
   const [isVerifying, setIsVerifying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState("");
@@ -139,23 +139,20 @@ export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnersh
       case "description":
         return {
           title: "Add to Video Description",
-          instruction: `Add this verification code to your video description:`,
+          instruction: `Add this verification code to your video description (only channel owners can edit):`,
           location: "video description",
-          icon: <FileText className="w-4 h-4" />
-        };
-      case "comment":
-        return {
-          title: "Comment on Your Video",
-          instruction: `Post this verification code as a comment on your video:`,
-          location: "video comments",
-          icon: <Youtube className="w-4 h-4" />
+          icon: <FileText className="w-4 h-4" />,
+          security: "Secure - Only channel owners can modify video descriptions",
+          recommended: true
         };
       case "title":
         return {
           title: "Add to Video Title",
-          instruction: `Temporarily add this code to your video title:`,
-          location: "video title",
-          icon: <Key className="w-4 h-4" />
+          instruction: `Temporarily add this code to your video title (only channel owners can edit):`,
+          location: "video title", 
+          icon: <Key className="w-4 h-4" />,
+          security: "Secure - Only channel owners can modify video titles",
+          recommended: true
         };
     }
   };
@@ -246,9 +243,8 @@ export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnersh
             </Alert>
 
             <Tabs value={verificationMethod} onValueChange={(value: any) => setVerificationMethod(value)}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="description">Description</TabsTrigger>
-                <TabsTrigger value="comment">Comment</TabsTrigger>
                 <TabsTrigger value="title">Title</TabsTrigger>
               </TabsList>
               
@@ -264,6 +260,13 @@ export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnersh
                     <p className="text-sm text-muted-foreground">
                       {instructions.instruction}
                     </p>
+
+                    <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <AlertDescription className="text-xs">
+                        {instructions.security} - This ensures only legitimate channel owners can complete verification.
+                      </AlertDescription>
+                    </Alert>
                     
                     <div className="bg-gray-100 dark:bg-gray-800 rounded p-3 font-mono text-sm">
                       <div className="flex items-center justify-between">
@@ -278,6 +281,10 @@ export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnersh
                       </div>
                     </div>
 
+                    <div className="bg-blue-50 dark:bg-blue-950/20 rounded p-3 text-xs text-blue-800 dark:text-blue-200">
+                      <strong>Why this is secure:</strong> Only the channel owner has edit access to video titles and descriptions. Comments can be posted by anyone, making them unreliable for ownership verification.
+                    </div>
+
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -287,6 +294,15 @@ export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnersh
                       >
                         <ExternalLink className="w-3 h-3" />
                         Open Video
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`https://studio.youtube.com/video/${videoData.id}/edit`, '_blank')}
+                        className="flex items-center gap-1"
+                      >
+                        <Youtube className="w-3 h-3" />
+                        YouTube Studio
                       </Button>
                     </div>
                   </CardContent>
