@@ -56,7 +56,7 @@ const formSchema = z.object({
   paysDividends: z.boolean().default(false),
   paymentAddress: z.string().optional(),
   paymentFrequency: z.enum(["monthly", "quarterly", "yearly", "streaming"]).optional(),
-  revenueDistributionMethod: z.enum(["automatic", "manual", "escrow"]).optional(),
+  revenueDistributionMethod: z.enum(["equal", "proportional", "tiered", "custom"]).optional(),
   distributionPercentage: z.string().optional(),
   minimumDistribution: z.string().optional(),
   distributionDetails: z.string().optional(),
@@ -579,7 +579,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsUploading(true);
     setProgressMessage("Preparing to mint NFT on Hedera...");
     setUploadProgress(10);
@@ -760,9 +760,18 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
 
       await createRightMutation.mutateAsync(rightData);
     } catch (error) {
+      console.error("Form submission error:", error);
+      console.error("Form data:", data);
+      console.error("Right data:", rightData);
+      
+      let errorMessage = "Failed to create right";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Failed to create right",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
