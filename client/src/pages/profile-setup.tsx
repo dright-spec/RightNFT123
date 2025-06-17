@@ -43,7 +43,7 @@ export default function ProfileSetup() {
 
   const setupProfileMutation = useMutation({
     mutationFn: async (data: ProfileForm) => {
-      return apiRequest("/api/profile-setup", "POST", data);
+      return apiRequest("POST", "/api/profile-setup", data);
     },
     onSuccess: () => {
       toast({
