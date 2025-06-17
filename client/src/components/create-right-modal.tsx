@@ -968,7 +968,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
             <FormField
               control={form.control}
               name="listingType"
-              render={({ field }) => (
+              render={({ field }: any) => (
                 <FormItem>
                   <FormLabel>Listing Type</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -1003,7 +1003,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 <FormField
                   control={form.control}
                   name="price"
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem>
                       <FormLabel>Price *</FormLabel>
                       <FormControl>
@@ -1017,7 +1017,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 <FormField
                   control={form.control}
                   name="currency"
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -1042,7 +1042,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 <FormField
                   control={form.control}
                   name="minBidAmount"
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem>
                       <FormLabel>Starting Bid *</FormLabel>
                       <FormControl>
@@ -1056,7 +1056,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 <FormField
                   control={form.control}
                   name="auctionDuration"
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem>
                       <FormLabel>Duration (hours) *</FormLabel>
                       <FormControl>
@@ -1084,7 +1084,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                 <FormField
                   control={form.control}
                   name="paysDividends"
-                  render={({ field }) => (
+                  render={({ field }: any) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                       <FormControl>
                         <Checkbox
@@ -1121,7 +1121,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     <FormField
                       control={form.control}
                       name="revenueDistributionMethod"
-                      render={({ field }) => (
+                      render={({ field }: any) => (
                         <FormItem>
                           <FormLabel>Revenue Distribution Method *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -1146,7 +1146,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                       <FormField
                         control={form.control}
                         name="distributionPercentage"
-                        render={({ field }) => (
+                        render={({ field }: any) => (
                           <FormItem>
                             <FormLabel>Revenue Share % *</FormLabel>
                             <FormControl>
@@ -1170,7 +1170,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                       <FormField
                         control={form.control}
                         name="minimumDistribution"
-                        render={({ field }) => (
+                        render={({ field }: any) => (
                           <FormItem>
                             <FormLabel>Minimum Distribution</FormLabel>
                             <FormControl>
@@ -1188,7 +1188,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     <FormField
                       control={form.control}
                       name="paymentFrequency"
-                      render={({ field }) => (
+                      render={({ field }: any) => (
                         <FormItem>
                           <FormLabel>Payment Frequency *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -1212,7 +1212,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     <FormField
                       control={form.control}
                       name="distributionDetails"
-                      render={({ field }) => (
+                      render={({ field }: any) => (
                         <FormItem>
                           <FormLabel>Distribution Details *</FormLabel>
                           <FormControl>
