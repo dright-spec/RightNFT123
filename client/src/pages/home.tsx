@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -5,10 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EthereumWalletButton } from "@/components/ethereum-wallet-button";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
+import { ABTestSwitcher } from "@/components/ab-test-switcher";
+import HomeMinimalist from "./home-minimalist";
 import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Home() {
+  const [variant, setVariant] = useState<'original' | 'minimalist'>('original');
 
   const { data: featuredRights, isLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", { limit: 6, isListed: true }],
@@ -18,6 +22,20 @@ export default function Home() {
     document.getElementById("marketplace")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Return minimalist design if selected
+  if (variant === 'minimalist') {
+    return (
+      <>
+        <HomeMinimalist />
+        <ABTestSwitcher 
+          currentVariant={variant}
+          onVariantChange={setVariant}
+        />
+      </>
+    );
+  }
+
+  // Original design
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -763,7 +781,11 @@ export default function Home() {
         </div>
       </footer>
 
-
+      {/* A/B Test Switcher */}
+      <ABTestSwitcher 
+        currentVariant={variant}
+        onVariantChange={setVariant}
+      />
     </div>
   );
 }
