@@ -1233,7 +1233,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                     <FormField
                       control={form.control}
                       name="paymentAddress"
-                      render={({ field }) => (
+                      render={({ field }: any) => (
                         <FormItem>
                           <FormLabel>Payment Contract Address</FormLabel>
                           <FormControl>
