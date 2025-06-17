@@ -273,10 +273,10 @@ export class DatabaseStorage implements IStorage {
     return right;
   }
 
-  async updateRight(id: number, updates: Partial<Right>): Promise<Right | undefined> {
+  async updateRight(id: number, updates: any): Promise<Right | undefined> {
     const [right] = await db
       .update(rights)
-      .set(updates)
+      .set({ ...updates, updatedAt: new Date() })
       .where(eq(rights.id, id))
       .returning();
     return right || undefined;

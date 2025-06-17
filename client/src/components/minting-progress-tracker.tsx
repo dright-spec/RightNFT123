@@ -24,122 +24,62 @@ interface MintingProgressProps {
 }
 
 export function MintingProgressTracker({ rightId, rightTitle, onComplete, onError }: MintingProgressProps) {
-  const [steps, setSteps] = useState<MintingStep[]>([
-    {
-      id: "verification",
-      title: "Ownership Verification",
-      description: "Confirming authentic ownership of content",
-      status: "processing",
-      estimatedTime: "1-2 minutes"
-    },
-    {
-      id: "metadata",
-      title: "Metadata Preparation",
-      description: "Creating NFT metadata and uploading to IPFS",
-      status: "pending",
-      estimatedTime: "30 seconds"
-    },
-    {
-      id: "token-creation",
-      title: "Hedera Token Creation",
-      description: "Creating unique token on Hedera network",
-      status: "pending",
-      estimatedTime: "15 seconds"
-    },
-    {
-      id: "minting",
-      title: "NFT Minting",
-      description: "Minting your NFT and recording ownership",
-      status: "pending",
-      estimatedTime: "10 seconds"
-    },
-    {
-      id: "marketplace",
-      title: "Marketplace Listing",
-      description: "Making your NFT available for trading",
-      status: "pending",
-      estimatedTime: "5 seconds"
-    }
-  ]);
-
-  const [currentStep, setCurrentStep] = useState(0);
-  const [overallProgress, setOverallProgress] = useState(0);
-  const [mintingResult, setMintingResult] = useState<any>(null);
+  const [mintingStatus, setMintingStatus] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Poll minting status from the server
+  const { data: statusData, error: statusError } = useQuery({
+    queryKey: [`/api/minting-status/${rightId}`],
+    refetchInterval: 1000, // Poll every second
+    retry: false,
+    enabled: !mintingStatus?.status || mintingStatus.status === "processing"
+  });
+
   useEffect(() => {
-    // Start the minting process
-    simulateMintingProcess();
-  }, [rightId]);
-
-  const simulateMintingProcess = async () => {
-    try {
-      for (let i = 0; i < steps.length; i++) {
-        // Update current step to processing
-        setSteps(prev => prev.map((step, index) => 
-          index === i 
-            ? { ...step, status: "processing", timestamp: new Date().toISOString() }
-            : step
-        ));
-        setCurrentStep(i);
-        setOverallProgress((i / steps.length) * 100);
-
-        // Simulate processing time
-        const processingTime = i === 0 ? 3000 : 1500; // First step takes longer
-        await new Promise(resolve => setTimeout(resolve, processingTime));
-
-        // Complete the step
-        setSteps(prev => prev.map((step, index) => 
-          index === i 
-            ? { 
-                ...step, 
-                status: "completed", 
-                transactionHash: i === 2 ? `0.0.${Math.floor(Math.random() * 1000000)}-${Date.now()}` : undefined 
-              }
-            : step
-        ));
+    if (statusData) {
+      setMintingStatus(statusData);
+      
+      if (statusData.status === "completed") {
+        toast({
+          title: "NFT Minted Successfully!",
+          description: `${rightTitle} is now available as an NFT on the marketplace`,
+        });
+        if (onComplete) onComplete(statusData.results);
+      } else if (statusData.status === "error") {
+        setError(statusData.error);
+        toast({
+          title: "Minting Failed",
+          description: statusData.error,
+          variant: "destructive"
+        });
+        if (onError) onError(statusData.error);
       }
-
-      // Complete the process
-      setOverallProgress(100);
-      const result = {
-        tokenId: `0.0.${Math.floor(Math.random() * 1000000)}`,
-        serialNumber: Math.floor(Math.random() * 1000) + 1,
-        transactionId: `0.0.${rightId}-${Date.now()}`,
-        metadataUri: `ipfs://Qm${Math.random().toString(36).substr(2, 44)}`,
-        mintedAt: new Date().toISOString()
-      };
-      
-      setMintingResult(result);
-      
-      toast({
-        title: "NFT Minted Successfully!",
-        description: `${rightTitle} is now available as an NFT on the marketplace`,
-      });
-
-      if (onComplete) onComplete(result);
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Minting process failed";
-      setError(errorMessage);
-      
-      // Mark current step as error
-      setSteps(prev => prev.map((step, index) => 
-        index === currentStep 
-          ? { ...step, status: "error" }
-          : step
-      ));
-
-      toast({
-        title: "Minting Failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
-
-      if (onError) onError(errorMessage);
     }
-  };
+  }, [statusData, rightTitle, onComplete, onError, toast]);
+
+  useEffect(() => {
+    if (statusError) {
+      setError("Failed to track minting progress");
+    }
+  }, [statusError]);
+
+  // If no status data yet, show initial loading state
+  if (!mintingStatus && !error) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Initializing NFT minting...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const steps = mintingStatus?.steps || [];
+  const overallProgress = mintingStatus ? (mintingStatus.currentStep / Math.max(steps.length - 1, 1)) * 100 : 0;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);

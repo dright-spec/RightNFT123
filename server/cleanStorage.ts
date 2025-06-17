@@ -200,7 +200,7 @@ export class CleanStorage implements IStorage {
     return right;
   }
 
-  async updateRight(id: number, updates: Partial<Right>): Promise<Right | undefined> {
+  async updateRight(id: number, updates: any): Promise<Right | undefined> {
     const right = this.rights.get(id);
     if (!right) return undefined;
 
