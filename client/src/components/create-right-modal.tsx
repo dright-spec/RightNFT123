@@ -115,16 +115,16 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      type: "copyright",
+      type: "copyright" as const,
       description: "",
       tags: [],
-      listingType: "fixed",
+      listingType: "fixed" as const,
       price: "",
       currency: "ETH",
       paysDividends: false,
       paymentAddress: "",
-      paymentFrequency: "monthly",
-      revenueDistributionMethod: "automatic",
+      paymentFrequency: "monthly" as const,
+      revenueDistributionMethod: "equal" as const,
       distributionPercentage: "",
       minimumDistribution: "",
       distributionDetails: "",
@@ -762,7 +762,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
     } catch (error) {
       console.error("Form submission error:", error);
       console.error("Form data:", data);
-      console.error("Right data:", rightData);
+      console.error("Right data:", data);
       
       let errorMessage = "Failed to create right";
       if (error instanceof Error) {
@@ -859,7 +859,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
             <FormField
               control={form.control}
               name="title"
-              render={({ field }) => (
+              render={({ field }: any) => (
                 <FormItem>
                   <FormLabel>Right Title *</FormLabel>
                   <FormControl>
@@ -873,7 +873,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
             <FormField
               control={form.control}
               name="type"
-              render={({ field }) => (
+              render={({ field }: any) => (
                 <FormItem>
                   <FormLabel>Type of Right *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -898,7 +898,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
             <FormField
               control={form.control}
               name="description"
-              render={({ field }) => (
+              render={({ field }: any) => (
                 <FormItem>
                   <FormLabel>Description *</FormLabel>
                   <FormControl>
