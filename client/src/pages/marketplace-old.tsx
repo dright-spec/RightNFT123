@@ -29,9 +29,7 @@ import {
   Timer,
   Gavel,
   ShoppingCart,
-  TrendingDown,
-  Star,
-  BarChart3
+  TrendingDown
 } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
@@ -54,13 +52,13 @@ export default function Marketplace() {
     }],
   });
 
-  // Advanced filtering logic based on business model
+  // Advanced filtering logic
   const filteredRights = allRights?.filter(right => {
-    // Investment value range filter
+    // Price range filter
     const price = parseFloat(right.price || "0");
     if (price < priceRange[0] || price > priceRange[1]) return false;
     
-    // Listing type filter for investment opportunities
+    // Listing type filter
     if (listingType !== "all") {
       if (listingType === "auction" && right.listingType !== "auction") return false;
       if (listingType === "fixed" && right.listingType !== "fixed") return false;
@@ -70,13 +68,12 @@ export default function Marketplace() {
         const hoursLeft = (endTime.getTime() - now.getTime()) / (1000 * 60 * 60);
         if (hoursLeft > 24) return false;
       }
-      if (listingType === "high-yield" && !right.paysDividends) return false;
     }
     
     return true;
   });
 
-  // Business-focused sorting for investment decisions
+  // Advanced sorting logic
   const sortedRights = filteredRights?.sort((a, b) => {
     switch (sortBy) {
       case "price-high":
@@ -94,11 +91,6 @@ export default function Marketplace() {
         return (b.views || 0) - (a.views || 0);
       case "most-favorited":
         return (b.favorites || 0) - (a.favorites || 0);
-      case "yield-potential":
-        // Sort by dividend-paying rights first, then by price
-        if (a.paysDividends && !b.paysDividends) return -1;
-        if (!a.paysDividends && b.paysDividends) return 1;
-        return parseFloat(b.price || "0") - parseFloat(a.price || "0");
       case "oldest":
         return new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime();
       default: // newest
@@ -131,14 +123,14 @@ export default function Marketplace() {
                   Back to Home
                 </Button>
               </Link>
-              <h1 className="text-xl font-semibold text-foreground">Investment Marketplace</h1>
+              <h1 className="text-xl font-semibold text-foreground">Marketplace</h1>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search rights, creators, categories..."
+                  placeholder="Search items, creators, collections..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-80"
@@ -160,7 +152,7 @@ export default function Marketplace() {
             </TabsTrigger>
             <TabsTrigger value="auctions" className="flex items-center gap-2">
               <Gavel className="w-4 h-4" />
-              Live Auctions
+              Auctions
             </TabsTrigger>
             <TabsTrigger value="fixed-price" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
@@ -172,7 +164,7 @@ export default function Marketplace() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Investment-Focused Filters Bar */}
+          {/* Filters Bar */}
           <div className="flex items-center justify-between mb-6 p-4 bg-card rounded-lg border">
             <div className="flex items-center gap-4">
               <Button
@@ -182,21 +174,21 @@ export default function Marketplace() {
                 className="flex items-center gap-2"
               >
                 <Filter className="w-4 h-4" />
-                Investment Filters
+                Filters
               </Button>
               
-              {/* Business Model Quick Filters */}
+              {/* Quick Filters based on business model */}
               <div className="flex items-center gap-2">
                 <Badge 
                   variant={listingType === "all" ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/90"
+                  className="cursor-pointer"
                   onClick={() => setListingType("all")}
                 >
-                  All Opportunities
+                  All Items
                 </Badge>
                 <Badge 
                   variant={listingType === "auction" ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/90"
+                  className="cursor-pointer"
                   onClick={() => setListingType("auction")}
                 >
                   <Timer className="w-3 h-3 mr-1" />
@@ -204,23 +196,15 @@ export default function Marketplace() {
                 </Badge>
                 <Badge 
                   variant={listingType === "fixed" ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/90"
+                  className="cursor-pointer"
                   onClick={() => setListingType("fixed")}
                 >
                   <DollarSign className="w-3 h-3 mr-1" />
-                  Fixed Price
-                </Badge>
-                <Badge 
-                  variant={listingType === "high-yield" ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/90"
-                  onClick={() => setListingType("high-yield")}
-                >
-                  <BarChart3 className="w-3 h-3 mr-1" />
-                  High Yield
+                  Buy Now
                 </Badge>
                 <Badge 
                   variant={listingType === "ending-soon" ? "default" : "secondary"}
-                  className="cursor-pointer hover:bg-primary/90"
+                  className="cursor-pointer"
                   onClick={() => setListingType("ending-soon")}
                 >
                   <Clock className="w-3 h-3 mr-1" />
@@ -231,18 +215,18 @@ export default function Marketplace() {
 
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                {sortedRights?.length || 0} investment opportunities
+                {sortedRights?.length || 0} items
               </span>
               
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-56">
+                <SelectTrigger className="w-48">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="newest">Recently Listed</SelectItem>
-                  <SelectItem value="yield-potential">Highest Yield Potential</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
                   <SelectItem value="price-high">Highest Value</SelectItem>
-                  <SelectItem value="price-low">Best Entry Price</SelectItem>
+                  <SelectItem value="price-low">Best Deals</SelectItem>
                   <SelectItem value="ending-soon">Auction Ending Soon</SelectItem>
                   <SelectItem value="most-viewed">Most Popular</SelectItem>
                   <SelectItem value="most-favorited">Most Favorited</SelectItem>
@@ -270,14 +254,14 @@ export default function Marketplace() {
             </div>
           </div>
 
-          {/* Advanced Investment Filters Panel */}
+          {/* Advanced Filters Panel - Business Model Focused */}
           {showFilters && (
             <Card className="mb-6">
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  {/* Investment Budget Range */}
+                  {/* Investment Value Range */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Investment Budget (ETH)</label>
+                    <label className="text-sm font-medium mb-3 block">Investment Range (ETH)</label>
                     <div className="space-y-3">
                       <Slider
                         value={priceRange}
@@ -290,15 +274,12 @@ export default function Marketplace() {
                         <span>{priceRange[0]} ETH</span>
                         <span>{priceRange[1]} ETH</span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Set your investment range to find suitable opportunities
-                      </p>
                     </div>
                   </div>
 
-                  {/* Revenue Model */}
+                  {/* Revenue Potential */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Revenue Potential</label>
+                    <label className="text-sm font-medium mb-3 block">Revenue Model</label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox id="dividends" />
@@ -312,38 +293,34 @@ export default function Marketplace() {
                         <Checkbox id="appreciation" />
                         <label htmlFor="appreciation" className="text-sm">Value Appreciation</label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="resale" />
-                        <label htmlFor="resale" className="text-sm">Resale Rights</label>
-                      </div>
                     </div>
                   </div>
 
-                  {/* Asset Category */}
+                  {/* Asset Type & Quality */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Investment Category</label>
+                    <label className="text-sm font-medium mb-3 block">Asset Category</label>
                     <Select value={typeFilter} onValueChange={setTypeFilter}>
                       <SelectTrigger>
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Investment Types</SelectItem>
-                        <SelectItem value="copyright">Creative Rights (Copyright)</SelectItem>
-                        <SelectItem value="royalty">Revenue Streams (Royalty)</SelectItem>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="copyright">Copyright (Creative Works)</SelectItem>
+                        <SelectItem value="royalty">Royalty Streams</SelectItem>
                         <SelectItem value="access">Exclusive Access Rights</SelectItem>
                         <SelectItem value="ownership">Ownership Stakes</SelectItem>
-                        <SelectItem value="license">Licensing Opportunities</SelectItem>
+                        <SelectItem value="license">Licensing Rights</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Risk & Quality Indicators */}
+                  {/* Risk & Verification */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Risk Profile</label>
+                    <label className="text-sm font-medium mb-3 block">Risk Level</label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox id="verified" />
-                        <label htmlFor="verified" className="text-sm">Verified Assets Only</label>
+                        <label htmlFor="verified" className="text-sm">Verified Only</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox id="established" />
@@ -352,10 +329,6 @@ export default function Marketplace() {
                       <div className="flex items-center space-x-2">
                         <Checkbox id="liquid" />
                         <label htmlFor="liquid" className="text-sm">High Liquidity</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="performing" />
-                        <label htmlFor="performing" className="text-sm">Proven Performance</label>
                       </div>
                     </div>
                   </div>
@@ -375,20 +348,14 @@ export default function Marketplace() {
                       <TrendingUp className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-blue-900 dark:text-blue-100">Rights Investment Marketplace</h3>
-                      <p className="text-blue-700 dark:text-blue-300">
-                        Transform creative assets into liquid investments • Guaranteed ownership rights • Automated revenue distribution
-                      </p>
+                      <h3 className="font-bold text-blue-900 dark:text-blue-100">Investment Marketplace</h3>
+                      <p className="text-blue-700 dark:text-blue-300">Turn creative assets into liquid investments with guaranteed ownership rights</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6 text-right">
+                  <div className="flex items-center gap-4 text-right">
                     <div>
                       <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{sortedRights?.length || 0}</div>
                       <div className="text-sm text-blue-700 dark:text-blue-300">Available Rights</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">847.3 ETH</div>
-                      <div className="text-sm text-blue-700 dark:text-blue-300">Total Volume</div>
                     </div>
                   </div>
                 </div>
@@ -416,9 +383,9 @@ export default function Marketplace() {
                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-medium mb-2">No investment opportunities found</h3>
+                  <h3 className="text-lg font-medium mb-2">No rights found</h3>
                   <p className="text-muted-foreground mb-4">
-                    Try adjusting your investment criteria or search terms
+                    Try adjusting your filters or search terms
                   </p>
                   <Button variant="outline" onClick={() => {
                     setSearchQuery("");
@@ -426,26 +393,23 @@ export default function Marketplace() {
                     setListingType("all");
                     setPriceRange([0, 1000]);
                   }}>
-                    Reset Investment Filters
+                    Clear Filters
                   </Button>
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
-          {/* Live Auctions Tab */}
+          {/* Auctions Tab */}
           <TabsContent value="auctions" className="space-y-4">
             <Card>
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <Gavel className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-medium mb-2">Live Auction Opportunities</h3>
-                  <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                    Participate in time-sensitive bidding for premium rights. Set reserve prices and compete for valuable intellectual property assets.
+              <CardContent className="p-6">
+                <div className="text-center py-8">
+                  <Gavel className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Live Auctions</h3>
+                  <p className="text-muted-foreground">
+                    Active auctions with time-sensitive bidding opportunities
                   </p>
-                  <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                    OpenSea-style auction mechanics with reserve prices
-                  </Badge>
                 </div>
               </CardContent>
             </Card>
@@ -454,16 +418,13 @@ export default function Marketplace() {
           {/* Fixed Price Tab */}
           <TabsContent value="fixed-price" className="space-y-4">
             <Card>
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-medium mb-2">Fixed Price Investments</h3>
-                  <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                    Purchase rights immediately at fixed prices. Perfect for investors who want instant ownership without bidding competition.
+              <CardContent className="p-6">
+                <div className="text-center py-8">
+                  <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Buy Now</h3>
+                  <p className="text-muted-foreground">
+                    Fixed price listings available for immediate purchase
                   </p>
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    Instant purchase • No waiting • Guaranteed price
-                  </Badge>
                 </div>
               </CardContent>
             </Card>
@@ -475,7 +436,7 @@ export default function Marketplace() {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Market Activity</CardTitle>
+                    <CardTitle>Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ActivityFeed />
@@ -485,28 +446,20 @@ export default function Marketplace() {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Investment Statistics</CardTitle>
+                    <CardTitle>Market Stats</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Market Volume</span>
-                      <span className="font-bold text-green-600">847.3 ETH</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Average ROI</span>
-                      <span className="font-bold text-green-600">+24.7%</span>
+                      <span className="text-muted-foreground">Total Volume</span>
+                      <span className="font-medium">847.3 ETH</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Floor Price</span>
                       <span className="font-medium">0.05 ETH</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Listed Opportunities</span>
+                      <span className="text-muted-foreground">Listed</span>
                       <span className="font-medium">{sortedRights?.length || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">24h Volume</span>
-                      <span className="font-medium">47.2 ETH</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -514,6 +467,35 @@ export default function Marketplace() {
             </div>
           </TabsContent>
         </Tabs>
+      </div>
+    </div>
+  );
+}
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-4">Market Stats</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">24h Volume</span>
+                      <span className="font-semibold text-green-600">$24,680</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Active Listings</span>
+                      <span className="font-semibold">{sortedRights?.length || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Avg. Price</span>
+                      <span className="font-semibold">2.4 ETH</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Market Cap</span>
+                      <span className="font-semibold">$2.1M</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
