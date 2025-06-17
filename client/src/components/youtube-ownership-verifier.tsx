@@ -322,7 +322,7 @@ export function YouTubeOwnershipVerifier({ onVerified, onError }: YouTubeOwnersh
 
             <Button
               onClick={verifyOwnership}
-              disabled={isVerifying}
+              disabled={isVerifying && progress > 30}
               className="w-full bg-green-600 hover:bg-green-700"
             >
               {isVerifying && progress > 30 ? (
