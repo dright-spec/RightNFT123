@@ -376,51 +376,256 @@ const getRightGuidance = (rightType: string, contentSource: string) => {
 
 // Dynamic right types based on content source
 const getRightTypes = (contentSource: string): RightTypeOption[] => {
-  if (contentSource === "music_track") {
-    return [
-      { 
-        value: "copyright", 
-        label: "Master Recording Rights", 
-        icon: FileText, 
-        description: "Sell ownership of the original recorded track - buyer gets full control", 
-        symbol: "©",
-        example: "Complete ownership transfer of your song recording"
-      },
-      { 
-        value: "royalty", 
-        label: "Streaming Revenue Share", 
-        icon: DollarSign, 
-        description: "Sell a percentage of future streaming earnings while keeping ownership", 
-        symbol: "💰",
-        example: "Buyer gets 50% of all Spotify/Apple Music earnings"
-      },
-      { 
-        value: "license", 
-        label: "Usage License", 
-        icon: Shield, 
-        description: "Grant specific usage rights (sync, commercial use, etc.) for a period", 
-        symbol: "📜",
-        example: "License for use in YouTube videos or commercials"
-      },
-      { 
-        value: "access", 
-        label: "Exclusive Content Access", 
-        icon: Eye, 
-        description: "Sell access to unreleased tracks, stems, or behind-the-scenes content", 
-        symbol: "🔑",
-        example: "Exclusive access to instrumental versions and demos"
-      },
-    ];
+  switch (contentSource) {
+    case "youtube_video":
+      return [
+        { 
+          value: "copyright", 
+          label: "Video Copyright", 
+          icon: FileText, 
+          description: "Sell complete ownership of your YouTube video - buyer gets all rights", 
+          symbol: "©",
+          example: "Full ownership transfer including monetization rights"
+        },
+      ];
+
+    case "music_track":
+      return [
+        { 
+          value: "copyright", 
+          label: "Master Recording Rights", 
+          icon: FileText, 
+          description: "Sell ownership of the original recorded track - buyer gets full control", 
+          symbol: "©",
+          example: "Complete ownership transfer of your song recording"
+        },
+        { 
+          value: "royalty", 
+          label: "Streaming Revenue Share", 
+          icon: DollarSign, 
+          description: "Sell a percentage of future streaming earnings while keeping ownership", 
+          symbol: "💰",
+          example: "Buyer gets 50% of all Spotify/Apple Music earnings"
+        },
+        { 
+          value: "license", 
+          label: "Usage License", 
+          icon: Shield, 
+          description: "Grant specific usage rights (sync, commercial use, etc.) for a period", 
+          symbol: "📜",
+          example: "License for use in YouTube videos or commercials"
+        },
+        { 
+          value: "access", 
+          label: "Exclusive Content Access", 
+          icon: Eye, 
+          description: "Sell access to unreleased tracks, stems, or behind-the-scenes content", 
+          symbol: "🔑",
+          example: "Exclusive access to instrumental versions and demos"
+        },
+      ];
+
+    case "patent":
+      return [
+        { 
+          value: "copyright", 
+          label: "Patent Ownership", 
+          icon: FileText, 
+          description: "Sell complete ownership of your patent - buyer gets all patent rights", 
+          symbol: "©",
+          example: "Full patent ownership transfer including licensing rights"
+        },
+        { 
+          value: "royalty", 
+          label: "Patent Royalty Share", 
+          icon: DollarSign, 
+          description: "Sell a percentage of future patent licensing income", 
+          symbol: "💰",
+          example: "Buyer gets 30% of all patent licensing fees"
+        },
+        { 
+          value: "license", 
+          label: "Patent License", 
+          icon: Shield, 
+          description: "Grant specific usage rights to your patent technology", 
+          symbol: "📜",
+          example: "License for manufacturing in specific territories"
+        },
+      ];
+
+    case "real_estate":
+      return [
+        { 
+          value: "ownership", 
+          label: "Property Ownership Stake", 
+          icon: Crown, 
+          description: "Sell a percentage ownership in your real estate property", 
+          symbol: "👑",
+          example: "25% ownership stake in rental property with income sharing"
+        },
+        { 
+          value: "access", 
+          label: "Property Access Rights", 
+          icon: Eye, 
+          description: "Grant usage rights to your property for specific periods", 
+          symbol: "🔑",
+          example: "Vacation home access 4 weeks per year"
+        },
+      ];
+
+    case "artwork":
+      return [
+        { 
+          value: "copyright", 
+          label: "Artwork Copyright", 
+          icon: FileText, 
+          description: "Sell ownership rights to your artwork including reproduction rights", 
+          symbol: "©",
+          example: "Complete ownership with commercial usage rights"
+        },
+        { 
+          value: "license", 
+          label: "Commercial License", 
+          icon: Shield, 
+          description: "Grant specific usage rights for commercial applications", 
+          symbol: "📜",
+          example: "License for merchandise, prints, or marketing use"
+        },
+        { 
+          value: "royalty", 
+          label: "Artwork Royalty Share", 
+          icon: DollarSign, 
+          description: "Sell a percentage of future sales and licensing income", 
+          symbol: "💰",
+          example: "Buyer gets 40% of all print sales and licensing fees"
+        },
+      ];
+
+    case "software":
+      return [
+        { 
+          value: "copyright", 
+          label: "Software Ownership", 
+          icon: FileText, 
+          description: "Sell complete ownership of your software including source code", 
+          symbol: "©",
+          example: "Full ownership transfer with modification and resale rights"
+        },
+        { 
+          value: "license", 
+          label: "Software License", 
+          icon: Shield, 
+          description: "Grant usage rights to your software with specific terms", 
+          symbol: "📜",
+          example: "Commercial use license for enterprise applications"
+        },
+        { 
+          value: "royalty", 
+          label: "Revenue Share", 
+          icon: DollarSign, 
+          description: "Sell a percentage of software sales or subscription income", 
+          symbol: "💰",
+          example: "Buyer gets 25% of all software sales revenue"
+        },
+      ];
+
+    case "brand":
+      return [
+        { 
+          value: "copyright", 
+          label: "Brand Ownership", 
+          icon: FileText, 
+          description: "Sell complete ownership of your brand including trademarks", 
+          symbol: "©",
+          example: "Full brand ownership with all trademark rights"
+        },
+        { 
+          value: "license", 
+          label: "Brand License", 
+          icon: Shield, 
+          description: "Grant rights to use your brand for specific products or territories", 
+          symbol: "📜",
+          example: "License to use brand name for specific product categories"
+        },
+        { 
+          value: "royalty", 
+          label: "Brand Royalty Share", 
+          icon: DollarSign, 
+          description: "Sell a percentage of brand licensing or product revenue", 
+          symbol: "💰",
+          example: "Buyer gets 20% of all brand licensing income"
+        },
+      ];
+
+    case "book":
+      return [
+        { 
+          value: "copyright", 
+          label: "Book Copyright", 
+          icon: FileText, 
+          description: "Sell ownership rights to your book including publishing rights", 
+          symbol: "©",
+          example: "Complete ownership with translation and adaptation rights"
+        },
+        { 
+          value: "license", 
+          label: "Publishing License", 
+          icon: Shield, 
+          description: "Grant specific publishing or adaptation rights", 
+          symbol: "📜",
+          example: "License for film adaptation or foreign translation"
+        },
+        { 
+          value: "royalty", 
+          label: "Book Royalty Share", 
+          icon: DollarSign, 
+          description: "Sell a percentage of book sales and licensing income", 
+          symbol: "💰",
+          example: "Buyer gets 35% of all book sales and adaptation fees"
+        },
+      ];
+
+    case "other":
+      return [
+        { 
+          value: "copyright", 
+          label: "Intellectual Property Rights", 
+          icon: FileText, 
+          description: "Sell ownership rights to your unique intellectual property", 
+          symbol: "©",
+          example: "Complete IP ownership transfer"
+        },
+        { 
+          value: "license", 
+          label: "Usage License", 
+          icon: Shield, 
+          description: "Grant specific usage rights for your intellectual property", 
+          symbol: "📜",
+          example: "Commercial usage license with specific terms"
+        },
+        { 
+          value: "ownership", 
+          label: "Asset Ownership Stake", 
+          icon: Crown, 
+          description: "Sell a percentage ownership in your unique asset", 
+          symbol: "👑",
+          example: "Partial ownership with proportional returns"
+        },
+        { 
+          value: "access", 
+          label: "Exclusive Access Rights", 
+          icon: Eye, 
+          description: "Grant exclusive access to content, services, or experiences", 
+          symbol: "🔑",
+          example: "VIP access to exclusive content or events"
+        },
+      ];
+
+    default:
+      return [
+        { value: "copyright", label: "Copyright", icon: FileText, description: "Intellectual property ownership rights", symbol: "©", example: undefined },
+      ];
   }
-  
-  // Default types for other content
-  return [
-    { value: "copyright", label: "Copyright", icon: FileText, description: "Intellectual property rights to creative works", symbol: "©", example: undefined },
-    { value: "royalty", label: "Royalty", icon: DollarSign, description: "Ongoing revenue streams from existing assets", symbol: "💰", example: undefined },
-    { value: "access", label: "Access", icon: Eye, description: "Exclusive access rights to content or services", symbol: "🔑", example: undefined },
-    { value: "ownership", label: "Ownership", icon: Crown, description: "Direct ownership stakes in assets", symbol: "👑", example: undefined },
-    { value: "license", label: "License", icon: Shield, description: "Usage permissions and licensing rights", symbol: "🔐", example: undefined },
-  ];
 };
 
 export default function CreateRight() {
