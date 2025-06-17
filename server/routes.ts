@@ -496,27 +496,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Right not found" });
       }
 
-      // Trigger automatic NFT minting process
-      try {
-        const mintingResult = await triggerAutomaticNFTMinting(updatedRight);
-        
-        res.json({
-          success: true,
-          message: "Right verified and NFT minting initiated",
-          right: updatedRight,
-          minting: mintingResult
-        });
-      } catch (mintError: any) {
+      // Trigger automatic NFT minting process asynchronously
+      triggerAutomaticNFTMinting(updatedRight).catch((mintError: any) => {
         console.error("NFT minting failed after verification:", mintError);
-        
-        // Still return success for verification, but note minting failure
-        res.json({
-          success: true,
-          message: "Right verified but NFT minting encountered issues",
-          right: updatedRight,
-          mintingError: mintError?.message || "Unknown minting error"
-        });
-      }
+      });
+      
+      res.json({
+        success: true,
+        message: "Right verified and NFT minting initiated",
+        right: updatedRight
+      });
     } catch (error) {
       console.error("Error verifying right:", error);
       res.status(500).json({ error: "Failed to verify right" });

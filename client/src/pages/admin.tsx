@@ -149,11 +149,8 @@ export default function Admin() {
       if (variables.status === "verified") {
         toast({
           title: "Success", 
-          description: "Right verified successfully. NFT minting will begin automatically.",
+          description: "Right verified successfully. NFT minting initiated automatically.",
         });
-        
-        // Trigger automatic NFT minting for verified rights
-        await triggerNFTMinting(variables.rightId);
       } else {
         toast({
           title: "Success",

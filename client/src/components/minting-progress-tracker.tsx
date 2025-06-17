@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,41 +29,34 @@ export function MintingProgressTracker({ rightId, rightTitle, onComplete, onErro
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Poll minting status from the server
-  const { data: statusData, error: statusError } = useQuery({
-    queryKey: [`/api/minting-status/${rightId}`],
-    refetchInterval: 1000, // Poll every second
-    retry: false,
-    enabled: !mintingStatus?.status || mintingStatus.status === "processing"
-  });
+  // Use custom hook for minting progress
+  const { status, isLoading, isComplete, error: progressError } = useMintingProgress(rightId);
 
   useEffect(() => {
-    if (statusData) {
-      setMintingStatus(statusData);
+    if (status) {
+      setMintingStatus(status);
       
-      if (statusData.status === "completed") {
+      if (status.status === "completed") {
         toast({
           title: "NFT Minted Successfully!",
           description: `${rightTitle} is now available as an NFT on the marketplace`,
         });
-        if (onComplete) onComplete(statusData.results);
-      } else if (statusData.status === "error") {
-        setError(statusData.error);
-        toast({
-          title: "Minting Failed",
-          description: statusData.error,
-          variant: "destructive"
-        });
-        if (onError) onError(statusData.error);
+        if (onComplete) onComplete(status.results);
       }
     }
-  }, [statusData, rightTitle, onComplete, onError, toast]);
+  }, [status, rightTitle, onComplete, toast]);
 
   useEffect(() => {
-    if (statusError) {
-      setError("Failed to track minting progress");
+    if (progressError) {
+      setError(progressError);
+      toast({
+        title: "Minting Failed",
+        description: progressError,
+        variant: "destructive"
+      });
+      if (onError) onError(progressError);
     }
-  }, [statusError]);
+  }, [progressError, onError, toast]);
 
   // If no status data yet, show initial loading state
   if (!mintingStatus && !error) {
@@ -139,7 +133,7 @@ export function MintingProgressTracker({ rightId, rightTitle, onComplete, onErro
 
         {/* Step-by-step Progress */}
         <div className="space-y-4">
-          {steps.map((step, index) => (
+          {steps.map((step: any, index: number) => (
             <div key={step.id} className="flex items-start gap-4 p-4 rounded-lg border bg-muted/30">
               <div className="flex-shrink-0 mt-1">
                 {getStepIcon(step.status)}
@@ -181,7 +175,7 @@ export function MintingProgressTracker({ rightId, rightTitle, onComplete, onErro
         </div>
 
         {/* Success Result */}
-        {mintingResult && (
+        {mintingStatus?.status === "completed" && mintingStatus.results && (
           <Card className="bg-green-50 border-green-200">
             <CardContent className="pt-6">
               <div className="space-y-3">
@@ -193,11 +187,11 @@ export function MintingProgressTracker({ rightId, rightTitle, onComplete, onErro
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-600">Token ID:</p>
-                    <p className="font-mono">{mintingResult.tokenId}</p>
+                    <p className="font-mono">{mintingStatus.results.tokenId}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Serial Number:</p>
-                    <p className="font-mono">#{mintingResult.serialNumber}</p>
+                    <p className="font-mono">#{mintingStatus.results.serialNumber}</p>
                   </div>
                 </div>
                 
@@ -205,7 +199,7 @@ export function MintingProgressTracker({ rightId, rightTitle, onComplete, onErro
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => copyToClipboard(mintingResult.transactionId)}
+                    onClick={() => copyToClipboard(mintingStatus.results.transactionId)}
                   >
                     <Copy className="h-3 w-3 mr-1" />
                     Copy Transaction ID
@@ -213,7 +207,7 @@ export function MintingProgressTracker({ rightId, rightTitle, onComplete, onErro
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => window.open(`https://hashscan.io/testnet/transaction/${mintingResult.transactionId}`, '_blank')}
+                    onClick={() => window.open(`https://hashscan.io/testnet/transaction/${mintingStatus.results.transactionId}`, '_blank')}
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />
                     View on Explorer
