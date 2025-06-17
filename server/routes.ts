@@ -246,6 +246,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User by wallet address routes
+  app.get("/api/users/by-wallet/:walletAddress", async (req, res) => {
+    try {
+      const { walletAddress } = req.params;
+      
+      if (!walletAddress) {
+        return res.status(400).json({ error: "Wallet address is required" });
+      }
+
+      const user = await storage.getUserByWalletAddress(walletAddress);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Don't return password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error fetching user by wallet:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // User CRUD routes
+  app.post("/api/users", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(userData);
+      
+      // Don't return password
+      const { password, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        res.status(409).json({ error: "Username or wallet address already exists" });
+      } else {
+        res.status(400).json({ error: error.message || "Failed to create user" });
+      }
+    }
+  });
+
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Don't return password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      const updates = req.body;
+      const user = await storage.updateUser(id, updates);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Don't return password
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        res.status(409).json({ error: "Username or wallet address already exists" });
+      } else {
+        res.status(400).json({ error: error.message || "Failed to update user" });
+      }
+    }
+  });
+
   // Rights routes
   app.get("/api/rights", async (req, res) => {
     try {
