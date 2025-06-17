@@ -35,13 +35,64 @@ const createRightFormSchema = insertRightSchema.extend({
 
 type CreateRightFormData = z.infer<typeof createRightFormSchema>;
 
-const rightTypes = [
-  { value: "copyright", label: "Copyright", icon: FileText, description: "Intellectual property rights to creative works", symbol: "©" },
-  { value: "royalty", label: "Royalty", icon: DollarSign, description: "Ongoing revenue streams from existing assets", symbol: "💰" },
-  { value: "access", label: "Access", icon: Eye, description: "Exclusive access rights to content or services", symbol: "🔑" },
-  { value: "ownership", label: "Ownership", icon: Crown, description: "Direct ownership stakes in assets", symbol: "👑" },
-  { value: "license", label: "License", icon: Shield, description: "Usage permissions and licensing rights", symbol: "🔐" },
-];
+// Type definition for right types
+type RightTypeOption = {
+  value: string;
+  label: string;
+  icon: any;
+  description: string;
+  symbol: string;
+  example?: string;
+};
+
+// Dynamic right types based on content source
+const getRightTypes = (contentSource: string): RightTypeOption[] => {
+  if (contentSource === "music_track") {
+    return [
+      { 
+        value: "copyright", 
+        label: "Master Recording Rights", 
+        icon: FileText, 
+        description: "Sell ownership of the original recorded track - buyer gets full control", 
+        symbol: "©",
+        example: "Complete ownership transfer of your song recording"
+      },
+      { 
+        value: "royalty", 
+        label: "Streaming Revenue Share", 
+        icon: DollarSign, 
+        description: "Sell a percentage of future streaming earnings while keeping ownership", 
+        symbol: "💰",
+        example: "Buyer gets 50% of all Spotify/Apple Music earnings"
+      },
+      { 
+        value: "license", 
+        label: "Usage License", 
+        icon: Shield, 
+        description: "Grant specific usage rights (sync, commercial use, etc.) for a period", 
+        symbol: "📜",
+        example: "License for use in YouTube videos or commercials"
+      },
+      { 
+        value: "access", 
+        label: "Exclusive Content Access", 
+        icon: Eye, 
+        description: "Sell access to unreleased tracks, stems, or behind-the-scenes content", 
+        symbol: "🔑",
+        example: "Exclusive access to instrumental versions and demos"
+      },
+    ];
+  }
+  
+  // Default types for other content
+  return [
+    { value: "copyright", label: "Copyright", icon: FileText, description: "Intellectual property rights to creative works", symbol: "©" },
+    { value: "royalty", label: "Royalty", icon: DollarSign, description: "Ongoing revenue streams from existing assets", symbol: "💰" },
+    { value: "access", label: "Access", icon: Eye, description: "Exclusive access rights to content or services", symbol: "🔑" },
+    { value: "ownership", label: "Ownership", icon: Crown, description: "Direct ownership stakes in assets", symbol: "👑" },
+    { value: "license", label: "License", icon: Shield, description: "Usage permissions and licensing rights", symbol: "🔐" },
+  ];
+};
 
 export default function CreateRight() {
   const [, setLocation] = useLocation();
@@ -697,8 +748,8 @@ export default function CreateRight() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Right Type *</FormLabel>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {rightTypes.map((type) => {
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {getRightTypes(form.watch("contentSource")).map((type) => {
                                 const Icon = type.icon;
                                 return (
                                   <Card
@@ -710,10 +761,25 @@ export default function CreateRight() {
                                     }`}
                                     onClick={() => field.onChange(type.value)}
                                   >
-                                    <CardContent className="p-4 text-center">
-                                      <Icon className="w-8 h-8 mx-auto mb-2 text-primary" />
-                                      <h4 className="font-medium text-sm">{type.label}</h4>
-                                      <p className="text-xs text-muted-foreground mt-1">{type.description}</p>
+                                    <CardContent className="p-5">
+                                      <div className="flex items-start gap-4">
+                                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
+                                          <Icon className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h3 className="font-semibold mb-2 text-left">{type.label}</h3>
+                                          <p className="text-sm text-muted-foreground mb-3 text-left leading-relaxed">
+                                            {type.description}
+                                          </p>
+                                          {type.example && (
+                                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                                              <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                                Example: {type.example}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
                                     </CardContent>
                                   </Card>
                                 );
