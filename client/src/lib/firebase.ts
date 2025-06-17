@@ -41,9 +41,14 @@ export const signInWithGoogle = async () => {
     });
     
     // Check if Firebase is properly initialized
-    if (!import.meta.env.VITE_FIREBASE_API_KEY || !import.meta.env.VITE_FIREBASE_PROJECT_ID || !import.meta.env.VITE_FIREBASE_APP_ID) {
+    if (!import.meta.env.VITE_FIREBASE_API_KEY || !import.meta.env.VITE_FIREBASE_APP_ID) {
       throw new Error('Missing Firebase configuration. Please check environment variables.');
     }
+    
+    // Validate Firebase project setup
+    console.log('Testing Firebase Auth state...');
+    console.log('Auth domain check:', auth.app.options.authDomain);
+    console.log('Current domain:', window.location.hostname);
     
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
