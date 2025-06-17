@@ -5,13 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { TestTube, RotateCcw, Eye, BarChart3 } from "lucide-react";
 
 interface ABTestSwitcherProps {
-  onVariantChange: (variant: 'original' | 'minimalist') => void;
-  currentVariant: 'original' | 'minimalist';
+  onVariantChange: (variant: 'original' | 'minimalist' | 'beautiful') => void;
+  currentVariant: 'original' | 'minimalist' | 'beautiful';
 }
 
 export function ABTestSwitcher({ onVariantChange, currentVariant }: ABTestSwitcherProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [viewCount, setViewCount] = useState({ original: 0, minimalist: 0 });
+  const [viewCount, setViewCount] = useState({ original: 0, minimalist: 0, beautiful: 0 });
 
   useEffect(() => {
     // Show switcher only in development or for admins
@@ -37,9 +37,15 @@ export function ABTestSwitcher({ onVariantChange, currentVariant }: ABTestSwitch
   }, [currentVariant]);
 
   const resetCounts = () => {
-    const reset = { original: 0, minimalist: 0 };
+    const reset = { original: 0, minimalist: 0, beautiful: 0 };
     setViewCount(reset);
     localStorage.setItem('ab-test-counts', JSON.stringify(reset));
+  };
+
+  const getNextVariant = () => {
+    if (currentVariant === 'original') return 'minimalist';
+    if (currentVariant === 'minimalist') return 'beautiful';
+    return 'original';
   };
 
   if (!isVisible) return null;
@@ -49,12 +55,12 @@ export function ABTestSwitcher({ onVariantChange, currentVariant }: ABTestSwitch
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => onVariantChange(currentVariant === 'original' ? 'minimalist' : 'original')}
+        onClick={() => onVariantChange(getNextVariant())}
         className="text-xs px-3 py-1 h-8 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 hover:bg-white dark:hover:bg-gray-900 shadow-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-        title={`Switch to ${currentVariant === 'original' ? 'minimalist' : 'original'} design`}
+        title={`Switch to ${getNextVariant()} design`}
       >
         <TestTube className="w-3 h-3 mr-1" />
-        {currentVariant === 'original' ? 'Min' : 'Orig'}
+        {currentVariant === 'original' ? 'Min' : currentVariant === 'minimalist' ? 'Beauty' : 'Orig'}
       </Button>
     </div>
   );

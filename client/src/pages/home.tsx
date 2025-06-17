@@ -8,11 +8,12 @@ import { EthereumWalletButton } from "@/components/ethereum-wallet-button";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { ABTestSwitcher } from "@/components/ab-test-switcher";
 import HomeMinimalist from "./home-minimalist";
+import HomeBeautiful from "./home-beautiful";
 import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Home() {
-  const [variant, setVariant] = useState<'original' | 'minimalist'>('original');
+  const [variant, setVariant] = useState<'original' | 'minimalist' | 'beautiful'>('original');
 
   const { data: featuredRights, isLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", { limit: 6, isListed: true }],
@@ -27,6 +28,19 @@ export default function Home() {
     return (
       <>
         <HomeMinimalist />
+        <ABTestSwitcher 
+          currentVariant={variant}
+          onVariantChange={setVariant}
+        />
+      </>
+    );
+  }
+
+  // Return beautiful design if selected
+  if (variant === 'beautiful') {
+    return (
+      <>
+        <HomeBeautiful />
         <ABTestSwitcher 
           currentVariant={variant}
           onVariantChange={setVariant}
