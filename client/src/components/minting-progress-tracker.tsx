@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle, Clock, AlertCircle, ExternalLink, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMintingProgress } from "@/hooks/useMintingProgress";
 
 interface MintingStep {
   id: string;
