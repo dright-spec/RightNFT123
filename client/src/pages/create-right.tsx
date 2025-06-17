@@ -45,6 +45,157 @@ type RightTypeOption = {
   example?: string;
 };
 
+// Get right-specific guidance for forms
+const getRightGuidance = (rightType: string, contentSource: string) => {
+  if (contentSource === "music_track") {
+    switch (rightType) {
+      case "copyright":
+        return {
+          descriptionPlaceholder: "Describe the master recording you're selling. Include track details, production year, and what the buyer will own (full ownership, publishing rights, etc.)",
+          descriptionHelper: "Buyers want to know: What exactly are they buying? Full ownership or just recording rights?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Master recordings typically sell for $500-$50,000+ depending on popularity and revenue history"
+        };
+      case "royalty":
+        return {
+          descriptionPlaceholder: "Explain the revenue stream you're sharing. Include current earnings, streaming platforms, and the percentage being sold.",
+          descriptionHelper: "Buyers need transparency: How much does this earn monthly? Which platforms? What percentage are they getting?",
+          requiredFields: ["title", "description", "price", "paysDividends"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Revenue shares often sell for 10-50x monthly earnings depending on growth potential"
+        };
+      case "license":
+        return {
+          descriptionPlaceholder: "Define the usage rights you're granting. Specify duration, territories, and allowed uses (sync, commercial, etc.)",
+          descriptionHelper: "Be specific about limitations: How long? Where can it be used? What types of projects?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Licensing deals range from $100-$10,000+ based on usage scope and track popularity"
+        };
+      case "access":
+        return {
+          descriptionPlaceholder: "Describe the exclusive content buyers will access. Include unreleased tracks, stems, behind-the-scenes material, etc.",
+          descriptionHelper: "What exclusive content are you providing? Studio sessions? Unreleased versions? Producer files?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Exclusive access typically priced $50-$1,000+ depending on content value and artist following"
+        };
+    }
+  }
+  
+  // Guidance for other content types
+  switch (rightType) {
+    case "copyright":
+      if (contentSource === "artwork") {
+        return {
+          descriptionPlaceholder: "Describe the artwork you're selling. Include creation date, medium, dimensions, and what ownership rights the buyer receives.",
+          descriptionHelper: "Buyers want to know: Original vs print rights? Commercial use allowed? Reproduction rights included?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Digital art typically sells for $100-$10,000+ based on artist reputation and usage rights"
+        };
+      }
+      if (contentSource === "book") {
+        return {
+          descriptionPlaceholder: "Detail the book/manuscript you're selling. Include genre, length, publication status, and what rights are included.",
+          descriptionHelper: "Specify what's included: Publishing rights? Translation rights? Film adaptation rights?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Book rights range from $500-$100,000+ depending on genre, length, and market potential"
+        };
+      }
+      return {
+        descriptionPlaceholder: "Describe the intellectual property you're selling. Include what the buyer will own and any usage restrictions.",
+        descriptionHelper: "Be clear about what ownership rights are being transferred and any limitations",
+        requiredFields: ["title", "description", "price"],
+        optionalFields: ["tags"],
+        pricingGuidance: "Copyright pricing varies widely based on content type and market value"
+      };
+
+    case "royalty":
+      if (contentSource === "patent") {
+        return {
+          descriptionPlaceholder: "Explain the patent royalty stream. Include current licensees, revenue history, and the percentage being sold.",
+          descriptionHelper: "Buyers need: Which companies pay royalties? How much monthly? Patent expiration date?",
+          requiredFields: ["title", "description", "price", "paysDividends"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Patent royalties often sell for 15-100x annual earnings based on patent strength"
+        };
+      }
+      return {
+        descriptionPlaceholder: "Detail the ongoing revenue stream you're sharing. Include current earnings, sources, and percentage being sold.",
+        descriptionHelper: "Transparency is key: How much does this earn? From where? What percentage do buyers get?",
+        requiredFields: ["title", "description", "price", "paysDividends"],
+        optionalFields: ["tags"],
+        pricingGuidance: "Revenue shares typically sell for 10-50x monthly earnings depending on stability"
+      };
+
+    case "license":
+      if (contentSource === "software") {
+        return {
+          descriptionPlaceholder: "Define the software licensing rights. Include usage scope, user limits, territory restrictions, and license duration.",
+          descriptionHelper: "Specify: Commercial vs personal use? How many users? Which territories? Time limitations?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Software licenses range from $50-$50,000+ based on functionality and user scope"
+        };
+      }
+      if (contentSource === "brand") {
+        return {
+          descriptionPlaceholder: "Explain the brand/trademark licensing terms. Include usage rights, territories, duration, and any restrictions.",
+          descriptionHelper: "Be specific: What can be branded? Which markets? For how long? Any competitor restrictions?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags"],
+          pricingGuidance: "Brand licensing deals typically range from $1,000-$1M+ based on brand value and scope"
+        };
+      }
+      return {
+        descriptionPlaceholder: "Define the licensing terms you're granting. Include scope, duration, territories, and permitted uses.",
+        descriptionHelper: "Buyers need clarity on what they can and cannot do with this license",
+        requiredFields: ["title", "description", "price"],
+        optionalFields: ["tags"],
+        pricingGuidance: "License pricing depends on scope, duration, and exclusivity level"
+      };
+
+    case "ownership":
+      if (contentSource === "real_estate") {
+        return {
+          descriptionPlaceholder: "Describe the property ownership stake. Include location, property type, ownership percentage, and any rental income.",
+          descriptionHelper: "Buyers want: Exact location? What percentage? Any rental income? Property management included?",
+          requiredFields: ["title", "description", "price"],
+          optionalFields: ["tags", "paysDividends"],
+          pricingGuidance: "Property stakes typically priced at market value percentage minus liquidity discount"
+        };
+      }
+      return {
+        descriptionPlaceholder: "Detail the ownership stake you're selling. Include what percentage, any voting rights, and income distribution.",
+        descriptionHelper: "Specify ownership details: What percentage? Decision-making rights? Revenue sharing?",
+        requiredFields: ["title", "description", "price"],
+        optionalFields: ["tags", "paysDividends"],
+        pricingGuidance: "Ownership stakes priced based on asset value and rights included"
+      };
+
+    case "access":
+      return {
+        descriptionPlaceholder: "Describe the exclusive access you're providing. Include what content, how long, and any special privileges.",
+        descriptionHelper: "What exclusive content or experiences are buyers getting access to?",
+        requiredFields: ["title", "description", "price"],
+        optionalFields: ["tags"],
+        pricingGuidance: "Access rights typically priced $25-$5,000+ based on exclusivity and value"
+      };
+
+    default:
+      return {
+        descriptionPlaceholder: "Describe your right, its uniqueness, and what buyers will receive...",
+        descriptionHelper: "Provide details about ownership, usage rights, and any restrictions",
+        requiredFields: ["title", "description", "price"],
+        optionalFields: ["tags", "paysDividends"],
+        pricingGuidance: "Price based on market value and potential returns"
+      };
+  }
+};
+
 // Dynamic right types based on content source
 const getRightTypes = (contentSource: string): RightTypeOption[] => {
   if (contentSource === "music_track") {
@@ -833,6 +984,56 @@ export default function CreateRight() {
                     ) : (
                       // Standard form for other content types
                       <div className="space-y-6">
+                        {/* Dynamic Right Type Banner with Progress Summary */}
+                        {form.watch("type") && form.watch("contentSource") && (
+                          <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              {(() => {
+                                const rightTypes = getRightTypes(form.watch("contentSource"));
+                                const selectedType = rightTypes.find(t => t.value === form.watch("type"));
+                                const Icon = selectedType?.icon || FileText;
+                                return <Icon className="w-5 h-5 text-purple-600 mt-0.5" />;
+                              })()}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="font-medium text-purple-800 dark:text-purple-200">
+                                    {(() => {
+                                      const rightTypes = getRightTypes(form.watch("contentSource"));
+                                      const selectedType = rightTypes.find(t => t.value === form.watch("type"));
+                                      return selectedType?.label || "Right Type";
+                                    })()} Selected
+                                  </h4>
+                                  <div className="text-xs bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
+                                    Step 1 of 3
+                                  </div>
+                                </div>
+                                <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+                                  {(() => {
+                                    const rightTypes = getRightTypes(form.watch("contentSource"));
+                                    const selectedType = rightTypes.find(t => t.value === form.watch("type"));
+                                    return selectedType?.description || "";
+                                  })()}
+                                </p>
+                                
+                                {/* Field Requirements Summary */}
+                                {(() => {
+                                  const guidance = getRightGuidance(form.watch("type"), form.watch("contentSource"));
+                                  const requiredCount = guidance.requiredFields.length;
+                                  const optionalCount = guidance.optionalFields.length;
+                                  
+                                  return (
+                                    <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-700">
+                                      <p className="text-xs text-purple-600 dark:text-purple-400">
+                                        <span className="font-medium">{requiredCount} required</span>
+                                        {optionalCount > 0 && <span className="text-purple-500"> • {optionalCount} optional</span>} fields for this selection
+                                      </p>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         <div className="grid md:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
@@ -881,22 +1082,32 @@ export default function CreateRight() {
                         <FormField
                           control={form.control}
                           name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Description *</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Describe your right, its uniqueness, and what buyers will receive..."
-                                  className="min-h-[120px] resize-none"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Provide details about ownership, usage rights, and any restrictions
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                          render={({ field }) => {
+                            const guidance = getRightGuidance(form.watch("type"), form.watch("contentSource"));
+                            return (
+                              <FormItem>
+                                <FormLabel>Description *</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder={guidance.descriptionPlaceholder}
+                                    className="min-h-[120px] resize-none"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  {guidance.descriptionHelper}
+                                </FormDescription>
+                                {guidance.pricingGuidance && (
+                                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-2">
+                                    <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                                      💡 Pricing Guide: {guidance.pricingGuidance}
+                                    </p>
+                                  </div>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
                         />
                       </div>
                     )}
@@ -1056,23 +1267,38 @@ export default function CreateRight() {
                         />
                       </div>
 
-                      <FormField
-                        control={form.control}
-                        name="paysDividends"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">Revenue Distribution</FormLabel>
-                              <FormDescription>
-                                Enable automatic revenue sharing with NFT holders
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                      {/* Conditional Revenue Sharing Field */}
+                      {(() => {
+                        const guidance = getRightGuidance(form.watch("type"), form.watch("contentSource"));
+                        return guidance.requiredFields.includes("paysDividends") || guidance.optionalFields.includes("paysDividends") ? (
+                          <FormField
+                            control={form.control}
+                            name="paysDividends"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div className="space-y-0.5">
+                                  <FormLabel className="text-base">
+                                    Revenue Distribution {guidance.requiredFields.includes("paysDividends") ? "*" : ""}
+                                  </FormLabel>
+                                  <FormDescription>
+                                    {form.watch("type") === "royalty" 
+                                      ? "Enable automatic revenue distribution to NFT holders from ongoing earnings"
+                                      : form.watch("type") === "ownership" && form.watch("contentSource") === "real_estate"
+                                      ? "Share rental income and property appreciation with NFT holders"
+                                      : form.watch("type") === "ownership"
+                                      ? "Share income from the owned asset with NFT holders"
+                                      : "Enable automatic revenue sharing with NFT holders"
+                                    }
+                                  </FormDescription>
+                                </div>
+                                <FormControl>
+                                  <Switch checked={Boolean(field.value)} onCheckedChange={field.onChange} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        ) : null;
+                      })()}
                     </CardContent>
                   </Card>
                 )}
