@@ -1,205 +1,278 @@
 import { useState } from "react";
-import { useWalletUser } from "@/hooks/use-wallet-user";
+import { useLocation } from "wouter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { User, Wallet, ArrowRight, CheckCircle } from "lucide-react";
-import { Link } from "wouter";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useWalletUser } from "@/hooks/use-wallet-user";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { User, Mail, Shield, CheckCircle, ArrowRight, Wallet } from "lucide-react";
+
+const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+  email: z.string().email("Please enter a valid email").optional().or(z.literal("")),
+});
+
+type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfileSetup() {
-  const {
-    walletAddress,
-    createUser,
-    isCreatingUser,
-    navigateToProfile,
-    isConnected
-  } = useWalletUser();
+  const [, setLocation] = useLocation();
+  const { user, walletAddress, isLoading, refreshUser } = useWalletUser();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
 
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
+  const form = useForm<ProfileForm>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: user?.name || "",
+      username: user?.username || "",
+      email: user?.email || "",
+    },
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const setupProfileMutation = useMutation({
+    mutationFn: async (data: ProfileForm) => {
+      return apiRequest("/api/profile-setup", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Profile Setup Complete",
+        description: "Your profile has been successfully created!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/wallet-user"] });
+      refreshUser();
+      setLocation("/marketplace");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Setup Failed",
+        description: error.message || "Failed to complete profile setup",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  const sendEmailVerificationMutation = useMutation({
+    mutationFn: async (email: string) => {
+      return apiRequest("/api/send-email-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+    },
+    onSuccess: () => {
+      setEmailVerificationSent(true);
+      toast({
+        title: "Verification Email Sent",
+        description: "Check your email for the verification link",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Send Email",
+        description: error.message || "Could not send verification email",
+        variant: "destructive",
+      });
+    },
+  });
 
-    if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters";
-    } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.username)) {
-      newErrors.username = "Username can only contain letters, numbers, hyphens, and underscores";
-    }
-
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const onSubmit = async (data: ProfileForm) => {
+    setupProfileMutation.mutate(data);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    createUser({
-      username: formData.username.trim(),
-      email: formData.email.trim() || undefined,
-    });
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+  const handleSendEmailVerification = () => {
+    const email = form.getValues("email");
+    if (email) {
+      sendEmailVerificationMutation.mutate(email);
     }
   };
 
-  if (!isConnected) {
+  const formatDisplayAddress = (address: string) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6 text-center">
-            <Wallet className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-xl font-semibold mb-2">Connect Your Wallet</h2>
-            <p className="text-muted-foreground mb-4">
-              Please connect your wallet to set up your profile.
-            </p>
-            <Link href="/marketplace">
-              <Button>Go to Marketplace</Button>
-            </Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold mb-2">Welcome to Dright!</h1>
-          <p className="text-muted-foreground">
-            Let's set up your profile to start creating and trading rights NFTs
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h1>
+          <p className="text-gray-600">Set up your account to start trading digital rights</p>
         </div>
 
-        {/* Wallet Status */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
-                <div>
-                  <p className="font-medium">Wallet Connected</p>
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-                  </p>
-                </div>
-              </div>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Connected
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Profile Setup Form */}
-        <Card>
+        <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle>Create Your Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username *</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange("username", e.target.value)}
-                  className={errors.username ? "border-red-500" : ""}
-                />
-                {errors.username && (
-                  <p className="text-sm text-red-500">{errors.username}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  This will be your unique identifier on the platform
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email (Optional)</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className={errors.email ? "border-red-500" : ""}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500">{errors.email}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  We'll use this for important notifications (optional)
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  type="submit"
-                  disabled={isCreatingUser}
-                  className="flex-1"
-                >
-                  {isCreatingUser ? (
-                    "Creating Profile..."
-                  ) : (
-                    <>
-                      Create Profile
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </Button>
-                <Link href="/marketplace">
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    Back to Marketplace
-                  </Button>
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Next Steps */}
-        <Card className="mt-6">
-          <CardContent className="pt-6">
-            <h3 className="font-semibold mb-3">What's Next?</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>• Complete your profile with additional details</p>
-              <p>• Create your first rights NFT</p>
-              <p>• Explore investment opportunities in the marketplace</p>
-              <p>• Connect with other creators and investors</p>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Profile Information
+            </CardTitle>
+            <div className="flex items-center gap-2 mt-4">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Wallet className="w-3 h-3 mr-1" />
+                Wallet Connected
+              </Badge>
+              <span className="text-sm text-gray-500 font-mono">
+                {formatDisplayAddress(walletAddress || '')}
+              </span>
             </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter your full name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Choose a unique username" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          This will be your public display name
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-blue-600" />
+                    <h3 className="font-medium">Email Authentication (Optional)</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      Enhancement
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600">
+                    Add email as a backup login method. You can always sign in with your wallet.
+                  </p>
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="your.email@example.com" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Optional: Add email for account recovery and notifications
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {form.watch("email") && !emailVerificationSent && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSendEmailVerification}
+                      disabled={sendEmailVerificationMutation.isPending}
+                      className="w-full sm:w-auto"
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Send Verification Email
+                    </Button>
+                  )}
+
+                  {emailVerificationSent && (
+                    <Alert className="bg-green-50 border-green-200">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        Verification email sent! Check your inbox and follow the link to verify your email.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
+                <Separator />
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    type="submit"
+                    disabled={setupProfileMutation.isPending}
+                    className="flex-1"
+                  >
+                    {setupProfileMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Setting up...
+                      </>
+                    ) : (
+                      <>
+                        Complete Setup
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setLocation("/marketplace")}
+                    className="flex-1 sm:flex-none"
+                  >
+                    Skip for Now
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500">
+            Your wallet connection is secure and encrypted. We never store your private keys.
+          </p>
+        </div>
       </div>
     </div>
   );

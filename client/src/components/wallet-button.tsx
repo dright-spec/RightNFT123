@@ -109,79 +109,11 @@ export function WalletButton(props: any) {
           <ArrowRight className="w-4 h-4" />
         </Button>
       ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full" />
-              <span className="hidden sm:inline">{displayAddress}</span>
-              <Wallet className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <div className="px-3 py-2">
-              <p className="text-sm text-muted-foreground">Connected Account</p>
-              <p className="font-mono text-sm">{hederaWallet.formatAccountId(accountId || '')}</p>
-              {walletState.network && (
-                <Badge variant="outline" className="mt-1">
-                  {walletState.network}
-                </Badge>
-              )}
-            </div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/profile" className="cursor-pointer">
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/my-rights" className="cursor-pointer">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                My Rights
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings" className="cursor-pointer">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDisconnect} className="text-red-600">
-              <LogOut className="w-4 h-4 mr-2" />
-              Disconnect
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <Button onClick={handleConnect} disabled={walletState.isConnecting} className="gap-2">
-          {walletState.isConnecting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Wallet className="w-4 h-4" />
-          )}
-          <span className="hidden sm:inline">
-            {walletState.isConnecting ? "Connecting..." : "Connect Wallet"}
-          </span>
+        <Button variant="default" onClick={handleConnect} {...props}>
+          <Wallet className="w-4 h-4 mr-2" />
+          Connect Wallet
         </Button>
       )}
-
-      {walletState.error && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <div className="bg-destructive text-destructive-foreground p-3 rounded-md shadow-lg max-w-sm">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm">{walletState.error}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <WalletConnect
-        open={showWalletConnect}
-        onOpenChange={setShowWalletConnect}
-        onSuccess={handleWalletSuccess}
-      />
     </>
   );
 }
