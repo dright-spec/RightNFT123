@@ -250,7 +250,10 @@ export default function ProfileSetup() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setLocation("/marketplace")}
+                    onClick={() => {
+                      localStorage.setItem('profile_setup_skipped', 'true');
+                      setLocation("/marketplace");
+                    }}
                     className="flex-1 sm:flex-none"
                   >
                     Skip for Now

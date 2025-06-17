@@ -20,9 +20,10 @@ export function WalletButton(props: any) {
   
   const [location, setLocation] = useLocation();
 
-  // Auto-navigate to profile setup after successful wallet connection
+  // Auto-navigate to profile setup only on initial wallet connection, not when user skips
   useEffect(() => {
-    if (needsProfileSetup && location === '/marketplace') {
+    // Only redirect if coming from a fresh wallet connection, not when returning from profile setup
+    if (needsProfileSetup && location === '/marketplace' && !localStorage.getItem('profile_setup_skipped')) {
       // Small delay to ensure wallet connection is complete
       const timer = setTimeout(() => {
         navigateToProfileSetup();
