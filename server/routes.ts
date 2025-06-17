@@ -246,6 +246,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile setup for wallet users (after wallet connection)
+  app.post('/api/profile-setup', async (req, res) => {
+    try {
+      const { name, username, email } = req.body;
+
+      if (!req.session.walletAddress) {
+        return res.status(401).json({ message: 'Wallet connection required' });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByWalletAddress(req.session.walletAddress);
+      
+      if (existingUser) {
+        // Update existing user
+        const updatedUser = await storage.updateUser(existingUser.id, {
+          name: name || existingUser.name,
+          username: username || existingUser.username,
+          email: email || existingUser.email,
+        });
+        
+        req.session.userId = updatedUser?.id;
+        return res.json({ user: updatedUser });
+      }
+
+      // Create new user
+      const user = await storage.createUser({
+        name,
+        username,
+        email: email || null,
+        walletAddress: req.session.walletAddress,
+        password: '', // No password for wallet users
+        emailVerified: false,
+      });
+
+      req.session.userId = user.id;
+      res.json({ user });
+    } catch (error) {
+      console.error('Profile setup error:', error);
+      res.status(500).json({ message: 'Failed to set up profile' });
+    }
+  });
+
+  // Send email verification (optional enhancement for wallet users)
+  app.post('/api/send-email-verification', async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!req.session.userId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email is required' });
+      }
+
+      // Generate verification token
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      const user = await storage.updateUser(req.session.userId, {
+        emailVerificationToken: token,
+        emailVerificationExpires: expiresAt,
+      });
+
+      // In production, send actual email here
+      console.log(`Email verification token for ${email}: ${token}`);
+      
+      res.json({ message: 'Verification email sent' });
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ message: 'Failed to send verification email' });
+    }
+  });
+
+  // Verify email token (optional enhancement)
+  app.post('/api/verify-email', async (req, res) => {
+    try {
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Verification token is required' });
+      }
+
+      const user = await storage.getUserByEmailVerificationToken(token);
+      
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired verification token' });
+      }
+
+      // Check if token has expired
+      if (user.emailVerificationExpires && new Date() > user.emailVerificationExpires) {
+        return res.status(400).json({ message: 'Verification token has expired' });
+      }
+
+      // Update user as verified
+      const updatedUser = await storage.updateUser(user.id, {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      });
+
+      res.json({ message: 'Email verified successfully', user: updatedUser });
+    } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ message: 'Failed to verify email' });
+    }
+  });
+
   // User by wallet address routes
   app.get("/api/users/by-wallet/:walletAddress", async (req, res) => {
     try {

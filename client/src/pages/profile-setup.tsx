@@ -27,7 +27,7 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfileSetup() {
   const [, setLocation] = useLocation();
-  const { user, walletAddress, isLoading, refreshUser } = useWalletUser();
+  const { user, walletAddress, isLoading } = useWalletUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
@@ -35,7 +35,7 @@ export default function ProfileSetup() {
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || "",
+      name: user?.displayName || "",
       username: user?.username || "",
       email: user?.email || "",
     },
@@ -43,10 +43,7 @@ export default function ProfileSetup() {
 
   const setupProfileMutation = useMutation({
     mutationFn: async (data: ProfileForm) => {
-      return apiRequest("/api/profile-setup", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return apiRequest("/api/profile-setup", "POST", data);
     },
     onSuccess: () => {
       toast({
@@ -54,7 +51,6 @@ export default function ProfileSetup() {
         description: "Your profile has been successfully created!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/wallet-user"] });
-      refreshUser();
       setLocation("/marketplace");
     },
     onError: (error: any) => {
@@ -68,10 +64,7 @@ export default function ProfileSetup() {
 
   const sendEmailVerificationMutation = useMutation({
     mutationFn: async (email: string) => {
-      return apiRequest("/api/send-email-verification", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
+      return apiRequest("/api/send-email-verification", "POST", { email });
     },
     onSuccess: () => {
       setEmailVerificationSent(true);
