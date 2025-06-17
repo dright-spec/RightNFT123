@@ -86,11 +86,11 @@ const getRightTypes = (contentSource: string): RightTypeOption[] => {
   
   // Default types for other content
   return [
-    { value: "copyright", label: "Copyright", icon: FileText, description: "Intellectual property rights to creative works", symbol: "©" },
-    { value: "royalty", label: "Royalty", icon: DollarSign, description: "Ongoing revenue streams from existing assets", symbol: "💰" },
-    { value: "access", label: "Access", icon: Eye, description: "Exclusive access rights to content or services", symbol: "🔑" },
-    { value: "ownership", label: "Ownership", icon: Crown, description: "Direct ownership stakes in assets", symbol: "👑" },
-    { value: "license", label: "License", icon: Shield, description: "Usage permissions and licensing rights", symbol: "🔐" },
+    { value: "copyright", label: "Copyright", icon: FileText, description: "Intellectual property rights to creative works", symbol: "©", example: undefined },
+    { value: "royalty", label: "Royalty", icon: DollarSign, description: "Ongoing revenue streams from existing assets", symbol: "💰", example: undefined },
+    { value: "access", label: "Access", icon: Eye, description: "Exclusive access rights to content or services", symbol: "🔑", example: undefined },
+    { value: "ownership", label: "Ownership", icon: Crown, description: "Direct ownership stakes in assets", symbol: "👑", example: undefined },
+    { value: "license", label: "License", icon: Shield, description: "Usage permissions and licensing rights", symbol: "🔐", example: undefined },
   ];
 };
 
