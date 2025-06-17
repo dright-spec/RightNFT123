@@ -1,34 +1,96 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { WalletButton } from "@/components/wallet-button";
 import { ActivityFeed } from "@/components/activity-feed";
-import { ArrowLeft, Filter, TrendingUp, Zap } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Filter, 
+  TrendingUp, 
+  Zap, 
+  Search, 
+  Grid3X3, 
+  List, 
+  Clock,
+  DollarSign,
+  Eye,
+  Heart,
+  Share2,
+  MoreHorizontal,
+  Timer,
+  Gavel,
+  ShoppingCart,
+  TrendingDown
+} from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Marketplace() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [priceRange, setPriceRange] = useState<number[]>([0, 1000]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [listingType, setListingType] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("explore");
 
-  const { data: rights, isLoading, error } = useQuery<RightWithCreator[]>({
+  const { data: allRights, isLoading, error } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", { 
-      limit: 50, 
+      limit: 100, 
       isListed: true,
+      search: searchQuery || undefined,
       type: typeFilter === "all" ? undefined : typeFilter 
     }],
   });
 
-  const sortedRights = rights?.sort((a, b) => {
+  // Advanced filtering logic
+  const filteredRights = allRights?.filter(right => {
+    // Price range filter
+    const price = parseFloat(right.price || "0");
+    if (price < priceRange[0] || price > priceRange[1]) return false;
+    
+    // Listing type filter
+    if (listingType !== "all") {
+      if (listingType === "auction" && right.listingType !== "auction") return false;
+      if (listingType === "fixed" && right.listingType !== "fixed") return false;
+      if (listingType === "ending-soon" && right.listingType === "auction") {
+        const endTime = new Date(right.auctionEndTime || 0);
+        const now = new Date();
+        const hoursLeft = (endTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        if (hoursLeft > 24) return false;
+      }
+    }
+    
+    return true;
+  });
+
+  // Advanced sorting logic
+  const sortedRights = filteredRights?.sort((a, b) => {
     switch (sortBy) {
       case "price-high":
         return parseFloat(b.price || "0") - parseFloat(a.price || "0");
       case "price-low":
         return parseFloat(a.price || "0") - parseFloat(b.price || "0");
+      case "ending-soon":
+        if (a.listingType === "auction" && b.listingType === "auction") {
+          const aEnd = new Date(a.auctionEndTime || 0).getTime();
+          const bEnd = new Date(b.auctionEndTime || 0).getTime();
+          return aEnd - bEnd;
+        }
+        return 0;
+      case "most-viewed":
+        return (b.views || 0) - (a.views || 0);
+      case "most-favorited":
+        return (b.favorites || 0) - (a.favorites || 0);
       case "oldest":
         return new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime();
       default: // newest
@@ -49,24 +111,31 @@ export default function Marketplace() {
   }
 
   return (
-    <div className="min-h-screen bg-background animate-fade-in">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40 animate-slide-in-down">
+      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4 animate-slide-in-left">
+            <div className="flex items-center space-x-4">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="transition-all duration-300 hover:scale-105 hover:shadow-lg group">
-                  <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1" />
-                  Back
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Home
                 </Button>
               </Link>
-              <h1 className="text-xl font-bold text-primary transition-all duration-300 hover:scale-105">
-                D<span className="text-accent">right</span>
-              </h1>
+              <h1 className="text-xl font-semibold text-foreground">Marketplace</h1>
             </div>
             
-            <div className="animate-slide-in-right">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search items, creators, collections..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-80"
+                />
+              </div>
               <WalletButton />
             </div>
           </div>
@@ -74,20 +143,26 @@ export default function Marketplace() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Rights Marketplace</h1>
-          <p className="text-muted-foreground">
-            Browse and purchase tokenized rights - from music and media to patents and real estate
-          </p>
-          
-          {/* Legal Disclaimer */}
-          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              <strong>Legal Notice:</strong> This platform facilitates legal ownership transfer, not securities trading.
-            </p>
-          </div>
-        </div>
+        {/* OpenSea-style Tabs */}
+        <Tabs defaultValue="explore" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="explore" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Explore
+            </TabsTrigger>
+            <TabsTrigger value="auctions" className="flex items-center gap-2">
+              <Gavel className="w-4 h-4" />
+              Auctions
+            </TabsTrigger>
+            <TabsTrigger value="fixed-price" className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              Buy Now
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              Activity
+            </TabsTrigger>
+          </TabsList>
 
         {/* Filters */}
         <Card className="mb-8">
