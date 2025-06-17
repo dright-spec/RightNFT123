@@ -91,7 +91,15 @@ export const rights = pgTable("rights", {
   ownershipDocumentHash: text("ownership_document_hash"), // IPFS hash of ownership documents metadata
   ownershipDocumentUrl: text("ownership_document_url"), // IPFS URL of ownership documents metadata
   
-  // Ethereum blockchain integration
+  // Hedera blockchain integration
+  hederaTokenId: text("hedera_token_id"), // Hedera Token ID (0.0.xxxxx)
+  hederaSerialNumber: text("hedera_serial_number"), // NFT serial number
+  hederaTransactionId: text("hedera_transaction_id"), // Mint transaction hash
+  hederaMetadataUri: text("hedera_metadata_uri"), // IPFS URI for NFT metadata
+  hederaAccountId: text("hedera_account_id"), // Current NFT holder account
+  hederaNetwork: text("hedera_network").default("testnet"), // mainnet, testnet
+  
+  // Ethereum blockchain integration (legacy)
   ethereumTokenId: text("ethereum_token_id"), // ERC-721 token ID
   ethereumContractAddress: text("ethereum_contract_address"), // Smart contract address
   ethereumTransactionHash: text("ethereum_transaction_hash"), // Mint transaction hash
@@ -167,6 +175,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   website: true,
   twitter: true,
   instagram: true,
+  displayName: true,
 });
 
 export const insertCategorySchema = createInsertSchema(categories).pick({
