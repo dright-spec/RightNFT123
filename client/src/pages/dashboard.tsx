@@ -121,8 +121,8 @@ export default function Dashboard() {
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
               </Link>
-              <Link href="/auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
-                Auctions
+              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Live Auctions
               </Link>
               <Link href="/dashboard" className="text-primary border-b-2 border-primary font-medium">
                 Dashboard

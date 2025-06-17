@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { WalletButton } from "@/components/wallet-button";
 import { ActivityFeed } from "@/components/activity-feed";
+import OnboardingTooltip, { marketplaceOnboardingSteps } from "@/components/onboarding-tooltip";
+import WelcomeModal from "@/components/welcome-modal";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { 
   ArrowLeft, 
   Filter, 
@@ -44,6 +47,29 @@ export default function Marketplace() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("explore");
+
+  // Onboarding state
+  const {
+    state: onboardingState,
+    startMarketplaceOnboarding,
+    nextStep,
+    prevStep,
+    skipOnboarding,
+    completeMarketplaceOnboarding,
+    shouldShowWelcome,
+    markWelcomeSeen
+  } = useOnboarding();
+
+  // Auto-start welcome for new users
+  useEffect(() => {
+    if (shouldShowWelcome()) {
+      // Small delay to ensure page is loaded
+      const timer = setTimeout(() => {
+        markWelcomeSeen();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowWelcome, markWelcomeSeen]);
 
   const { data: allRights, isLoading, error } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", { 
@@ -144,6 +170,15 @@ export default function Marketplace() {
                   className="pl-10 w-80"
                 />
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={startMarketplaceOnboarding}
+                className="flex items-center gap-2"
+              >
+                <span className="text-lg">🤓</span>
+                Help Tour
+              </Button>
               <WalletButton />
             </div>
           </div>
@@ -835,6 +870,23 @@ export default function Marketplace() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Onboarding Components */}
+      <WelcomeModal
+        isOpen={shouldShowWelcome()}
+        onClose={markWelcomeSeen}
+        onStartTour={startMarketplaceOnboarding}
+      />
+
+      <OnboardingTooltip
+        steps={marketplaceOnboardingSteps}
+        currentStep={onboardingState.currentStep}
+        onNext={nextStep}
+        onPrev={prevStep}
+        onSkip={skipOnboarding}
+        onComplete={completeMarketplaceOnboarding}
+        visible={onboardingState.isActive}
+      />
     </div>
   );
 }
