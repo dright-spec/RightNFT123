@@ -19,6 +19,7 @@ import { VerificationWorkflow } from "@/components/verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
+import SimpleMusicVerifier from "@/components/simple-music-verifier";
 import { ethereumService } from "@/lib/ethereum";
 import { ethereumWallet } from "@/lib/ethereumWallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
