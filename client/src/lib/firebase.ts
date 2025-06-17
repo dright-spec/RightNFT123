@@ -1,12 +1,22 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 
+// Extract the actual project ID from the app ID (format: "1:123456:web:abcdef")
+const extractProjectId = (appId: string) => {
+  const parts = appId.split(':');
+  return parts.length >= 2 ? parts[1] : appId;
+};
+
+const actualProjectId = import.meta.env.VITE_FIREBASE_APP_ID ? 
+  extractProjectId(import.meta.env.VITE_FIREBASE_APP_ID) : 
+  import.meta.env.VITE_FIREBASE_PROJECT_ID;
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_APP_ID?.split(':')[1] || '',
+  authDomain: `${actualProjectId}.firebaseapp.com`,
+  projectId: actualProjectId,
+  storageBucket: `${actualProjectId}.appspot.com`,
+  messagingSenderId: actualProjectId,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
@@ -21,12 +31,13 @@ provider.addScope('https://www.googleapis.com/auth/youtube.channel-memberships.c
 
 export const signInWithGoogle = async () => {
   try {
-    console.log('Detailed Firebase config:', {
+    console.log('Corrected Firebase config:', {
       apiKey: import.meta.env.VITE_FIREBASE_API_KEY?.substring(0, 10) + '...',
-      authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+      authDomain: `${actualProjectId}.firebaseapp.com`,
+      projectId: actualProjectId,
       appId: import.meta.env.VITE_FIREBASE_APP_ID?.substring(0, 20) + '...',
-      currentUrl: window.location.hostname
+      currentUrl: window.location.hostname,
+      extractedProjectId: actualProjectId
     });
     
     // Check if Firebase is properly initialized
