@@ -31,7 +31,7 @@ export const categories = pgTable("categories", {
   slug: text("slug").notNull().unique(),
   description: text("description"),
   icon: text("icon").default("📄"),
-  parentId: integer("parent_id").references(() => categories.id),
+  parentId: integer("parent_id"),
   itemCount: integer("item_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -313,3 +313,101 @@ export const defaultCategories = [
   { name: "Event Access", slug: "events", icon: "🎟️", parentSlug: "access", description: "VIP and exclusive event access" },
   { name: "Club Memberships", slug: "clubs", icon: "🏆", parentSlug: "access", description: "Private club and venue access" },
 ];
+
+// Database Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  createdRights: many(rights, { relationName: "creator" }),
+  ownedRights: many(rights, { relationName: "owner" }),
+  bids: many(bids),
+  favorites: many(favorites),
+  followers: many(follows, { relationName: "following" }),
+  following: many(follows, { relationName: "follower" }),
+  transactionsFrom: many(transactions, { relationName: "fromUser" }),
+  transactionsTo: many(transactions, { relationName: "toUser" }),
+}));
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  parent: one(categories, {
+    fields: [categories.parentId],
+    references: [categories.id],
+    relationName: "parent"
+  }),
+  children: many(categories, { relationName: "parent" }),
+  rights: many(rights),
+}));
+
+export const rightsRelations = relations(rights, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [rights.creatorId],
+    references: [users.id],
+    relationName: "creator"
+  }),
+  owner: one(users, {
+    fields: [rights.ownerId],
+    references: [users.id],
+    relationName: "owner"
+  }),
+  category: one(categories, {
+    fields: [rights.categoryId],
+    references: [categories.id],
+  }),
+  highestBidder: one(users, {
+    fields: [rights.highestBidderId],
+    references: [users.id],
+  }),
+  bids: many(bids),
+  favorites: many(favorites),
+  transactions: many(transactions),
+}));
+
+export const bidsRelations = relations(bids, ({ one }) => ({
+  right: one(rights, {
+    fields: [bids.rightId],
+    references: [rights.id],
+  }),
+  bidder: one(users, {
+    fields: [bids.bidderId],
+    references: [users.id],
+  }),
+}));
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  user: one(users, {
+    fields: [favorites.userId],
+    references: [users.id],
+  }),
+  right: one(rights, {
+    fields: [favorites.rightId],
+    references: [rights.id],
+  }),
+}));
+
+export const followsRelations = relations(follows, ({ one }) => ({
+  follower: one(users, {
+    fields: [follows.followerId],
+    references: [users.id],
+    relationName: "follower"
+  }),
+  following: one(users, {
+    fields: [follows.followingId],
+    references: [users.id],
+    relationName: "following"
+  }),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  right: one(rights, {
+    fields: [transactions.rightId],
+    references: [rights.id],
+  }),
+  fromUser: one(users, {
+    fields: [transactions.fromUserId],
+    references: [users.id],
+    relationName: "fromUser"
+  }),
+  toUser: one(users, {
+    fields: [transactions.toUserId],
+    references: [users.id],
+    relationName: "toUser"
+  }),
+}));

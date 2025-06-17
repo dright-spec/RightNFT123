@@ -236,4 +236,142 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { db } from "./db";
+import { eq, desc, asc, like, and, or, isNull, isNotNull } from "drizzle-orm";
+
+export class DatabaseStorage implements IStorage {
+  constructor() {
+    // Database connection handled by db.ts
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.walletAddress, walletAddress));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getRight(id: number): Promise<Right | undefined> {
+    const [right] = await db.select().from(rights).where(eq(rights.id, id));
+    return right || undefined;
+  }
+
+  async getRightWithCreator(id: number): Promise<RightWithCreator | undefined> {
+    const result = await db
+      .select()
+      .from(rights)
+      .leftJoin(users, eq(rights.creatorId, users.id))
+      .where(eq(rights.id, id));
+
+    if (result.length === 0) return undefined;
+
+    const right = result[0].rights;
+    const creator = result[0].users;
+
+    return {
+      ...right,
+      creator: creator!,
+      owner: creator!, // Assuming creator is also owner initially
+    };
+  }
+
+  async getRights(limit = 20, offset = 0, type?: string, isListed?: boolean): Promise<Right[]> {
+    let query = db.select().from(rights);
+
+    const conditions = [];
+    if (type) conditions.push(eq(rights.type, type));
+    if (isListed !== undefined) conditions.push(eq(rights.isListed, isListed));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.limit(limit).offset(offset).orderBy(desc(rights.createdAt));
+  }
+
+  async getRightsWithCreator(limit = 20, offset = 0, type?: string, isListed?: boolean): Promise<RightWithCreator[]> {
+    let query = db
+      .select()
+      .from(rights)
+      .leftJoin(users, eq(rights.creatorId, users.id));
+
+    const conditions = [];
+    if (type) conditions.push(eq(rights.type, type));
+    if (isListed !== undefined) conditions.push(eq(rights.isListed, isListed));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const result = await query.limit(limit).offset(offset).orderBy(desc(rights.createdAt));
+
+    return result.map(row => ({
+      ...row.rights,
+      creator: row.users!,
+      owner: row.users!, // Assuming creator is also owner initially
+    }));
+  }
+
+  async getRightsByCreator(creatorId: number): Promise<Right[]> {
+    return await db.select().from(rights).where(eq(rights.creatorId, creatorId));
+  }
+
+  async getRightsByOwner(ownerId: number): Promise<Right[]> {
+    return await db.select().from(rights).where(eq(rights.ownerId, ownerId));
+  }
+
+  async createRight(rightData: InsertRight & { creatorId: number; ownerId: number }): Promise<Right> {
+    const [right] = await db
+      .insert(rights)
+      .values({
+        ...rightData,
+        symbol: rightTypeSymbols[rightData.type as keyof typeof rightTypeSymbols] || "📄",
+      })
+      .returning();
+    return right;
+  }
+
+  async updateRight(id: number, updates: Partial<Right>): Promise<Right | undefined> {
+    const [right] = await db
+      .update(rights)
+      .set(updates)
+      .where(eq(rights.id, id))
+      .returning();
+    return right || undefined;
+  }
+
+  async getTransaction(id: number): Promise<Transaction | undefined> {
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction || undefined;
+  }
+
+  async getTransactionsByRight(rightId: number): Promise<Transaction[]> {
+    return await db.select().from(transactions).where(eq(transactions.rightId, rightId));
+  }
+
+  async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values(insertTransaction)
+      .returning();
+    return transaction;
+  }
+}
+
+export const storage = new DatabaseStorage();

@@ -256,7 +256,7 @@ export const marketplaceOnboardingSteps: OnboardingStep[] = [
     id: "filters",
     title: "Smart Investment Filters",
     description: "These filters help you find the perfect investment opportunity. Filter by budget range, revenue potential (dividends, royalties), risk profile, and asset categories.",
-    target: "button:has(svg):contains('Investment Filters')",
+    target: "[data-testid='investment-filters']",
     position: "bottom",
     action: "Click to see all available investment criteria",
     mascotExpression: "thinking"
