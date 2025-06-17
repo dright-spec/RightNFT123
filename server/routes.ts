@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingUser) {
         // Update existing user
         const updatedUser = await storage.updateUser(existingUser.id, {
-          name: name || existingUser.name,
+          displayName: name || existingUser.displayName,
           username: username || existingUser.username,
           email: email || existingUser.email,
         });
@@ -272,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create new user
       const user = await storage.createUser({
-        name,
+        displayName: name,
         username,
         email: email || null,
         walletAddress: req.session.walletAddress,

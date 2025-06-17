@@ -1,11 +1,32 @@
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { configureProductionSecurity, setupErrorHandling, setupHealthCheck } from "./productionConfig";
 import path from "path";
 import fs from "fs";
 
+// Extend session data types
+declare module 'express-session' {
+  interface SessionData {
+    userId?: number;
+    walletAddress?: string;
+  }
+}
+
 const app = express();
+
+// Session middleware for authentication
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Enhanced domain detection for Autoscale deployment
 app.use((req: Request, res: Response, next: NextFunction) => {
