@@ -219,6 +219,15 @@ export const insertTransactionSchema = createInsertSchema(transactions).pick({
   type: true,
 });
 
+export const insertAbTestChoiceSchema = createInsertSchema(abTestChoices).pick({
+  sessionId: true,
+  userAgent: true,
+  ipAddress: true,
+  variant: true,
+  duration: true,
+  converted: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
@@ -231,6 +240,8 @@ export type Favorite = typeof favorites.$inferSelect;
 export type Follow = typeof follows.$inferSelect;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
+export type InsertAbTestChoice = z.infer<typeof insertAbTestChoiceSchema>;
+export type AbTestChoice = typeof abTestChoices.$inferSelect;
 
 // Extended types with relations
 export type RightWithCreator = Right & {

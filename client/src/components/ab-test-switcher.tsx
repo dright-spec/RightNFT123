@@ -45,52 +45,17 @@ export function ABTestSwitcher({ onVariantChange, currentVariant }: ABTestSwitch
   if (!isVisible) return null;
 
   return (
-    <Card className="fixed bottom-4 right-4 z-50 shadow-lg border-2 border-blue-200 bg-blue-50/95 backdrop-blur-sm">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <TestTube className="w-4 h-4 text-blue-600" />
-          <span className="font-semibold text-sm text-blue-900">A/B Test Control</span>
-        </div>
-        
-        <div className="space-y-2 mb-3">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant={currentVariant === 'original' ? 'default' : 'outline'}
-              onClick={() => onVariantChange('original')}
-              className="flex-1 text-xs"
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              Original ({viewCount.original})
-            </Button>
-            <Button
-              size="sm"
-              variant={currentVariant === 'minimalist' ? 'default' : 'outline'}
-              onClick={() => onVariantChange('minimalist')}
-              className="flex-1 text-xs"
-            >
-              <BarChart3 className="w-3 h-3 mr-1" />
-              Minimalist ({viewCount.minimalist})
-            </Button>
-          </div>
-          
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={resetCounts}
-            className="w-full text-xs"
-          >
-            <RotateCcw className="w-3 h-3 mr-1" />
-            Reset Counts
-          </Button>
-        </div>
-
-        <div className="text-xs text-blue-700">
-          <Badge variant="secondary" className="text-xs">
-            Current: {currentVariant === 'original' ? 'Original Design' : 'Minimalist Design'}
-          </Badge>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="fixed top-4 right-4 z-50">
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => onVariantChange(currentVariant === 'original' ? 'minimalist' : 'original')}
+        className="text-xs px-3 py-1 h-8 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-800/50 hover:bg-white dark:hover:bg-gray-900 shadow-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+        title={`Switch to ${currentVariant === 'original' ? 'minimalist' : 'original'} design`}
+      >
+        <TestTube className="w-3 h-3 mr-1" />
+        {currentVariant === 'original' ? 'Min' : 'Orig'}
+      </Button>
+    </div>
   );
 }
