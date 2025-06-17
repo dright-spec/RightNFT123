@@ -18,7 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { VerificationWorkflow } from "@/components/verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
-import { ManualYouTubeVerification } from "@/components/manual-youtube-verification";
+import { InstantYouTubeVerifier } from "@/components/instant-youtube-verifier";
 import { ethereumService } from "@/lib/ethereum";
 import { ethereumWallet } from "@/lib/ethereumWallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
@@ -861,15 +861,25 @@ export default function CreateRight() {
             {currentStep === 2 && (
               <div className="space-y-6 animate-fade-in">
                 {form.watch("contentSource") === "youtube_video" ? (
-                  <ManualYouTubeVerification
+                  <InstantYouTubeVerifier
                     onVerified={(videoData) => {
                       setSelectedVideos([videoData]);
                       setCanMintNFT(true);
                       form.setValue("title", videoData.title);
                       form.setValue("description", videoData.description);
                       form.setValue("youtubeUrl", videoData.url);
+                      toast({
+                        title: "Video Verified Successfully!",
+                        description: "Your YouTube video has been verified and is ready for NFT minting.",
+                      });
                     }}
-                    onSkip={() => setCurrentStep(3)}
+                    onError={(error) => {
+                      toast({
+                        title: "Verification Failed",
+                        description: error,
+                        variant: "destructive",
+                      });
+                    }}
                   />
                 ) : (
                   <VerificationWorkflow 
