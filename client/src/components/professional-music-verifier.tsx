@@ -12,7 +12,7 @@ import {
   Music, 
   Shield, 
   FileAudio,
-  Waveform,
+  AudioWaveform,
   Hash,
   Database,
   Zap,
@@ -425,7 +425,7 @@ export default function ProfessionalMusicVerifier({ onComplete, onBack }: Profes
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Waveform className="w-5 h-5 animate-pulse" />
+              <AudioWaveform className="w-5 h-5 animate-pulse" />
               Analyzing Audio File
             </CardTitle>
           </CardHeader>
@@ -443,7 +443,7 @@ export default function ProfessionalMusicVerifier({ onComplete, onBack }: Profes
                   <div className="text-xs text-muted-foreground">Cryptographic Hash</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
-                  <Waveform className="w-6 h-6 mx-auto mb-1 text-green-600" />
+                  <AudioWaveform className="w-6 h-6 mx-auto mb-1 text-green-600" />
                   <div className="text-xs text-muted-foreground">Audio Fingerprint</div>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
