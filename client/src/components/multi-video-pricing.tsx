@@ -20,7 +20,7 @@ interface YouTubeVideo {
   };
   publishedAt: string;
   viewCount: string;
-  duration: string;
+  duration?: string;
   channelTitle: string;
   channelId: string;
 }
@@ -68,6 +68,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
   const { toast } = useToast();
 
   const formatDuration = (duration: string) => {
+    if (!duration) return "0:00";
     const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
     if (!match) return duration;
     
@@ -297,7 +298,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
                       className="w-32 h-20 object-cover rounded-lg border border-gray-100"
                     />
                     <div className="absolute bottom-1 right-1 bg-black/90 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                      {formatDuration(video.duration)}
+                      {formatDuration(video.duration || "")}
                     </div>
                   </div>
                   
