@@ -18,7 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { VerificationWorkflow } from "@/components/verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
-import { InstantYouTubeVerifier } from "@/components/instant-youtube-verifier";
+import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
 import { ethereumService } from "@/lib/ethereum";
 import { ethereumWallet } from "@/lib/ethereumWallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
@@ -861,7 +861,7 @@ export default function CreateRight() {
             {currentStep === 2 && (
               <div className="space-y-6 animate-fade-in">
                 {form.watch("contentSource") === "youtube_video" ? (
-                  <InstantYouTubeVerifier
+                  <YouTubeOwnershipVerifier
                     onVerified={(videoData) => {
                       setSelectedVideos([videoData]);
                       setCanMintNFT(true);
@@ -869,13 +869,13 @@ export default function CreateRight() {
                       form.setValue("description", videoData.description);
                       form.setValue("youtubeUrl", videoData.url);
                       toast({
-                        title: "Video Verified Successfully!",
-                        description: "Your YouTube video has been verified and is ready for NFT minting.",
+                        title: "Ownership Verified Successfully!",
+                        description: "Your YouTube channel ownership has been confirmed. Ready for NFT minting.",
                       });
                     }}
                     onError={(error) => {
                       toast({
-                        title: "Verification Failed",
+                        title: "Ownership Verification Failed",
                         description: error,
                         variant: "destructive",
                       });
