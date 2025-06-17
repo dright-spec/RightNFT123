@@ -19,7 +19,7 @@ import { VerificationWorkflow } from "@/components/verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
-import SimpleMusicVerifier from "@/components/simple-music-verifier";
+import SecureMusicVerifier from "@/components/secure-music-verifier";
 import { ethereumService } from "@/lib/ethereum";
 import { ethereumWallet } from "@/lib/ethereumWallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
@@ -881,6 +881,20 @@ export default function CreateRight() {
                         variant: "destructive",
                       });
                     }}
+                  />
+                ) : form.watch("contentSource") === "music_track" ? (
+                  <SecureMusicVerifier
+                    onComplete={(musicData) => {
+                      setVerificationData(musicData);
+                      form.setValue("title", musicData.trackTitle);
+                      form.setValue("description", `Music Track: ${musicData.trackTitle} by ${musicData.artistName}`);
+                      setCanMintNFT(false); // Requires manual review
+                      toast({
+                        title: "Music Verification Submitted",
+                        description: "Your music ownership documentation has been submitted for manual review. You'll be notified when approved.",
+                      });
+                    }}
+                    onBack={() => setCurrentStep(1)}
                   />
                 ) : (
                   <VerificationWorkflow 
