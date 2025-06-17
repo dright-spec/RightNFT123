@@ -47,13 +47,13 @@ export function useWalletUser() {
           // Wallet disconnected
           setWalletAddress(null);
           localStorage.removeItem('wallet_address');
-          queryClient.setQueryData(['wallet-user'], null);
+          queryClient.setQueryData(['wallet-auth'], null);
         } else {
           // Account changed
           const address = accounts[0];
           setWalletAddress(address);
           localStorage.setItem('wallet_address', address);
-          queryClient.invalidateQueries({ queryKey: ['wallet-user'] });
+          queryClient.invalidateQueries({ queryKey: ['wallet-auth'] });
         }
       };
 
@@ -64,28 +64,41 @@ export function useWalletUser() {
     }
   }, [queryClient]);
 
-  // Fetch user data when wallet is connected
-  const { data: user, isLoading } = useQuery<User | null>({
-    queryKey: ['wallet-user', walletAddress],
+  // Authenticate wallet and fetch user data
+  const { data: authData, isLoading } = useQuery<{ user: User | null; hasProfile: boolean } | null>({
+    queryKey: ['wallet-auth', walletAddress],
     queryFn: async () => {
       if (!walletAddress) return null;
       
       try {
-        const response = await fetch(`/api/users/by-wallet/${walletAddress}`);
-        if (response.status === 404) {
-          return null; // User doesn't exist yet
+        // Authenticate wallet with backend to establish session
+        const authResponse = await fetch('/api/auth/wallet', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ walletAddress }),
+          credentials: 'include', // Important for session cookies
+        });
+        
+        if (!authResponse.ok) {
+          throw new Error('Wallet authentication failed');
         }
-        if (!response.ok) {
-          throw new Error('Failed to fetch user');
-        }
-        return response.json();
+        
+        const authResult = await authResponse.json();
+        return {
+          user: authResult.user,
+          hasProfile: authResult.hasProfile
+        };
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error authenticating wallet:', error);
         return null;
       }
     },
     enabled: !!walletAddress,
   });
+
+  const user = authData?.user || null;
 
   // Create user mutation
   const createUserMutation = useMutation({
@@ -222,7 +235,7 @@ export function useWalletUser() {
     setLocation('/profile');
   };
 
-  const needsProfileSetup = walletAddress && !user && !isLoading;
+  const needsProfileSetup = walletAddress && authData && !authData.hasProfile && !isLoading;
   const isConnected = !!walletAddress;
 
   return {

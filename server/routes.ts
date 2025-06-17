@@ -246,6 +246,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wallet authentication endpoint
+  app.post('/api/auth/wallet', async (req, res) => {
+    try {
+      const { walletAddress } = req.body;
+      
+      if (!walletAddress) {
+        return res.status(400).json({ message: 'Wallet address required' });
+      }
+
+      // Store wallet address in session
+      req.session.walletAddress = walletAddress.toLowerCase();
+      
+      // Check if user exists
+      const existingUser = await storage.getUserByWalletAddress(walletAddress.toLowerCase());
+      if (existingUser) {
+        req.session.userId = existingUser.id;
+      }
+
+      res.json({ 
+        success: true, 
+        hasProfile: !!existingUser,
+        user: existingUser 
+      });
+    } catch (error) {
+      console.error('Wallet auth error:', error);
+      res.status(500).json({ message: 'Authentication failed' });
+    }
+  });
+
   // Profile setup for wallet users (after wallet connection)
   app.post('/api/profile-setup', async (req, res) => {
     try {
