@@ -283,8 +283,8 @@ export const marketplaceOnboardingSteps: OnboardingStep[] = [
     id: "wallet",
     title: "Connect Your Wallet",
     description: "To buy rights and start investing, connect your MetaMask wallet. This ensures secure transactions and proves ownership of your digital assets on the Ethereum blockchain.",
-    target: "button:contains('Connect Wallet'), button:contains('MetaMask')",
-    position: "left",
+    target: "[data-testid='wallet-connect'], .wallet-button, header button:last-child",
+    position: "bottom",
     action: "Click to connect your MetaMask wallet",
     mascotExpression: "explaining"
   },

@@ -179,7 +179,7 @@ export default function Marketplace() {
                 <span className="text-lg">🤓</span>
                 Help Tour
               </Button>
-              <WalletButton />
+              <WalletButton data-testid="wallet-connect" />
             </div>
           </div>
         </div>
