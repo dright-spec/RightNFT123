@@ -365,149 +365,469 @@ export default function Marketplace() {
           )}
 
           {/* Tab Content */}
-          <TabsContent value="explore" className="space-y-4">
-            {/* Investment Opportunity Banner */}
-            <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-6">
+          <TabsContent value="explore" className="space-y-6">
+            {/* Modern Investment Hero Banner */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+              <div className="relative px-8 py-12">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-blue-600" />
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                      <TrendingUp className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-blue-900 dark:text-blue-100">Rights Investment Marketplace</h3>
-                      <p className="text-blue-700 dark:text-blue-300">
-                        Transform creative assets into liquid investments • Guaranteed ownership rights • Automated revenue distribution
+                      <h2 className="text-3xl font-bold mb-2">Rights Investment Marketplace</h2>
+                      <p className="text-lg text-white/90 max-w-2xl">
+                        Transform creative assets into liquid investments with blockchain-guaranteed ownership and automated revenue distribution
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6 text-right">
-                    <div>
-                      <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{sortedRights?.length || 0}</div>
-                      <div className="text-sm text-blue-700 dark:text-blue-300">Available Rights</div>
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold">{sortedRights?.length || 0}</div>
+                      <div className="text-white/80">Available Rights</div>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">847.3 ETH</div>
-                      <div className="text-sm text-blue-700 dark:text-blue-300">Total Volume</div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-emerald-300">847.3 ETH</div>
+                      <div className="text-white/80">Total Volume</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-green-300">+24.7%</div>
+                      <div className="text-white/80">Avg. ROI</div>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+
+            {/* Market Insights Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border-emerald-200 dark:border-emerald-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-emerald-900 dark:text-emerald-100">High Yield Assets</h3>
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300">Rights paying 15%+ returns</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/20 dark:to-red-950/20 border-orange-200 dark:border-orange-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
+                      <Timer className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-orange-900 dark:text-orange-100">Ending Soon</h3>
+                      <p className="text-sm text-orange-700 dark:text-orange-300">3 auctions end today</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                      <Star className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100">Featured Rights</h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">Curated top performers</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Rights Grid/List Display */}
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i} className="animate-pulse">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Card key={i} className="animate-pulse overflow-hidden">
+                    <div className="h-48 bg-muted"></div>
                     <CardContent className="p-6">
-                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
                       <div className="h-3 bg-muted rounded w-full mb-2"></div>
-                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                      <div className="h-3 bg-muted rounded w-2/3 mb-4"></div>
+                      <div className="flex justify-between items-center">
+                        <div className="h-6 bg-muted rounded w-16"></div>
+                        <div className="h-8 bg-muted rounded w-20"></div>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : sortedRights && sortedRights.length > 0 ? (
-              <AnimatedRightGrid rights={sortedRights} variant="grid" />
-            ) : (
-              <Card className="text-center py-12">
-                <CardContent>
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8 text-muted-foreground" />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">Investment Opportunities</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Live market data</span>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">No investment opportunities found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Try adjusting your investment criteria or search terms
-                  </p>
-                  <Button variant="outline" onClick={() => {
+                </div>
+                <AnimatedRightGrid rights={sortedRights} variant="grid" />
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-gradient-to-br from-muted to-muted/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Search className="w-12 h-12 text-muted-foreground" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-3">No investment opportunities found</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Try adjusting your investment criteria or explore different asset categories to find suitable opportunities.
+                </p>
+                <Button 
+                  onClick={() => {
                     setSearchQuery("");
                     setTypeFilter("all");
                     setListingType("all");
                     setPriceRange([0, 1000]);
-                  }}>
-                    Reset Investment Filters
+                  }}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3"
+                >
+                  Reset Investment Filters
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Live Auctions Tab */}
+          <TabsContent value="auctions" className="space-y-6">
+            {/* Auction Hero */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-600 via-red-600 to-pink-600 text-white shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+              <div className="relative px-8 py-12">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                      <Gavel className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold mb-2">Live Auction Opportunities</h2>
+                      <p className="text-lg text-white/90 max-w-2xl">
+                        Time-sensitive bidding for premium rights with reserve prices and automatic settlement
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold">3</div>
+                      <div className="text-white/80">Active Auctions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-yellow-300">2h 15m</div>
+                      <div className="text-white/80">Next Ending</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Auction Features */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center">
+                      <Clock className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-orange-900 dark:text-orange-100">Time-Based Bidding</h3>
+                      <p className="text-sm text-orange-700 dark:text-orange-300">Competitive auctions with countdown timers</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-purple-900 dark:text-purple-100">Reserve Prices</h3>
+                      <p className="text-sm text-purple-700 dark:text-purple-300">Protected minimum values for sellers</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Coming Soon Message */}
+            <Card className="border-2 border-dashed border-muted-foreground/20">
+              <CardContent className="p-12 text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Gavel className="w-12 h-12 text-orange-600" />
+                </div>
+                <h3 className="text-2xl font-semibold mb-3">Auctions Coming Soon</h3>
+                <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                  Live auction functionality is being finalized. Get ready to bid on premium rights with automatic settlement and reserve price protection.
+                </p>
+                <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 px-4 py-2">
+                  OpenSea-style mechanics • Reserve prices • Automatic settlement
+                </Badge>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Fixed Price Tab */}
+          <TabsContent value="fixed-price" className="space-y-6">
+            {/* Fixed Price Hero */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+              <div className="relative px-8 py-12">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                      <ShoppingCart className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold mb-2">Fixed Price Investments</h2>
+                      <p className="text-lg text-white/90 max-w-2xl">
+                        Instant ownership without bidding competition at guaranteed prices
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold">{sortedRights?.filter(r => r.listingType === 'fixed').length || 0}</div>
+                      <div className="text-white/80">Available Now</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-cyan-300">0.05 ETH</div>
+                      <div className="text-white/80">Starting From</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Fixed Price Benefits */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                      <Zap className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-green-900 dark:text-green-100">Instant Purchase</h3>
+                      <p className="text-sm text-green-700 dark:text-green-300">Buy immediately without waiting</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100">Guaranteed Price</h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">No bidding wars or surprises</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20 border-teal-200 dark:border-teal-800">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-xl flex items-center justify-center">
+                      <Star className="w-6 h-6 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-teal-900 dark:text-teal-100">Quality Assets</h3>
+                      <p className="text-sm text-teal-700 dark:text-teal-300">Verified and premium rights</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Fixed Price Rights Display */}
+            {sortedRights && sortedRights.filter(r => r.listingType === 'fixed').length > 0 ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">Available for Immediate Purchase</h3>
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    {sortedRights.filter(r => r.listingType === 'fixed').length} rights available
+                  </Badge>
+                </div>
+                <AnimatedRightGrid rights={sortedRights.filter(r => r.listingType === 'fixed')} variant="grid" />
+              </div>
+            ) : (
+              <Card className="border-2 border-dashed border-muted-foreground/20">
+                <CardContent className="p-12 text-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <ShoppingCart className="w-12 h-12 text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-semibold mb-3">No Fixed Price Rights Available</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto mb-6">
+                    All current rights are listed for auction. Check back soon for instant purchase opportunities or explore the auction section.
+                  </p>
+                  <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
+                    Browse Auctions Instead
                   </Button>
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
-          {/* Live Auctions Tab */}
-          <TabsContent value="auctions" className="space-y-4">
-            <Card>
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <Gavel className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-medium mb-2">Live Auction Opportunities</h3>
-                  <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                    Participate in time-sensitive bidding for premium rights. Set reserve prices and compete for valuable intellectual property assets.
-                  </p>
-                  <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
-                    OpenSea-style auction mechanics with reserve prices
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Fixed Price Tab */}
-          <TabsContent value="fixed-price" className="space-y-4">
-            <Card>
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-medium mb-2">Fixed Price Investments</h3>
-                  <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-                    Purchase rights immediately at fixed prices. Perfect for investors who want instant ownership without bidding competition.
-                  </p>
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    Instant purchase • No waiting • Guaranteed price
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           {/* Activity Tab */}
-          <TabsContent value="activity" className="space-y-4">
+          <TabsContent value="activity" className="space-y-6">
+            {/* Activity Hero */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-blue-600 to-indigo-600 text-white shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-r from-black/20 to-transparent"></div>
+              <div className="relative px-8 py-12">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20">
+                      <Zap className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold mb-2">Market Activity & Analytics</h2>
+                      <p className="text-lg text-white/90 max-w-2xl">
+                        Real-time trading data and investment performance metrics
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-8">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold">24</div>
+                      <div className="text-white/80">Trades Today</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-green-300">47.2 ETH</div>
+                      <div className="text-white/80">24h Volume</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Market Activity Feed */}
               <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Market Activity</CardTitle>
+                <Card className="h-fit">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Live Market Activity
+                    </CardTitle>
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                      Real-time updates
+                    </Badge>
                   </CardHeader>
                   <CardContent>
                     <ActivityFeed />
                   </CardContent>
                 </Card>
               </div>
-              <div>
+              
+              {/* Investment Statistics Sidebar */}
+              <div className="space-y-6">
+                {/* Key Metrics */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Investment Statistics</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5" />
+                      Investment Metrics
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Market Volume</span>
-                      <span className="font-bold text-green-600">847.3 ETH</span>
+                    <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                      <span className="text-sm font-medium">Total Market Volume</span>
+                      <span className="font-bold text-green-600 text-lg">847.3 ETH</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Average ROI</span>
-                      <span className="font-bold text-green-600">+24.7%</span>
+                    <div className="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
+                      <span className="text-sm font-medium">Average ROI</span>
+                      <span className="font-bold text-emerald-600 text-lg">+24.7%</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Floor Price</span>
-                      <span className="font-medium">0.05 ETH</span>
+                    <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950/20 rounded-lg">
+                      <span className="text-sm font-medium">Floor Price</span>
+                      <span className="font-medium text-lg">0.05 ETH</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Listed Opportunities</span>
-                      <span className="font-medium">{sortedRights?.length || 0}</span>
+                    <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                      <span className="text-sm font-medium">Listed Opportunities</span>
+                      <span className="font-medium text-lg">{sortedRights?.length || 0}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">24h Volume</span>
-                      <span className="font-medium">47.2 ETH</span>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                      <span className="text-sm font-medium">24h Volume</span>
+                      <span className="font-medium text-lg">47.2 ETH</span>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Performance Indicators */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5" />
+                      Performance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Market Growth</span>
+                        <span className="text-green-600 font-medium">+12.3%</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-green-600 h-2 rounded-full" style={{width: '73%'}}></div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Liquidity Index</span>
+                        <span className="text-blue-600 font-medium">High</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{width: '89%'}}></div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Trading Activity</span>
+                        <span className="text-purple-600 font-medium">Very Active</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-purple-600 h-2 rounded-full" style={{width: '94%'}}></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="w-5 h-5" />
+                      Quick Actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
+                      View Top Performers
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Set Price Alerts
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Export Activity Report
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
