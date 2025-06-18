@@ -100,13 +100,7 @@ export const rights = pgTable("rights", {
   mintingStatus: text("minting_status").default("not_started"), // not_started, processing, completed, failed
   metadataUri: text("metadata_uri"), // IPFS URI for NFT metadata
   
-  // Ethereum blockchain integration (legacy)
-  ethereumTokenId: text("ethereum_token_id"), // ERC-721 token ID
-  ethereumContractAddress: text("ethereum_contract_address"), // Smart contract address
-  ethereumTransactionHash: text("ethereum_transaction_hash"), // Mint transaction hash
-  ethereumMetadataUri: text("ethereum_metadata_uri"), // IPFS URI for NFT metadata
-  ethereumWalletAddress: text("ethereum_wallet_address"), // Current NFT holder address
-  ethereumNetwork: text("ethereum_network").default("sepolia"), // mainnet, sepolia, goerli
+
   
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

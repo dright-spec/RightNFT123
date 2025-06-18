@@ -179,13 +179,13 @@ export function HederaTestPanel() {
                     <div>
                       <p className="text-muted-foreground">Token ID:</p>
                       <p className="font-mono text-xs bg-white p-2 rounded border">
-                        {testMintMutation.data.mintResult.tokenId}
+                        {(testMintMutation.data as any)?.mintResult?.tokenId}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Serial Number:</p>
                       <p className="font-mono text-xs bg-white p-2 rounded border">
-                        #{testMintMutation.data.mintResult.serialNumber}
+                        #{(testMintMutation.data as any)?.mintResult?.serialNumber}
                       </p>
                     </div>
                   </div>
@@ -193,14 +193,14 @@ export function HederaTestPanel() {
                   <div>
                     <p className="text-muted-foreground text-sm">Transaction ID:</p>
                     <p className="font-mono text-xs bg-white p-2 rounded border break-all">
-                      {testMintMutation.data.mintResult.transactionId}
+                      {(testMintMutation.data as any)?.mintResult?.transactionId}
                     </p>
                   </div>
 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(testMintMutation.data.mintResult.explorerUrl, '_blank')}
+                    onClick={() => window.open((testMintMutation.data as any)?.mintResult?.explorerUrl, '_blank')}
                     className="w-full"
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />

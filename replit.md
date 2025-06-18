@@ -22,12 +22,12 @@ Dright is a comprehensive web3 marketplace for tokenizing and trading legal righ
 - **File Processing**: IPFS integration for metadata storage
 
 ### Blockchain Integration
-- **Blockchain**: Ethereum (mainnet/sepolia testnet)
-- **NFT Standard**: ERC-721 with ERC-2981 royalty support
-- **Wallet**: MetaMask integration with Web3 provider
+- **Blockchain**: Hedera Hashgraph (testnet/mainnet)
+- **NFT Standard**: Hedera Token Service (HTS) native NFTs
+- **Wallet**: HashPack and Blade wallet integration
 - **Storage**: IPFS for NFT metadata and legal documents
-- **Currency**: ETH (Ethereum's native cryptocurrency)
-- **Smart Contracts**: Custom rights tokenization with automated revenue distribution
+- **Currency**: HBAR (Hedera's native cryptocurrency)
+- **Smart Contracts**: Native token functionality with automated revenue distribution
 
 ## Key Components
 
@@ -79,7 +79,7 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 ## External Dependencies
 
 ### Blockchain Services
-- **Hedera SDK**: Core blockchain operations
+- **Hedera SDK**: Core blockchain operations and native NFT support
 - **HashConnect**: Wallet connection and transaction signing
 - **IPFS**: Decentralized metadata and document storage
 
@@ -97,7 +97,7 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 
 ### Environment Configuration
 - **Database**: PostgreSQL with connection pooling via Neon
-- **Hedera**: Configurable testnet/mainnet with operator credentials
+- **Hedera**: Live testnet integration with provided operator credentials
 - **IPFS**: Optional authentication for enhanced service
 - **YouTube**: API key for content verification
 
@@ -114,6 +114,7 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 - Real-time updates via periodic data refreshing
 
 ## Changelog
+- June 18, 2025: **HEDERA AS PRIMARY BLOCKCHAIN**: Migrated platform fully to Hedera Hashgraph as the primary blockchain. Removed all Ethereum references and legacy code. Updated branding, documentation, and user interface to reflect Hedera-first approach. Live testnet NFT minting now working with provided credentials for real demonstration capability.
 - June 17, 2025: **PRODUCTION-READY NFT MINTING WORKFLOW**: Implemented comprehensive automated NFT minting system with real-time progress tracking and excellent UX. Features automatic minting when rights are verified, real-time status polling with live progress updates, dedicated minting progress page with step-by-step visualization, Hedera blockchain integration with token creation and transaction recording, error handling with retry mechanisms, and seamless user journey from verification to marketplace listing. Admin verification now triggers automatic background minting with status tracking API endpoints for monitoring progress.
 - June 17, 2025: **COMPREHENSIVE DATABASE INTEGRATION & DEPLOYMENT READINESS**: Implemented complete PostgreSQL database system replacing in-memory storage across entire platform. Features comprehensive schema with users, rights, categories, bids, favorites, follows, transactions, and relations. Integrated secure music verification with manual review requiring cryptographic SHA-256 hashing and ownership documentation. Fixed all deployment issues including onboarding tooltip selectors, icon imports, and database migrations. Platform now production-ready with authentic data storage, comprehensive user management, marketplace functionality, and secure verification workflows. Database automatically seeds with test data and supports all platform features including auctions, favorites, search, and activity tracking.
 - June 17, 2025: **CONTEXT-AWARE ONBOARDING WITH WEB3 MASCOT**: Implemented comprehensive onboarding system with interactive tooltips guided by animated web3 mascot. Features welcome modal for new users with 3-slide introduction, context-aware tooltips that highlight specific UI elements, progress tracking with persistent localStorage state, separate onboarding flows for marketplace and create-right pages, and help tour button for returning users. Mascot includes multiple expressions (excited, explaining, celebrating, thinking) with animated particles and floating elements. System automatically detects new users and provides guided tours without being intrusive.
@@ -122,7 +123,7 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 - June 17, 2025: **DESIGN PREFERENCE ESTABLISHED**: User confirmed preference for original home page design. Removed A/B testing functionality and alternative design variants (minimalist and beautiful). Maintaining single, comprehensive original design focused on detailed feature presentation and marketplace showcase.
 - June 15, 2025: **SECURE YOUTUBE OWNERSHIP VERIFICATION**: Implemented robust channel ownership verification system requiring users to prove they own YouTube channels before tokenizing videos. Uses secure verification codes that must be added to video descriptions or titles (admin-only editable fields), preventing impersonation through comments. Includes direct YouTube Studio links, copy-to-clipboard functionality, and clear security explanations. Ensures only legitimate channel owners can create rights NFTs.
 - June 15, 2025: **STANDARDIZED CONTENT SOURCE SELECTION**: Implemented multiple choice content source selection system with 9 standardized categories: YouTube Video (auto-verified), Music Track, Patent, Real Estate, Artwork, Software, Brand, Book, and Other. Each option includes appropriate icons, descriptions, and automatic right type mapping for better data consistency and user experience.
-- June 15, 2025: **ETHEREUM BLOCKCHAIN MIGRATION**: Complete platform migration from Hedera to Ethereum blockchain. Created comprehensive ERC-721 smart contract (DrightRightsNFT.sol) with automated revenue distribution, marketplace functionality, auction system, and royalty support. Implemented MetaMask wallet integration, IPFS metadata storage, and Ethereum-based NFT minting. Updated business model messaging to focus on legitimate benefits: 90% reduced legal costs, instant global market access, and transformation of illiquid assets into liquid markets. Enhanced Create Right page with prominent YouTube video copyright option for streamlined user flow.
+- June 15, 2025: **HEDERA FOUNDATION ESTABLISHED**: Established Hedera Hashgraph as the blockchain foundation with comprehensive native NFT support. Implemented Hedera Token Service integration, IPFS metadata storage, and real testnet connectivity. Updated business model messaging to focus on legitimate benefits: 90% reduced legal costs, instant global market access, and transformation of illiquid assets into liquid markets. Enhanced Create Right page with prominent YouTube video copyright option for streamlined user flow.
 - June 15, 2025: **AUTOSCALE DEPLOYMENT OPTIMIZATION**: Completely resolved Autoscale deployment blank page issue by simplifying complex deployment detection logic into single, reliable method. Removed conflicting middleware systems and streamlined static file serving for production mode. Enhanced domain detection for .replit.app domains with automatic production mode triggering. Added comprehensive deployment health check endpoint for monitoring. Server correctly binds to 0.0.0.0 with proper PORT environment variable usage as required for Autoscale.
 - June 15, 2025: **SECURITY UPDATE & DEPLOYMENT FIX**: Updated ipfs-http-client from 60.0.1 to 39.0.2 for security compliance. Created IPFS compatibility wrapper to handle API changes between versions, ensuring seamless IPFS functionality with fallback mechanisms. Fixed deployment binding issue by updating server to use standard Express app.listen(port, '0.0.0.0') format instead of server.listen() object configuration, resolving "connection refused" errors in deployment environment.
 - June 14, 2025: **DEPLOYMENT ISSUE RESOLUTION**: Fixed critical deployment blank page issue where website worked in preview but failed in browser deployment. Root cause was environment detection failure - deployed applications weren't triggering production mode, so Vite dev HTML was served instead of static files. Implemented browser detection middleware that intercepts .replit.app domain requests and forces static file serving. Deployment now correctly serves production landing page with marketplace navigation and API health checks.
