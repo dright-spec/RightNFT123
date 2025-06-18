@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi'
-import { mainnet, arbitrum, polygon, avalanche, bsc, optimism, gnosis } from 'wagmi/chains'
-import { walletConnect, injected } from 'wagmi/connectors'
+import { mainnet, arbitrum, polygon } from 'wagmi/chains'
+import { injected } from 'wagmi/connectors'
 
 // Define Hedera chains for future integration
 export const hederaTestnet = {
@@ -40,24 +40,16 @@ export const hederaMainnet = {
   },
 } as const
 
-// Get project ID from environment
-export const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '2f5a2b1c3e4d5f6a7b8c9d0e1f2a3b4c'
-
-// Create wagmi config with standard setup
+// Simple wagmi config without WalletConnect to avoid project ID issues
 export const config = createConfig({
-  chains: [mainnet, arbitrum, polygon, avalanche, bsc, optimism, gnosis],
+  chains: [mainnet, arbitrum, polygon],
   connectors: [
-    walletConnect({ projectId }),
-    injected(),
+    injected(), // MetaMask, Coinbase, etc.
   ],
   transports: {
     [mainnet.id]: http(),
     [arbitrum.id]: http(),
     [polygon.id]: http(),
-    [avalanche.id]: http(),
-    [bsc.id]: http(),
-    [optimism.id]: http(),
-    [gnosis.id]: http(),
   },
 })
 
