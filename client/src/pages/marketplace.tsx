@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
-import { WalletButton } from "@/components/wallet-button";
+import { HederaWalletButton } from "@/components/hedera-wallet-button";
 import { ActivityFeed } from "@/components/activity-feed";
 import OnboardingTooltip, { marketplaceOnboardingSteps } from "@/components/onboarding-tooltip";
 import WelcomeModal from "@/components/welcome-modal";

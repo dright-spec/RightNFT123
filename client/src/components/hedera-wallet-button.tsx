@@ -26,7 +26,7 @@ export function HederaWalletButton() {
       const availableWallets: HederaWallet[] = [];
 
       // HashPack Wallet
-      if (window.hashconnect) {
+      if ((window as any).hashconnect) {
         availableWallets.push({
           name: "HashPack",
           icon: "🔗",
@@ -35,7 +35,7 @@ export function HederaWalletButton() {
       }
 
       // Blade Wallet
-      if (window.bladeWallet) {
+      if ((window as any).bladeWallet) {
         availableWallets.push({
           name: "Blade",
           icon: "⚔️",
@@ -44,7 +44,7 @@ export function HederaWalletButton() {
       }
 
       // Kabila Wallet
-      if (window.kabila) {
+      if ((window as any).kabila) {
         availableWallets.push({
           name: "Kabila",
           icon: "🪙",
