@@ -1,17 +1,31 @@
-import React from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider } from 'wagmi'
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { config } from "@/lib/wallet-config";
+import App from "./App.tsx";
 import "./index.css";
 
-// Global error handling for unhandled promise rejections
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason);
-  event.preventDefault();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
 });
 
-// Global error handling for uncaught errors
-window.addEventListener('error', (event) => {
-  console.error('Global error:', event.error);
-});
-
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <App />
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  </StrictMode>,
+);

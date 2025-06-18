@@ -20,7 +20,7 @@ import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
 import SecureMusicVerifier from "@/components/secure-music-verifier";
-import { Web3ModalWallet } from "@/components/web3modal-wallet";
+import { SimpleWalletButton } from "@/components/simple-wallet-button";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -741,7 +741,6 @@ export default function CreateRight() {
   const onSubmit = async (data: CreateRightFormData) => {
     // For now, proceed without wallet connection check
     // The platform will handle verification and minting after admin approval
-    }
 
     // Verify that verification is complete before allowing submission
     if (!canMintNFT && selectedVideos.length === 0) {
@@ -843,8 +842,7 @@ export default function CreateRight() {
           verificationFiles: verificationData?.files || [],
           youtubeData: verificationData?.youtubeData,
           isListed: true,
-          currency: "ETH",
-          // Will be populated after verification and minting
+          currency: "HBAR",
         };
 
         setUploadProgress(90);
