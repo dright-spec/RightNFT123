@@ -38,6 +38,11 @@ export function initializeHederaClient() {
     client.setOperator(AccountId.fromString(accountId), PrivateKey.fromString(privateKey));
     
     console.log(`[hedera] Client initialized for ${network} with account ${accountId}`);
+    
+    // Set longer timeout for testnet
+    client.setDefaultMaxTransactionFee(new Hbar(2));
+    client.setDefaultMaxQueryPayment(new Hbar(1));
+    
     return client;
   } catch (error) {
     console.error("[hedera] Failed to initialize client:", error);

@@ -322,7 +322,7 @@ export default function Admin() {
 
         {/* Main Content */}
         <Tabs defaultValue="verification" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="verification" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Verification
@@ -330,6 +330,10 @@ export default function Admin() {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="hedera" className="flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Hedera
             </TabsTrigger>
             <TabsTrigger value="rights" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -557,6 +561,19 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Hedera Tab */}
+          <TabsContent value="hedera" className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">Hedera Testnet Integration</h2>
+                <p className="text-muted-foreground">
+                  Test and monitor the Hedera blockchain integration for NFT minting
+                </p>
+              </div>
+              <HederaTestPanel />
+            </div>
           </TabsContent>
 
           {/* Rights Tab */}

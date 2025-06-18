@@ -27,13 +27,9 @@ export function HederaTestPanel() {
   // Test minting mutation
   const testMintMutation = useMutation({
     mutationFn: async (formData: typeof testForm) => {
-      return await apiRequest("/api/hedera/test-mint", {
-        method: "POST",
-        body: JSON.stringify(formData),
-        headers: { "Content-Type": "application/json" }
-      });
+      return await apiRequest("/api/hedera/test-mint", "POST", formData);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       toast({
         title: "Test Minting Successful!",
         description: `NFT ${data.mintResult.tokenId}/${data.mintResult.serialNumber} minted on Hedera testnet`,
@@ -54,12 +50,12 @@ export function HederaTestPanel() {
 
   const getStatusIcon = () => {
     if (statusLoading) return <Loader2 className="h-4 w-4 animate-spin" />;
-    if (hederaStatus?.status === "connected") return <CheckCircle className="h-4 w-4 text-green-600" />;
+    if ((hederaStatus as any)?.status === "connected") return <CheckCircle className="h-4 w-4 text-green-600" />;
     return <AlertCircle className="h-4 w-4 text-red-600" />;
   };
 
   const getStatusColor = () => {
-    if (hederaStatus?.status === "connected") return "bg-green-50 border-green-200";
+    if ((hederaStatus as any)?.status === "connected") return "bg-green-50 border-green-200";
     return "bg-red-50 border-red-200";
   };
 
@@ -79,29 +75,29 @@ export function HederaTestPanel() {
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Checking Hedera connection...</span>
             </div>
-          ) : hederaStatus?.status === "connected" ? (
+          ) : (hederaStatus as any)?.status === "connected" ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Network:</span>
                 <Badge variant="outline" className="capitalize bg-green-100 text-green-700">
-                  {hederaStatus.network}
+                  {(hederaStatus as any).network}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Account ID:</span>
                 <Badge variant="outline" className="font-mono text-xs">
-                  {hederaStatus.accountId}
+                  {(hederaStatus as any).accountId}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Balance:</span>
-                <span className="text-sm font-mono">{hederaStatus.balance}</span>
+                <span className="text-sm font-mono">{(hederaStatus as any).balance}</span>
               </div>
             </div>
           ) : (
             <div className="text-red-600">
               <p className="font-medium">Connection Failed</p>
-              <p className="text-sm">{hederaStatus?.message || "Unable to connect to Hedera network"}</p>
+              <p className="text-sm">{(hederaStatus as any)?.message || "Unable to connect to Hedera network"}</p>
             </div>
           )}
         </CardContent>
@@ -154,7 +150,7 @@ export function HederaTestPanel() {
 
           <Button
             onClick={handleTestMint}
-            disabled={testMintMutation.isPending || !hederaStatus?.status || hederaStatus.status !== "connected"}
+            disabled={testMintMutation.isPending || !(hederaStatus as any)?.status || (hederaStatus as any).status !== "connected"}
             className="w-full"
           >
             {testMintMutation.isPending ? (
