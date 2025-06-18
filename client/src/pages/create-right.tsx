@@ -787,12 +787,12 @@ export default function CreateRight() {
               title: video.title,
               description: video.description || `YouTube video: ${video.title}`,
               type: data.type,
-              imageUrl: video.thumbnails.high.url,
+              imageUrl: video.thumbnails.high?.url || video.thumbnails.medium?.url || "",
               contentFileUrl: `https://www.youtube.com/watch?v=${video.id}`,
               tags: [video.channelTitle, 'YouTube', 'Video Content'],
               listingType: pricing.listingType,
               price: pricing.price,
-              currency: "ETH",
+              currency: "HBAR",
               royaltyPercentage: pricing.royaltyPercentage.toString(),
               paysDividends: pricing.paysDividends,
               startingBid: pricing.startingBid,
@@ -822,8 +822,8 @@ export default function CreateRight() {
           description: data.description,
           type: data.type as any,
           dividends: data.paysDividends || false,
-          payout_address: walletState.accountAddress!,
-          creator: walletState.accountAddress!,
+          payout_address: "0.0.123456", // Placeholder for now
+          creator: "Current User",
           created_at: new Date().toISOString()
         };
 
@@ -893,6 +893,7 @@ export default function CreateRight() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
+              <SimpleWalletButton />
             </div>
           </div>
         </div>

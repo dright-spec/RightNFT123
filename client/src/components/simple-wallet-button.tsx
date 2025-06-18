@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export function SimpleWalletButton() {
   const { toast } = useToast();
 
   // Check for existing connection on load
-  useState(() => {
+  React.useEffect(() => {
     const stored = localStorage.getItem('hedera_wallet_connection');
     if (stored) {
       try {
@@ -29,7 +29,7 @@ export function SimpleWalletButton() {
         console.log("Invalid stored connection");
       }
     }
-  });
+  }, []);
 
   const connectHashPack = async () => {
     try {
