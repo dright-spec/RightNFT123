@@ -173,13 +173,16 @@ export function SimpleWalletButton() {
       </Button>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg" aria-describedby="wallet-dialog-description">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wallet className="h-5 w-5" />
                 Connect Hedera Wallet
               </CardTitle>
+              <p id="wallet-dialog-description" className="text-sm text-muted-foreground">
+                Choose your preferred method to connect to the Hedera network
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button

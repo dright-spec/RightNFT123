@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
-import { SimpleWalletButton } from "@/components/simple-wallet-button";
+import { Web3ModalButton } from "@/components/web3-modal-button";
 import { ActivityFeed } from "@/components/activity-feed";
 import OnboardingTooltip, { marketplaceOnboardingSteps } from "@/components/onboarding-tooltip";
 import WelcomeModal from "@/components/welcome-modal";
@@ -179,7 +179,7 @@ export default function Marketplace() {
                 <span className="text-lg">🤓</span>
                 Help Tour
               </Button>
-              <SimpleWalletButton />
+              <Web3ModalButton />
             </div>
           </div>
         </div>
