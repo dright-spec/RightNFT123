@@ -20,7 +20,7 @@ import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
 import SecureMusicVerifier from "@/components/secure-music-verifier";
-import { WalletConnectModal } from "@/components/walletconnect-modal";
+import { NativeHederaWallet } from "@/components/native-hedera-wallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -740,11 +740,11 @@ export default function CreateRight() {
 
   const onSubmit = async (data: CreateRightFormData) => {
     // Check wallet connection
-    const walletState = ethereumWallet.getState();
-    if (!walletState.isConnected) {
+    const hederaConnection = localStorage.getItem('hedera_wallet_connection');
+    if (!hederaConnection) {
       toast({
         title: "Wallet Not Connected",
-        description: "Please connect your MetaMask wallet to create rights NFTs.",
+        description: "Please connect your Hedera wallet to create rights NFTs.",
         variant: "destructive",
       });
       return;
