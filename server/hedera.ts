@@ -152,12 +152,14 @@ export class HederaNFTService {
     try {
       console.log(`[hedera] Minting NFT for token ${params.tokenId}`);
 
-      // Convert metadata to bytes if it's a string
-      const metadataBytes = Buffer.from(params.metadata, 'utf8');
+      // Keep metadata very short for Hedera limits (max 100 bytes)
+      const shortMetadata = params.metadata.slice(0, 32);
+      const metadataBytes = Buffer.from(shortMetadata, 'utf8');
 
       const tokenMintTx = new TokenMintTransaction()
         .setTokenId(params.tokenId)
         .addMetadata(metadataBytes)
+        .setMaxTransactionFee(new Hbar(20))
         .freezeWith(this.client);
 
       const tokenMintSign = await tokenMintTx.sign(PrivateKey.fromString(process.env.HEDERA_PRIVATE_KEY!));
