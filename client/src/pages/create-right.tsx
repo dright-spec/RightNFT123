@@ -20,7 +20,7 @@ import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
 import SecureMusicVerifier from "@/components/secure-music-verifier";
-import { Web3ModalButton } from "@/components/web3-modal-button";
+import { HederaFaucetWallet } from "@/components/hedera-faucet-wallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -893,7 +893,7 @@ export default function CreateRight() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <Web3ModalButton />
+              <HederaFaucetWallet />
             </div>
           </div>
         </div>
