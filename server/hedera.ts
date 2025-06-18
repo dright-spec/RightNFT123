@@ -57,9 +57,9 @@ export function initializeHederaClient() {
     
     console.log(`[hedera] Client initialized for ${network} with account ${accountId}`);
     
-    // Set longer timeout for testnet
-    client.setDefaultMaxTransactionFee(new Hbar(2));
-    client.setDefaultMaxQueryPayment(new Hbar(1));
+    // Set higher fees for testnet operations
+    client.setDefaultMaxTransactionFee(new Hbar(20));
+    client.setDefaultMaxQueryPayment(new Hbar(5));
     
     return client;
   } catch (error) {
@@ -116,6 +116,7 @@ export class HederaNFTService {
         .setAdminKey(this.client.operatorPublicKey!)
         .setSupplyKey(this.client.operatorPublicKey!)
         .setTokenMemo(params.memo)
+        .setMaxTransactionFee(new Hbar(20))
         .freezeWith(this.client);
 
       const tokenCreateSign = await tokenCreateTx.sign(PrivateKey.fromString(process.env.HEDERA_PRIVATE_KEY!));
