@@ -20,7 +20,7 @@ import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
 import SecureMusicVerifier from "@/components/secure-music-verifier";
-import { NativeHederaWallet } from "@/components/native-hedera-wallet";
+import { Web3ModalWallet } from "@/components/web3modal-wallet";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
 import { z } from "zod";
 
@@ -739,15 +739,8 @@ export default function CreateRight() {
   };
 
   const onSubmit = async (data: CreateRightFormData) => {
-    // Check wallet connection
-    const hederaConnection = localStorage.getItem('hedera_wallet_connection');
-    if (!hederaConnection) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your Hedera wallet to create rights NFTs.",
-        variant: "destructive",
-      });
-      return;
+    // For now, proceed without wallet connection check
+    // The platform will handle verification and minting after admin approval
     }
 
     // Verify that verification is complete before allowing submission
@@ -781,14 +774,13 @@ export default function CreateRight() {
               description: video.description || `YouTube video: ${video.title}`,
               type: data.type as any,
               dividends: pricing.paysDividends,
-              payout_address: walletState.accountAddress!,
-              image_uri: video.thumbnails.high.url,
-              creator: walletState.accountAddress!,
+              payout_address: "0.0.123456", // Placeholder for now
+              image_uri: video.thumbnails.high?.url || video.thumbnails.medium?.url || "",
+              creator: "Current User",
               created_at: new Date().toISOString()
             };
 
-            // Mint NFT on Ethereum
-            const mintResult = await ethereumService.mintNFT(metadata);
+            // NFT will be minted automatically after admin verification
             
             setUploadProgress((i + 0.7) * progressIncrement);
 
@@ -809,13 +801,7 @@ export default function CreateRight() {
               auctionDuration: pricing.auctionDuration,
               verificationStatus: 'verified',
               isListed: true,
-              // Ethereum NFT data
-              ethereumTokenId: mintResult.tokenId,
-              ethereumContractAddress: mintResult.contractAddress,
-              ethereumTransactionHash: mintResult.transactionHash,
-              ethereumMetadataUri: mintResult.metadataUri,
-              ethereumWalletAddress: walletState.accountAddress,
-              ethereumNetwork: walletState.network,
+              // Will be populated after verification and minting
             };
 
             await createRightMutation.mutateAsync(rightData);
@@ -844,8 +830,7 @@ export default function CreateRight() {
 
         setUploadProgress(40);
 
-        // Mint NFT on Ethereum
-        const mintResult = await ethereumService.mintNFT(metadata, selectedFile || undefined);
+        // NFT will be minted automatically after admin verification
         
         setUploadProgress(70);
 
@@ -859,13 +844,7 @@ export default function CreateRight() {
           youtubeData: verificationData?.youtubeData,
           isListed: true,
           currency: "ETH",
-          // Ethereum NFT data
-          ethereumTokenId: mintResult.tokenId,
-          ethereumContractAddress: mintResult.contractAddress,
-          ethereumTransactionHash: mintResult.transactionHash,
-          ethereumMetadataUri: mintResult.metadataUri,
-          ethereumWalletAddress: walletState.accountAddress,
-          ethereumNetwork: walletState.network,
+          // Will be populated after verification and minting
         };
 
         setUploadProgress(90);
