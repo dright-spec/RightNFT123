@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAccount, useDisconnect } from 'wagmi'
-import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { useAccount, useDisconnect, useConnect } from 'wagmi'
 import { Wallet, LogOut, Copy, ExternalLink, CheckCircle, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -16,7 +15,7 @@ import {
 export function Web3ModalButton() {
   const { address, isConnected, connector } = useAccount()
   const { disconnect } = useDisconnect()
-  const { open } = useWeb3Modal()
+  const { connect, connectors } = useConnect()
   const { toast } = useToast()
   const [hederaAccount, setHederaAccount] = useState<string | null>(null)
 
@@ -137,20 +136,27 @@ export function Web3ModalButton() {
       <DropdownMenuContent align="end" className="w-64">
         <div className="p-2">
           <p className="text-sm font-medium mb-2">Choose Wallet</p>
-          <DropdownMenuItem
-            onClick={() => open()}
-            className="cursor-pointer mb-2"
-          >
-            <div className="flex items-center gap-3 w-full">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">W3</span>
+          {connectors.map((connector) => (
+            <DropdownMenuItem
+              key={connector.id}
+              onClick={() => connect({ connector })}
+              className="cursor-pointer mb-2"
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {connector.name.slice(0, 2)}
+                  </span>
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="font-medium">{connector.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {connector.id === 'walletConnect' ? '300+ wallets supported' : 'Browser extension'}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 text-left">
-                <p className="font-medium">WalletConnect</p>
-                <p className="text-xs text-muted-foreground">300+ wallets supported</p>
-              </div>
-            </div>
-          </DropdownMenuItem>
+            </DropdownMenuItem>
+          ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={connectHederaManually}
