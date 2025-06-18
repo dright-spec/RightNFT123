@@ -12,6 +12,7 @@ import { VerificationBadge } from "@/components/verification-badge";
 import { AdminLogin } from "@/components/admin-login";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { HederaTestPanel } from "@/components/hedera-test-panel";
 import { 
   Shield, 
   Users, 
