@@ -1730,7 +1730,7 @@ export default function CreateRight() {
                             const pricing = videoPricingData.find(p => p.videoId === video.id);
                             return (
                               <div key={video.id} className="flex items-center gap-3 p-3 border rounded">
-                                <img src={video.thumbnails.medium.url} alt="" className="w-16 h-12 object-cover rounded" />
+                                <img src={video.thumbnails?.medium?.url || video.thumbnails?.default?.url || ''} alt="" className="w-16 h-12 object-cover rounded" />
                                 <div className="flex-1">
                                   <p className="font-medium text-sm">{video.title}</p>
                                   <p className="text-xs text-muted-foreground">
