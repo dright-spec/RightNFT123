@@ -35,7 +35,25 @@ export function initializeHederaClient() {
       client = Client.forTestnet();
     }
 
-    client.setOperator(AccountId.fromString(accountId), PrivateKey.fromString(privateKey));
+    // Parse private key - try raw format first
+    let operatorKey;
+    try {
+      // Try raw format without prefix
+      operatorKey = PrivateKey.fromString(privateKey);
+      console.log(`[hedera] Using raw private key format`);
+    } catch (error) {
+      console.log(`[hedera] Raw format failed, trying ED25519: ${error.message}`);
+      try {
+        operatorKey = PrivateKey.fromStringED25519(privateKey);
+        console.log(`[hedera] Using ED25519 format`);
+      } catch (error2) {
+        console.log(`[hedera] ED25519 failed, trying ECDSA: ${error2.message}`);
+        operatorKey = PrivateKey.fromStringECDSA(privateKey);
+        console.log(`[hedera] Using ECDSA format`);
+      }
+    }
+    
+    client.setOperator(AccountId.fromString(accountId), operatorKey);
     
     console.log(`[hedera] Client initialized for ${network} with account ${accountId}`);
     
