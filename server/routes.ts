@@ -540,44 +540,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await new Promise(resolve => setTimeout(resolve, 2000));
       updateMintingStep(right.id, 1, "completed");
       
-      // Step 2: IPFS Upload
+      // Step 2: Prepare NFT metadata
       updateMintingStep(right.id, 2, "processing");
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const metadata = {
+        name: right.title,
+        description: right.description,
+        image: right.imageUrl || "",
+        attributes: [
+          { trait_type: "Type", value: right.type },
+          { trait_type: "Category", value: right.categoryId || "General" },
+          { trait_type: "Creator", value: right.creatorId },
+          { trait_type: "Listing Type", value: right.listingType || "buy_now" },
+          { trait_type: "Price", value: right.price || "0" },
+          { trait_type: "Currency", value: right.currency || "HBAR" }
+        ],
+        rightDetails: {
+          type: right.type,
+          price: right.price,
+          currency: right.currency,
+          listingType: right.listingType,
+          paysDividends: right.paysDividends,
+          auctionDuration: right.auctionDuration,
+          createdAt: right.createdAt
+        }
+      };
+      const metadataUri = JSON.stringify(metadata);
       updateMintingStep(right.id, 2, "completed");
       
-      // Step 3: Hedera Token Creation
+      // Step 3: Create Hedera NFT Token
       updateMintingStep(right.id, 3, "processing");
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { hederaNFTService } = await import("./hedera");
+      
+      const tokenInfo = await hederaNFTService.createNFTToken({
+        name: `Dright ${right.type} #${right.id}`,
+        symbol: `DR${right.type.substring(0, 3).toUpperCase()}`,
+        memo: `Tokenized ${right.type} right: ${right.title}`,
+        maxSupply: 1
+      });
       updateMintingStep(right.id, 3, "completed");
       
-      // Step 4: NFT Minting
+      // Step 4: Mint NFT on Hedera testnet
       updateMintingStep(right.id, 4, "processing");
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const mintResult = await hederaNFTService.mintNFT({
+        tokenId: tokenInfo.tokenId,
+        metadata: metadataUri
+      });
       updateMintingStep(right.id, 4, "completed");
       
       // Step 5: Marketplace Listing
       updateMintingStep(right.id, 5, "processing");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await storage.updateRight(right.id, {
+        hederaTokenId: mintResult.tokenId,
+        hederaSerialNumber: mintResult.serialNumber,
+        hederaTransactionId: mintResult.transactionId,
+        hederaAccountId: process.env.HEDERA_ACCOUNT_ID!,
+        metadataUri: mintResult.metadataUri,
+        mintingStatus: "completed",
+        isListed: true
+      });
       updateMintingStep(right.id, 5, "completed");
 
       const results = {
-        tokenId: `0.0.${Math.floor(Math.random() * 1000000)}`,
-        serialNumber: Math.floor(Math.random() * 1000) + 1,
-        transactionId: `0.0.${right.creatorId}-${Date.now()}`,
-        metadataUri: `ipfs://Qm${Math.random().toString(36).substr(2, 44)}`,
-        contractAddress: `0.0.${Math.floor(Math.random() * 1000000)}`,
+        tokenId: mintResult.tokenId,
+        serialNumber: mintResult.serialNumber,
+        transactionId: mintResult.transactionId,
+        metadataUri: mintResult.metadataUri,
+        explorerUrl: mintResult.explorerUrl,
         mintedAt: new Date().toISOString(),
         status: "completed"
       };
 
-      // Update right with minting results
-      await storage.updateRight(right.id, {
-        hederaTokenId: results.tokenId,
-        hederaSerialNumber: results.serialNumber.toString(),
-        hederaTransactionId: results.transactionId,
-        hederaMetadataUri: results.metadataUri,
-        isListed: true
-      });
+      console.log(`Real NFT minted successfully on Hedera: ${results.tokenId}/${results.serialNumber}`);
 
       // Mark minting as completed
       const status = mintingStatus.get(right.id);
@@ -658,7 +691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
-      // Start minting process
+      // Start real Hedera minting process
       const mintingResult = await triggerAutomaticNFTMinting(right);
       
       res.json({

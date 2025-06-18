@@ -96,13 +96,9 @@ export const rights = pgTable("rights", {
   ownershipDocumentHash: text("ownership_document_hash"), // IPFS hash of ownership documents metadata
   ownershipDocumentUrl: text("ownership_document_url"), // IPFS URL of ownership documents metadata
   
-  // Hedera blockchain integration
-  hederaTokenId: text("hedera_token_id"), // Hedera Token ID (0.0.xxxxx)
-  hederaSerialNumber: text("hedera_serial_number"), // NFT serial number
-  hederaTransactionId: text("hedera_transaction_id"), // Mint transaction hash
-  hederaMetadataUri: text("hedera_metadata_uri"), // IPFS URI for NFT metadata
-  hederaAccountId: text("hedera_account_id"), // Current NFT holder account
-  hederaNetwork: text("hedera_network").default("testnet"), // mainnet, testnet
+  // NFT minting status
+  mintingStatus: text("minting_status").default("not_started"), // not_started, processing, completed, failed
+  metadataUri: text("metadata_uri"), // IPFS URI for NFT metadata
   
   // Ethereum blockchain integration (legacy)
   ethereumTokenId: text("ethereum_token_id"), // ERC-721 token ID
