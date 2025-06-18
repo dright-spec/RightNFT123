@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { HederaWalletButton } from "@/components/hedera-wallet-button";
+import { WalletConnectModal } from "@/components/walletconnect-modal";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
@@ -47,7 +47,7 @@ export default function Home() {
               </Link>
             </nav>
 
-            <HederaWalletButton />
+            <WalletConnectModal />
           </div>
         </div>
       </header>
