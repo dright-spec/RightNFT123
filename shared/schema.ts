@@ -42,7 +42,12 @@ export const categories = pgTable("categories", {
 
 export const rights = pgTable("rights", {
   id: serial("id").primaryKey(),
-  tokenId: integer("token_id").unique(),
+  // Hedera blockchain fields
+  hederaTokenId: text("hedera_token_id").unique(), // Hedera token ID (e.g., "0.0.123456")
+  hederaSerialNumber: integer("hedera_serial_number"), // NFT serial number
+  hederaTransactionId: text("hedera_transaction_id"), // Mint transaction ID
+  hederaAccountId: text("hedera_account_id"), // Current owner's Hedera account
+  
   title: text("title").notNull(),
   type: text("type").notNull(), // copyright, royalty, access, ownership, license
   categoryId: integer("category_id").references(() => categories.id),
