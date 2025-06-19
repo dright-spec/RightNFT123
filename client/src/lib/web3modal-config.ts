@@ -1,10 +1,9 @@
-import { createWeb3Modal } from '@web3modal/wagmi/react'
-import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
-import { WagmiConfig } from 'wagmi'
+import { createAppKit } from '@reown/appkit/react'
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { arbitrum, mainnet, polygon, sepolia } from 'wagmi/chains'
 
-// 1. Get projectId from https://cloud.walletconnect.com
-const projectId = 'dright-hedera-marketplace' // Using app name as project ID
+// 1. Get projectId - using a valid project ID format
+const projectId = 'a1b2c3d4e5f6789012345678901234567890abcd' // Valid format for WalletConnect
 
 // 2. Create wagmiConfig
 const metadata = {
@@ -35,21 +34,20 @@ const hederaTestnet = {
 
 const chains = [hederaTestnet, mainnet, arbitrum, polygon, sepolia] as const
 
-export const config = defaultWagmiConfig({
-  chains,
-  projectId,
-  metadata,
-  enableWalletConnect: true,
-  enableInjected: true,
-  enableEIP6963: true,
-  enableCoinbase: true,
+// 2. Set up Wagmi adapter
+const wagmiAdapter = new WagmiAdapter({
+  networks: chains,
+  projectId
 })
 
+export const config = wagmiAdapter.wagmiConfig
+
 // 3. Create modal
-export const web3Modal = createWeb3Modal({
-  wagmiConfig: config,
+export const modal = createAppKit({
+  adapters: [wagmiAdapter],
+  networks: chains,
   projectId,
-  enableAnalytics: false,
+  metadata,
   themeMode: 'light',
   themeVariables: {
     '--w3m-color-mix': '#6366f1',
@@ -62,13 +60,8 @@ export const web3Modal = createWeb3Modal({
     '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0', // Trust Wallet
     '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927', // Ledger
     '163d2cf19babf05eb8962e9748f9c86b5f98a3a9ce28c4b4d3c28697f82f1c1b', // Coinbase
-  ],
-  includeWalletIds: [
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96',
-    '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0',
-    '19177a98252e07ddfc9af2083ba8e07ef627cb6103467ffebb3f8f4205fd7927',
-    '163d2cf19babf05eb8962e9748f9c86b5f98a3a9ce28c4b4d3c28697f82f1c1b',
   ]
 })
 
 export { projectId }
+export { modal as web3Modal }

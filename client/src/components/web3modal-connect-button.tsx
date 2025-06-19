@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useAppKit } from '@reown/appkit/react'
 import { useAccount, useDisconnect, useEnsName } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,13 +16,11 @@ export function Web3ModalConnectButton() {
   const { address, isConnected, connector } = useAccount()
   const { data: ensName } = useEnsName({ address })
   const { disconnect } = useDisconnect()
+  const { open } = useAppKit()
   const { toast } = useToast()
 
   const handleConnect = () => {
-    // Web3Modal handles the connection via its built-in modal
-    if (typeof window !== 'undefined' && (window as any).web3Modal) {
-      (window as any).web3Modal.open()
-    }
+    open()
   }
 
   const copyAddress = async () => {
