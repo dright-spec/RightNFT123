@@ -666,9 +666,14 @@ export default function CreateRight() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rights"] });
+      // Check if this was an immediate NFT creation or submission for review
+      const isImmediateNFT = data.contentSource === 'youtube_video' && selectedVideos.length > 0;
+      
       toast({
-        title: "Right Created Successfully!",
-        description: "Your right has been submitted for verification.",
+        title: isImmediateNFT ? "NFT Created Successfully!" : "Right Submitted Successfully!",
+        description: isImmediateNFT ? 
+          "Your NFT has been minted and is now available on the marketplace." :
+          "Your right has been submitted for admin verification. You'll be notified when approved.",
       });
       setLocation("/dashboard");
     },
@@ -1696,7 +1701,7 @@ export default function CreateRight() {
                       Review & Confirm
                     </CardTitle>
                     <CardDescription>
-                      Review your submission before minting
+                      {canMintNFT ? "Review your submission before minting" : "Review your submission before sending for admin approval"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -1746,11 +1751,26 @@ export default function CreateRight() {
                         </div>
                         <div>
                           <h4 className="font-medium mb-3">Verification Status</h4>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={canMintNFT ? "default" : "secondary"}>
-                              {canMintNFT ? "Verified" : "Pending"}
-                            </Badge>
-                            {canMintNFT && <Check className="w-4 h-4 text-green-600" />}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={canMintNFT ? "default" : "secondary"}>
+                                {canMintNFT ? "Verified" : "Pending"}
+                              </Badge>
+                              {canMintNFT && <Check className="w-4 h-4 text-green-600" />}
+                            </div>
+                            {!canMintNFT && form.watch("contentSource") !== "youtube_video" && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div className="flex items-start gap-2">
+                                  <Clock className="w-4 h-4 text-blue-600 mt-0.5" />
+                                  <div className="text-sm">
+                                    <p className="font-medium text-blue-800">Admin Review Required</p>
+                                    <p className="text-blue-600 mt-1">
+                                      Your right will be submitted for admin verification. Once approved, you can return to mint your NFT.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1780,10 +1800,12 @@ export default function CreateRight() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isUploading || !canMintNFT}
+                    disabled={isUploading}
                     className="px-8"
                   >
-                    {isUploading ? 'Creating...' : `Create NFT${selectedVideos.length > 1 ? 's' : ''}`}
+                    {isUploading ? 'Creating...' : 
+                     canMintNFT ? `Create NFT${selectedVideos.length > 1 ? 's' : ''}` :
+                     'Submit for Review'}
                     <Zap className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
