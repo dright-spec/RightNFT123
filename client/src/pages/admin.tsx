@@ -72,6 +72,57 @@ export default function Admin() {
     enabled: isAuthenticated, // Only fetch when authenticated
   });
 
+  // Verification mutation - moved to top with other hooks
+  const verifyRightMutation = useMutation({
+    mutationFn: async ({ rightId, status, notes }: { rightId: number; status: string; notes: string }) => {
+      if (status === "verified") {
+        // Call the verify endpoint which updates status to verified
+        return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { notes });
+      } else {
+        // Call the general verification endpoint
+        return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { status, notes });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/rights"] });
+      setSelectedRight(null);
+      setVerificationNotes("");
+      toast({
+        title: "Success",
+        description: "Right verification updated successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("NFT minting failed:", error);
+      toast({
+        title: "NFT Minting Failed",
+        description: "There was an error minting the NFT. Please try again or contact support.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // User ban mutation - moved to top with other hooks
+  const banUserMutation = useMutation({
+    mutationFn: async ({ userId, banned }: { userId: number; banned: boolean }) => {
+      return apiRequest("POST", `/api/admin/users/${userId}/ban`, { banned });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User status updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
@@ -137,8 +188,21 @@ export default function Admin() {
     );
   }
 
-  // Verification mutation
-  const verifyRightMutation = useMutation({
+  // Helper functions for handlers
+  const handleVerification = (status: string) => {
+    if (!selectedRight) return;
+    verifyRightMutation.mutate({
+      rightId: selectedRight.id,
+      status,
+      notes: verificationNotes,
+    });
+  };
+
+  const handleUserBan = (userId: number, banned: boolean) => {
+    banUserMutation.mutate({ userId, banned });
+  };
+
+  return (
     mutationFn: async ({ rightId, status, notes }: { rightId: number; status: string; notes: string }) => {
       if (status === "verified") {
         // Call the verify endpoint which updates status to verified
@@ -223,18 +287,7 @@ export default function Admin() {
     },
   });
 
-  const handleVerification = (status: string) => {
-    if (!selectedRight) return;
-    verifyRightMutation.mutate({
-      rightId: selectedRight.id,
-      status,
-      notes: verificationNotes,
-    });
-  };
 
-  const handleUserBan = (userId: number, banned: boolean) => {
-    banUserMutation.mutate({ userId, banned });
-  };
 
   return (
     <div className="min-h-screen bg-background p-6">
