@@ -192,27 +192,98 @@ export function HederaTestPanel() {
 
           {/* Enhanced NFT Display with Full Visualization */}
           {testMintMutation.data && (
-            <div className="mt-6">
-              <div className="mb-4 text-center">
-                <h3 className="text-lg font-bold text-green-800 mb-2">🎉 Live NFT Successfully Minted!</h3>
-                <p className="text-sm text-gray-600">Your test NFT is now live on Hedera testnet blockchain</p>
+            <div className="mt-6 space-y-4">
+              {/* Minting Results Section */}
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <h4 className="font-semibold text-green-800 mb-3">✅ Test NFT Minted Successfully</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <strong>Token ID:</strong> 
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono">{(testMintMutation.data as any)?.mintResult?.tokenId || (testMintMutation.data as any)?.tokenInfo?.tokenId || 'N/A'}</span>
+                      {((testMintMutation.data as any)?.mintResult?.tokenId || (testMintMutation.data as any)?.tokenInfo?.tokenId) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const tokenId = (testMintMutation.data as any)?.mintResult?.tokenId || (testMintMutation.data as any)?.tokenInfo?.tokenId;
+                            navigator.clipboard.writeText(tokenId);
+                            toast({ title: "Copied!", description: "Token ID copied to clipboard" });
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <strong>Serial Number:</strong> 
+                    <span className="font-mono">{(testMintMutation.data as any)?.mintResult?.serialNumber || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <strong>Transaction ID:</strong> 
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs">{(testMintMutation.data as any)?.mintResult?.transactionId || 'N/A'}</span>
+                      {(testMintMutation.data as any)?.mintResult?.transactionId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText((testMintMutation.data as any).mintResult.transactionId);
+                            toast({ title: "Copied!", description: "Transaction ID copied to clipboard" });
+                          }}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <strong>Explorer:</strong> 
+                    {(testMintMutation.data as any)?.mintResult?.explorerUrl ? (
+                      <a 
+                        href={(testMintMutation.data as any).mintResult.explorerUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-1"
+                      >
+                        View on HashScan <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="text-gray-500">N/A</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <strong>Metadata:</strong> 
+                    <span className="font-mono text-xs max-w-xs truncate">{(testMintMutation.data as any)?.mintResult?.metadataUri ? 'JSON metadata stored' : 'N/A'}</span>
+                  </div>
+                </div>
               </div>
-              
-              <NFTViewer 
-                nftData={{
-                  tokenId: (testMintMutation.data as any)?.mintResult?.tokenId || '',
-                  serialNumber: (testMintMutation.data as any)?.mintResult?.serialNumber || 1,
-                  transactionId: (testMintMutation.data as any)?.mintResult?.transactionId || '',
-                  explorerUrl: (testMintMutation.data as any)?.mintResult?.explorerUrl || '',
-                  name: (testMintMutation.data as any)?.tokenInfo?.name || testForm.name,
-                  symbol: (testMintMutation.data as any)?.tokenInfo?.symbol || testForm.symbol,
-                  metadata: (testMintMutation.data as any)?.mintResult?.metadataUri || {},
-                  rightType: testForm.youtubeUrl && extractYouTubeId(testForm.youtubeUrl) ? 'YouTube Video' : 'Test Rights',
-                  contentSource: testForm.youtubeUrl || undefined,
-                  youtubeVideoId: extractYouTubeId(testForm.youtubeUrl || '') || undefined
-                }}
-                className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50"
-              />
+
+              {/* NFT Visual Preview */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-3">🎨 NFT Preview</h4>
+                <NFTViewer 
+                  nftData={{
+                    tokenId: (testMintMutation.data as any)?.mintResult?.tokenId || (testMintMutation.data as any)?.tokenInfo?.tokenId || '',
+                    serialNumber: (testMintMutation.data as any)?.mintResult?.serialNumber || 1,
+                    transactionId: (testMintMutation.data as any)?.mintResult?.transactionId || '',
+                    explorerUrl: (testMintMutation.data as any)?.mintResult?.explorerUrl || '',
+                    name: (testMintMutation.data as any)?.tokenInfo?.name || testForm.name,
+                    symbol: (testMintMutation.data as any)?.tokenInfo?.symbol || testForm.symbol,
+                    metadata: {
+                      title: testForm.name,
+                      description: testForm.description,
+                      type: "copyright",
+                      contentSource: "youtube_video",
+                      youtubeUrl: testForm.youtubeUrl
+                    },
+                    rightType: "copyright",
+                    contentSource: "youtube_video"
+                  }}
+                  className="border-blue-200"
+                />
+              </div>
             </div>
           )}
         </CardContent>
