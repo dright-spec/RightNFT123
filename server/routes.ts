@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { marketplaceStorage as storage } from "./marketplaceStorage";
 import { AdminOperations } from "./admin-operations";
+import { PerformanceMonitor } from "./performance-monitor";
 import { db } from "./db";
 import { users, rights } from "@shared/schema";
 import { eq, desc, or, ilike, sql } from "drizzle-orm";

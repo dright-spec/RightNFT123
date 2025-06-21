@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { VerificationBadge } from "@/components/verification-badge";
 import { AdminLogin } from "@/components/admin-login";
+import { PerformanceDashboard } from "@/components/admin/performance-dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { HederaTestPanel } from "@/components/hedera-test-panel";
