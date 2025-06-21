@@ -354,33 +354,44 @@ export default function Admin() {
           {/* Verification Tab */}
           <TabsContent value="verification" className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Rights Verification Center
-                </CardTitle>
-                <CardDescription>
-                  Review and approve rights for NFT minting on Hedera blockchain
-                </CardDescription>
-                <div className="flex gap-4 mt-4">
-                  <div className="flex items-center gap-2">
-                    <Search className="w-4 h-4" />
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-3 text-xl">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <Shield className="w-6 h-6" />
+                      </div>
+                      Rights Verification Center
+                    </CardTitle>
+                    <CardDescription className="text-blue-100 mt-2">
+                      Streamlined review and approval for NFT minting on Hedera blockchain
+                    </CardDescription>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{pendingRights?.filter(r => r.verificationStatus === 'pending').length || 0}</div>
+                    <div className="text-sm text-blue-100">Pending Review</div>
+                  </div>
+                </div>
+                
+                <div className="flex gap-4 mt-6 bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                  <div className="flex items-center gap-2 flex-1">
+                    <Search className="w-4 h-4 text-white/80" />
                     <Input
-                      placeholder="Search rights..."
+                      placeholder="Search rights by title, creator, or content..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-64"
+                      className="bg-white/20 border-white/30 text-white placeholder:text-white/60 focus:bg-white/30"
                     />
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="w-52 bg-white/20 border-white/30 text-white">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending Review</SelectItem>
-                      <SelectItem value="verified">Verified & Minted</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="pending">⏳ Pending Review</SelectItem>
+                      <SelectItem value="verified">✅ Verified & Minted</SelectItem>
+                      <SelectItem value="rejected">❌ Rejected</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -392,53 +403,452 @@ export default function Admin() {
                     <p className="text-muted-foreground">Loading rights for review...</p>
                   </div>
                 ) : pendingRights?.length === 0 ? (
-                  <div className="text-center py-12">
-                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">All caught up!</h3>
-                    <p className="text-muted-foreground">No rights requiring verification at this time.</p>
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle className="w-10 h-10 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3 text-gray-900">All Caught Up!</h3>
+                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                      Excellent work! No rights are currently pending verification. 
+                      New submissions will appear here automatically.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Monitoring for new submissions...
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="grid gap-4">
                     {pendingRights?.map((right) => (
-                      <Card key={right.id} className="border-l-4 border-l-yellow-400">
-                        <CardContent className="p-6">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 space-y-3">
-                              <div className="flex items-center gap-3">
-                                <h3 className="text-xl font-semibold">{right.title}</h3>
-                                <VerificationBadge status={right.verificationStatus} />
-                              </div>
-                              
-                              <p className="text-muted-foreground leading-relaxed">
-                                {right.description}
-                              </p>
-                              
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="font-medium">
+                      <Card key={right.id} className="group hover:shadow-md transition-shadow border-l-4 border-l-blue-400 bg-gradient-to-r from-blue-50/50 to-transparent">
+                        <CardContent className="p-0">
+                          <div className="grid grid-cols-1 lg:grid-cols-4 gap-0">
+                            {/* Main Content - 2 columns */}
+                            <div className="lg:col-span-2 p-6">
+                              <div className="space-y-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <h3 className="text-lg font-bold text-gray-900">{right.title}</h3>
+                                      <VerificationBadge status={right.verificationStatus} />
+                                    </div>
+                                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                                      {right.description}
+                                    </p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <Badge variant="outline" className="font-medium bg-white">
                                     {right.type}
                                   </Badge>
                                   {right.price && (
-                                    <Badge variant="secondary">
+                                    <Badge variant="secondary" className="bg-green-100 text-green-800">
                                       {right.price} {right.currency || 'HBAR'}
                                     </Badge>
                                   )}
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(right.createdAt).toLocaleDateString()}
+                                  </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  Created: {new Date(right.createdAt).toLocaleDateString()}
+
+                                {right.contentSource && (
+                                  <div className="bg-white p-3 rounded-lg border border-gray-200">
+                                    <div className="text-xs font-medium text-gray-500 mb-1">Content Source</div>
+                                    <div className="text-sm text-gray-800">{right.contentSource}</div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Creator Info - 1 column */}
+                            <div className="p-6 bg-gray-50/50 border-l border-gray-200">
+                              <div className="space-y-3">
+                                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Creator</div>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                    {right.creator?.username.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-sm">{right.creator?.username}</div>
+                                    <div className="text-xs text-gray-500">{right.creator?.email}</div>
+                                  </div>
+                                </div>
+                                {right.creator?.walletAddress && (
+                                  <div>
+                                    <div className="text-xs font-medium text-gray-500 mb-1">Wallet</div>
+                                    <div className="font-mono text-xs bg-white p-2 rounded border text-gray-700 break-all">
+                                      {right.creator.walletAddress.substring(0, 20)}...
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Quick Actions - 1 column */}
+                            <div className="p-6 bg-white border-l border-gray-200">
+                              <div className="space-y-3">
+                                <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">Quick Actions</div>
+                                
+                                {/* Quick Approve/Reject Buttons */}
+                                <div className="space-y-2">
+                                  <Button
+                                    onClick={() => {
+                                      verifyRightMutation.mutate({
+                                        rightId: right.id,
+                                        status: "verified",
+                                        notes: "Quick approval - content verified"
+                                      });
+                                    }}
+                                    disabled={verifyRightMutation.isPending}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white h-9 text-sm"
+                                  >
+                                    {verifyRightMutation.isPending ? (
+                                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                                    ) : (
+                                      <CheckCircle className="w-3 h-3 mr-2" />
+                                    )}
+                                    Quick Approve
+                                  </Button>
+                                  
+                                  <Button
+                                    onClick={() => {
+                                      verifyRightMutation.mutate({
+                                        rightId: right.id,
+                                        status: "rejected",
+                                        notes: "Content does not meet verification requirements"
+                                      });
+                                    }}
+                                    disabled={verifyRightMutation.isPending}
+                                    variant="outline"
+                                    className="w-full border-red-200 text-red-600 hover:bg-red-50 h-9 text-sm"
+                                  >
+                                    <XCircle className="w-3 h-3 mr-2" />
+                                    Quick Reject
+                                  </Button>
+                                </div>
+
+                                <div className="border-t pt-3">
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button 
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setSelectedRight(right)}
+                                        className="w-full h-9 text-sm"
+                                      >
+                                        <Shield className="w-3 h-3 mr-2" />
+                                        Detailed Review
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+                                      <DialogHeader>
+                                        <DialogTitle className="flex items-center gap-2 text-xl">
+                                          <Shield className="w-6 h-6" />
+                                          Rights Verification Review: {selectedRight?.title}
+                                        </DialogTitle>
+                                      </DialogHeader>
+                                      
+                                      <div className="space-y-8">
+                                        {/* Comprehensive Right Information */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                          {/* Left Column - Basic Details */}
+                                          <div className="space-y-4">
+                                            <Card className="border-blue-200 bg-blue-50">
+                                              <CardHeader className="pb-3">
+                                                <CardTitle className="text-sm text-blue-800">Basic Information</CardTitle>
+                                              </CardHeader>
+                                              <CardContent className="space-y-3">
+                                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                                  <div>
+                                                    <div className="font-medium text-gray-600">Right Type</div>
+                                                    <Badge variant="outline" className="mt-1">{selectedRight?.type}</Badge>
+                                                  </div>
+                                                  <div>
+                                                    <div className="font-medium text-gray-600">Pricing</div>
+                                                    <div className="text-gray-800">{selectedRight?.price || 'Free'} {selectedRight?.currency || 'HBAR'}</div>
+                                                  </div>
+                                                  <div>
+                                                    <div className="font-medium text-gray-600">Current Status</div>
+                                                    <VerificationBadge status={selectedRight?.verificationStatus} className="mt-1" />
+                                                  </div>
+                                                  <div>
+                                                    <div className="font-medium text-gray-600">Submitted</div>
+                                                    <div className="text-gray-800">{selectedRight && new Date(selectedRight.createdAt).toLocaleDateString()}</div>
+                                                  </div>
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+
+                                            {/* Content Description */}
+                                            <Card className="border-green-200 bg-green-50">
+                                              <CardHeader className="pb-3">
+                                                <CardTitle className="text-sm text-green-800">Content Description</CardTitle>
+                                              </CardHeader>
+                                              <CardContent>
+                                                <p className="text-sm leading-relaxed text-gray-700">
+                                                  {selectedRight?.description || 'No description provided'}
+                                                </p>
+                                              </CardContent>
+                                            </Card>
+
+                                            {/* Content Source */}
+                                            {selectedRight?.contentSource && (
+                                              <Card className="border-purple-200 bg-purple-50">
+                                                <CardHeader className="pb-3">
+                                                  <CardTitle className="text-sm text-purple-800">Content Source</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                  <div className="text-sm">
+                                                    <div className="font-medium text-gray-600 mb-1">Source Type</div>
+                                                    <div className="text-gray-800 bg-white p-2 rounded border">
+                                                      {selectedRight.contentSource}
+                                                    </div>
+                                                  </div>
+                                                </CardContent>
+                                              </Card>
+                                            )}
+                                          </div>
+
+                                          {/* Right Column - Creator & Ownership Info */}
+                                          <div className="space-y-4">
+                                            <Card className="border-amber-200 bg-amber-50">
+                                              <CardHeader className="pb-3">
+                                                <CardTitle className="text-sm text-amber-800">Creator Information</CardTitle>
+                                              </CardHeader>
+                                              <CardContent className="space-y-3">
+                                                <div className="flex items-center gap-3">
+                                                  <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center">
+                                                    <span className="font-bold text-amber-800">
+                                                      {selectedRight?.creator?.username.charAt(0).toUpperCase()}
+                                                    </span>
+                                                  </div>
+                                                  <div>
+                                                    <div className="font-medium text-gray-800">{selectedRight?.creator?.username}</div>
+                                                    <div className="text-sm text-gray-600">{selectedRight?.creator?.email}</div>
+                                                  </div>
+                                                </div>
+                                                {selectedRight?.creator?.walletAddress && (
+                                                  <div>
+                                                    <div className="font-medium text-gray-600 text-xs mb-1">Wallet Address</div>
+                                                    <div className="font-mono text-xs bg-white p-2 rounded border break-all">
+                                                      {selectedRight.creator.walletAddress}
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </CardContent>
+                                            </Card>
+
+                                            {/* Verification History */}
+                                            <Card className="border-gray-200 bg-gray-50">
+                                              <CardHeader className="pb-3">
+                                                <CardTitle className="text-sm text-gray-800">Verification History</CardTitle>
+                                              </CardHeader>
+                                              <CardContent>
+                                                <div className="space-y-2 text-sm">
+                                                  <div className="flex justify-between">
+                                                    <span className="text-gray-600">Initial Status:</span>
+                                                    <span className="text-gray-800">Pending Review</span>
+                                                  </div>
+                                                  {selectedRight?.verificationNotes && (
+                                                    <div>
+                                                      <div className="text-gray-600 mb-1">Previous Notes:</div>
+                                                      <div className="bg-white p-2 rounded border text-gray-700 text-xs">
+                                                        {selectedRight.verificationNotes}
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </CardContent>
+                                            </Card>
+
+                                            {/* Additional Metadata */}
+                                            {selectedRight?.metadata && Object.keys(selectedRight.metadata).length > 0 && (
+                                              <Card className="border-indigo-200 bg-indigo-50">
+                                                <CardHeader className="pb-3">
+                                                  <CardTitle className="text-sm text-indigo-800">Additional Metadata</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                  <pre className="text-xs bg-white p-2 rounded border overflow-auto text-gray-700">
+                                                    {JSON.stringify(selectedRight.metadata, null, 2)}
+                                                  </pre>
+                                                </CardContent>
+                                              </Card>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* File Attachments Section */}
+                                        <Card className="border-2 border-dashed border-gray-300">
+                                          <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                              <FileText className="w-5 h-5" />
+                                              Supporting Documents & Files
+                                            </CardTitle>
+                                          </CardHeader>
+                                          <CardContent>
+                                            {/* Simulated file display - in real implementation, this would show actual uploaded files */}
+                                            <div className="space-y-3">
+                                              <div className="text-sm text-gray-600 mb-3">
+                                                Review all supporting documentation before making a verification decision:
+                                              </div>
+                                              
+                                              {/* Example files based on content source */}
+                                              {selectedRight?.contentSource === 'YouTube Video' ? (
+                                                <div className="space-y-2">
+                                                  <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded">
+                                                    <Video className="w-5 h-5 text-red-600" />
+                                                    <div className="flex-1">
+                                                      <div className="font-medium text-sm">YouTube Video Link</div>
+                                                      <div className="text-xs text-gray-600">Video ownership verification required</div>
+                                                    </div>
+                                                    <Button variant="outline" size="sm">View Video</Button>
+                                                  </div>
+                                                  <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded">
+                                                    <FileText className="w-5 h-5 text-green-600" />
+                                                    <div className="flex-1">
+                                                      <div className="font-medium text-sm">Channel Ownership Proof</div>
+                                                      <div className="text-xs text-gray-600">Screenshot or verification code</div>
+                                                    </div>
+                                                    <Button variant="outline" size="sm">Review Proof</Button>
+                                                  </div>
+                                                </div>
+                                              ) : selectedRight?.contentSource === 'Music Track' ? (
+                                                <div className="space-y-2">
+                                                  <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded">
+                                                    <Music className="w-5 h-5 text-purple-600" />
+                                                    <div className="flex-1">
+                                                      <div className="font-medium text-sm">Audio File</div>
+                                                      <div className="text-xs text-gray-600">Original music track for verification</div>
+                                                    </div>
+                                                    <Button variant="outline" size="sm">Play Audio</Button>
+                                                  </div>
+                                                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                                    <FileText className="w-5 h-5 text-blue-600" />
+                                                    <div className="flex-1">
+                                                      <div className="font-medium text-sm">Copyright Documentation</div>
+                                                      <div className="text-xs text-gray-600">Proof of authorship and ownership</div>
+                                                    </div>
+                                                    <Button variant="outline" size="sm">View Docs</Button>
+                                                  </div>
+                                                </div>
+                                              ) : (
+                                                <div className="text-center py-6 text-gray-500">
+                                                  <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                                  <div className="text-sm">No supporting files uploaded</div>
+                                                  <div className="text-xs">Manual verification required</div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </CardContent>
+                                        </Card>
+
+                                        {/* Verification Decision Section */}
+                                        <Card className="border-2 border-yellow-300 bg-yellow-50">
+                                          <CardHeader>
+                                            <CardTitle className="flex items-center gap-2 text-yellow-800">
+                                              <Settings className="w-5 h-5" />
+                                              Verification Decision
+                                            </CardTitle>
+                                          </CardHeader>
+                                          <CardContent className="space-y-4">
+                                            {/* Verification Notes */}
+                                            <div className="space-y-2">
+                                              <label className="text-sm font-medium">Detailed Verification Notes</label>
+                                              <Textarea
+                                                value={verificationNotes}
+                                                onChange={(e) => setVerificationNotes(e.target.value)}
+                                                placeholder="Document your verification decision with detailed notes explaining:&#10;• What evidence was reviewed&#10;• Why the decision was made&#10;• Any concerns or recommendations&#10;• Next steps if applicable"
+                                                rows={6}
+                                                className="resize-none"
+                                              />
+                                            </div>
+
+                                            {/* Verification Checklist */}
+                                            <div className="bg-white p-4 rounded border">
+                                              <div className="text-sm font-medium mb-3">Verification Checklist</div>
+                                              <div className="space-y-2 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                  <input type="checkbox" className="rounded" />
+                                                  <span>Creator identity and ownership verified</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <input type="checkbox" className="rounded" />
+                                                  <span>Content authenticity confirmed</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <input type="checkbox" className="rounded" />
+                                                  <span>Supporting documentation reviewed</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <input type="checkbox" className="rounded" />
+                                                  <span>No copyright conflicts detected</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <input type="checkbox" className="rounded" />
+                                                  <span>Pricing and terms are reasonable</span>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Warning Banner */}
+                                            <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                                              <div className="flex items-start gap-3">
+                                                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                                <div className="text-sm">
+                                                  <div className="font-medium text-red-800 mb-1">Critical Decision Point</div>
+                                                  <div className="text-red-700 leading-relaxed">
+                                                    <strong>APPROVAL</strong> will immediately trigger NFT minting on Hedera blockchain and make this right tradeable. 
+                                                    This action is <strong>irreversible</strong>. Ensure all verification steps are complete before proceeding.
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-3 pt-4">
+                                              <Button
+                                                onClick={() => handleVerification("verified")}
+                                                disabled={verifyRightMutation.isPending}
+                                                className="bg-green-600 hover:bg-green-700 flex-1 h-12"
+                                              >
+                                                {verifyRightMutation.isPending ? (
+                                                  <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    Minting Live NFT on Hedera...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <CheckCircle className="w-5 h-5 mr-2" />
+                                                    APPROVE & MINT NFT
+                                                  </>
+                                                )}
+                                              </Button>
+                                              <Button
+                                                variant="destructive"
+                                                onClick={() => handleVerification("rejected")}
+                                                disabled={verifyRightMutation.isPending}
+                                                className="flex-1 h-12"
+                                              >
+                                                <XCircle className="w-5 h-5 mr-2" />
+                                                REJECT RIGHT
+                                              </Button>
+                                            </div>
+                                          </CardContent>
+                                        </Card>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
                                 </div>
                               </div>
+                            </div>
+                          </div>
 
-                              {right.contentSource && (
-                                <div className="bg-muted/30 p-3 rounded-lg">
-                                  <div className="text-sm font-medium text-muted-foreground mb-1">Content Source</div>
-                                  <div className="text-sm">{right.contentSource}</div>
-                                </div>
-                              )}
-
-                              {/* Show NFT Viewer for verified rights with Hedera data */}
-                              {right.verificationStatus === 'verified' && right.hederaTokenId && (
-                                <div className="mt-4">
+                            {/* NFT Preview for verified rights */}
+                            {right.verificationStatus === 'verified' && right.hederaTokenId && (
+                              <div className="px-6 pb-6 border-t bg-green-50/30">
+                                <div className="pt-4">
+                                  <div className="text-xs font-medium text-green-700 mb-3 uppercase tracking-wide">✓ Verified & Minted NFT</div>
                                   <NFTViewer 
                                     nftData={{
                                       tokenId: right.hederaTokenId,
@@ -454,317 +864,12 @@ export default function Admin() {
                                     className="border-green-200"
                                   />
                                 </div>
-                              )}
-                            </div>
-                            
-                            <div className="ml-6 flex flex-col gap-2">
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button 
-                                    size="sm"
-                                    onClick={() => setSelectedRight(right)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                  >
-                                    <Shield className="w-4 h-4 mr-2" />
-                                    Review & Approve
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-                                  <DialogHeader>
-                                    <DialogTitle className="flex items-center gap-2 text-xl">
-                                      <Shield className="w-6 h-6" />
-                                      Rights Verification Review: {selectedRight?.title}
-                                    </DialogTitle>
-                                  </DialogHeader>
-                                  
-                                  <div className="space-y-8">
-                                    {/* Comprehensive Right Information */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                      {/* Left Column - Basic Details */}
-                                      <div className="space-y-4">
-                                        <Card className="border-blue-200 bg-blue-50">
-                                          <CardHeader className="pb-3">
-                                            <CardTitle className="text-sm text-blue-800">Basic Information</CardTitle>
-                                          </CardHeader>
-                                          <CardContent className="space-y-3">
-                                            <div className="grid grid-cols-2 gap-3 text-sm">
-                                              <div>
-                                                <div className="font-medium text-gray-600">Right Type</div>
-                                                <Badge variant="outline" className="mt-1">{selectedRight?.type}</Badge>
-                                              </div>
-                                              <div>
-                                                <div className="font-medium text-gray-600">Pricing</div>
-                                                <div className="text-gray-800">{selectedRight?.price || 'Free'} {selectedRight?.currency || 'HBAR'}</div>
-                                              </div>
-                                              <div>
-                                                <div className="font-medium text-gray-600">Current Status</div>
-                                                <VerificationBadge status={selectedRight?.verificationStatus} className="mt-1" />
-                                              </div>
-                                              <div>
-                                                <div className="font-medium text-gray-600">Submitted</div>
-                                                <div className="text-gray-800">{selectedRight && new Date(selectedRight.createdAt).toLocaleDateString()}</div>
-                                              </div>
-                                            </div>
-                                          </CardContent>
-                                        </Card>
-
-                                        {/* Content Description */}
-                                        <Card className="border-green-200 bg-green-50">
-                                          <CardHeader className="pb-3">
-                                            <CardTitle className="text-sm text-green-800">Content Description</CardTitle>
-                                          </CardHeader>
-                                          <CardContent>
-                                            <p className="text-sm leading-relaxed text-gray-700">
-                                              {selectedRight?.description || 'No description provided'}
-                                            </p>
-                                          </CardContent>
-                                        </Card>
-
-                                        {/* Content Source */}
-                                        {selectedRight?.contentSource && (
-                                          <Card className="border-purple-200 bg-purple-50">
-                                            <CardHeader className="pb-3">
-                                              <CardTitle className="text-sm text-purple-800">Content Source</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                              <div className="text-sm">
-                                                <div className="font-medium text-gray-600 mb-1">Source Type</div>
-                                                <div className="text-gray-800 bg-white p-2 rounded border">
-                                                  {selectedRight.contentSource}
-                                                </div>
-                                              </div>
-                                            </CardContent>
-                                          </Card>
-                                        )}
-                                      </div>
-
-                                      {/* Right Column - Creator & Ownership Info */}
-                                      <div className="space-y-4">
-                                        <Card className="border-amber-200 bg-amber-50">
-                                          <CardHeader className="pb-3">
-                                            <CardTitle className="text-sm text-amber-800">Creator Information</CardTitle>
-                                          </CardHeader>
-                                          <CardContent className="space-y-3">
-                                            <div className="flex items-center gap-3">
-                                              <div className="w-10 h-10 rounded-full bg-amber-200 flex items-center justify-center">
-                                                <span className="font-bold text-amber-800">
-                                                  {selectedRight?.creator?.username.charAt(0).toUpperCase()}
-                                                </span>
-                                              </div>
-                                              <div>
-                                                <div className="font-medium text-gray-800">{selectedRight?.creator?.username}</div>
-                                                <div className="text-sm text-gray-600">{selectedRight?.creator?.email}</div>
-                                              </div>
-                                            </div>
-                                            {selectedRight?.creator?.walletAddress && (
-                                              <div>
-                                                <div className="font-medium text-gray-600 text-xs mb-1">Wallet Address</div>
-                                                <div className="font-mono text-xs bg-white p-2 rounded border break-all">
-                                                  {selectedRight.creator.walletAddress}
-                                                </div>
-                                              </div>
-                                            )}
-                                          </CardContent>
-                                        </Card>
-
-                                        {/* Verification History */}
-                                        <Card className="border-gray-200 bg-gray-50">
-                                          <CardHeader className="pb-3">
-                                            <CardTitle className="text-sm text-gray-800">Verification History</CardTitle>
-                                          </CardHeader>
-                                          <CardContent>
-                                            <div className="space-y-2 text-sm">
-                                              <div className="flex justify-between">
-                                                <span className="text-gray-600">Initial Status:</span>
-                                                <span className="text-gray-800">Pending Review</span>
-                                              </div>
-                                              {selectedRight?.verificationNotes && (
-                                                <div>
-                                                  <div className="text-gray-600 mb-1">Previous Notes:</div>
-                                                  <div className="bg-white p-2 rounded border text-gray-700 text-xs">
-                                                    {selectedRight.verificationNotes}
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </CardContent>
-                                        </Card>
-
-                                        {/* Additional Metadata */}
-                                        {selectedRight?.metadata && Object.keys(selectedRight.metadata).length > 0 && (
-                                          <Card className="border-indigo-200 bg-indigo-50">
-                                            <CardHeader className="pb-3">
-                                              <CardTitle className="text-sm text-indigo-800">Additional Metadata</CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                              <pre className="text-xs bg-white p-2 rounded border overflow-auto text-gray-700">
-                                                {JSON.stringify(selectedRight.metadata, null, 2)}
-                                              </pre>
-                                            </CardContent>
-                                          </Card>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* File Attachments Section */}
-                                    <Card className="border-2 border-dashed border-gray-300">
-                                      <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                          <FileText className="w-5 h-5" />
-                                          Supporting Documents & Files
-                                        </CardTitle>
-                                      </CardHeader>
-                                      <CardContent>
-                                        {/* Simulated file display - in real implementation, this would show actual uploaded files */}
-                                        <div className="space-y-3">
-                                          <div className="text-sm text-gray-600 mb-3">
-                                            Review all supporting documentation before making a verification decision:
-                                          </div>
-                                          
-                                          {/* Example files based on content source */}
-                                          {selectedRight?.contentSource === 'YouTube Video' ? (
-                                            <div className="space-y-2">
-                                              <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded">
-                                                <Video className="w-5 h-5 text-red-600" />
-                                                <div className="flex-1">
-                                                  <div className="font-medium text-sm">YouTube Video Link</div>
-                                                  <div className="text-xs text-gray-600">Video ownership verification required</div>
-                                                </div>
-                                                <Button variant="outline" size="sm">View Video</Button>
-                                              </div>
-                                              <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded">
-                                                <FileText className="w-5 h-5 text-green-600" />
-                                                <div className="flex-1">
-                                                  <div className="font-medium text-sm">Channel Ownership Proof</div>
-                                                  <div className="text-xs text-gray-600">Screenshot or verification code</div>
-                                                </div>
-                                                <Button variant="outline" size="sm">Review Proof</Button>
-                                              </div>
-                                            </div>
-                                          ) : selectedRight?.contentSource === 'Music Track' ? (
-                                            <div className="space-y-2">
-                                              <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded">
-                                                <Music className="w-5 h-5 text-purple-600" />
-                                                <div className="flex-1">
-                                                  <div className="font-medium text-sm">Audio File</div>
-                                                  <div className="text-xs text-gray-600">Original music track for verification</div>
-                                                </div>
-                                                <Button variant="outline" size="sm">Play Audio</Button>
-                                              </div>
-                                              <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                                <FileText className="w-5 h-5 text-blue-600" />
-                                                <div className="flex-1">
-                                                  <div className="font-medium text-sm">Copyright Documentation</div>
-                                                  <div className="text-xs text-gray-600">Proof of authorship and ownership</div>
-                                                </div>
-                                                <Button variant="outline" size="sm">View Docs</Button>
-                                              </div>
-                                            </div>
-                                          ) : (
-                                            <div className="text-center py-6 text-gray-500">
-                                              <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                              <div className="text-sm">No supporting files uploaded</div>
-                                              <div className="text-xs">Manual verification required</div>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-
-                                    {/* Verification Decision Section */}
-                                    <Card className="border-2 border-yellow-300 bg-yellow-50">
-                                      <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-yellow-800">
-                                          <Settings className="w-5 h-5" />
-                                          Verification Decision
-                                        </CardTitle>
-                                      </CardHeader>
-                                      <CardContent className="space-y-4">
-                                        {/* Verification Notes */}
-                                        <div className="space-y-2">
-                                          <label className="text-sm font-medium">Detailed Verification Notes</label>
-                                          <Textarea
-                                            value={verificationNotes}
-                                            onChange={(e) => setVerificationNotes(e.target.value)}
-                                            placeholder="Document your verification decision with detailed notes explaining:&#10;• What evidence was reviewed&#10;• Why the decision was made&#10;• Any concerns or recommendations&#10;• Next steps if applicable"
-                                            rows={6}
-                                            className="resize-none"
-                                          />
-                                        </div>
-
-                                        {/* Verification Checklist */}
-                                        <div className="bg-white p-4 rounded border">
-                                          <div className="text-sm font-medium mb-3">Verification Checklist</div>
-                                          <div className="space-y-2 text-sm">
-                                            <div className="flex items-center gap-2">
-                                              <input type="checkbox" className="rounded" />
-                                              <span>Creator identity and ownership verified</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <input type="checkbox" className="rounded" />
-                                              <span>Content authenticity confirmed</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <input type="checkbox" className="rounded" />
-                                              <span>Supporting documentation reviewed</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <input type="checkbox" className="rounded" />
-                                              <span>No copyright conflicts detected</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <input type="checkbox" className="rounded" />
-                                              <span>Pricing and terms are reasonable</span>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        {/* Warning Banner */}
-                                        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                                          <div className="flex items-start gap-3">
-                                            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                                            <div className="text-sm">
-                                              <div className="font-medium text-red-800 mb-1">Critical Decision Point</div>
-                                              <div className="text-red-700 leading-relaxed">
-                                                <strong>APPROVAL</strong> will immediately trigger NFT minting on Hedera blockchain and make this right tradeable. 
-                                                This action is <strong>irreversible</strong>. Ensure all verification steps are complete before proceeding.
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-3 pt-4">
-                                          <Button
-                                            onClick={() => handleVerification("verified")}
-                                            disabled={verifyRightMutation.isPending}
-                                            className="bg-green-600 hover:bg-green-700 flex-1 h-12"
-                                          >
-                                            {verifyRightMutation.isPending ? (
-                                              <>
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                Minting Live NFT on Hedera...
-                                              </>
-                                            ) : (
-                                              <>
-                                                <CheckCircle className="w-5 h-5 mr-2" />
-                                                APPROVE & MINT NFT
-                                              </>
-                                            )}
-                                          </Button>
-                                          <Button
-                                            variant="destructive"
-                                            onClick={() => handleVerification("rejected")}
-                                            disabled={verifyRightMutation.isPending}
-                                            className="flex-1 h-12"
-                                          >
-                                            <XCircle className="w-5 h-5 mr-2" />
-                                            REJECT RIGHT
-                                          </Button>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-                                  </div>
+                              </div>
+                            )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                                 </DialogContent>
                               </Dialog>
                             </div>
