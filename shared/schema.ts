@@ -149,6 +149,18 @@ export const transactions = pgTable("transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'right_approved', 'right_rejected', 'nft_minted', etc.
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  relatedRightId: integer("related_right_id").references(() => rights.id),
+  actionUrl: varchar("action_url", { length: 500 }), // URL for user to take action
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const abTestChoices = pgTable("ab_test_choices", {
   id: serial("id").primaryKey(),
   sessionId: text("session_id").notNull(), // Browser session ID
