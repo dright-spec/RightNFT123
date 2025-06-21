@@ -447,7 +447,9 @@ export default function Admin() {
                                       explorerUrl: `https://hashscan.io/testnet/transaction/${right.hederaTransactionId}`,
                                       name: right.title,
                                       symbol: 'DRIGHT',
-                                      metadata: right.metadata || {}
+                                      metadata: right.metadata || {},
+                                      rightType: right.type,
+                                      contentSource: right.contentSource
                                     }}
                                     className="border-green-200"
                                   />

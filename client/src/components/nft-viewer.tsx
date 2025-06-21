@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Hash, Copy, Check, Eye, Music, Video, FileText, Palette, Code, Building, Book, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { YouTubeEmbed } from "@/components/youtube-embed";
 
 interface NFTViewerProps {
   nftData: {
@@ -15,6 +16,8 @@ interface NFTViewerProps {
     symbol?: string;
     metadata?: any;
     rightType?: string;
+    contentSource?: string;
+    youtubeVideoId?: string;
   };
   className?: string;
 }
@@ -64,6 +67,31 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
   const rightDisplay = getRightTypeDisplay(nftData.rightType);
   const IconComponent = rightDisplay.icon;
 
+  // Extract YouTube video ID from content source or metadata
+  const getYouTubeVideoId = () => {
+    if (nftData.youtubeVideoId) return nftData.youtubeVideoId;
+    
+    // Try to extract from content source
+    if (nftData.contentSource && nftData.contentSource.includes('youtube')) {
+      const match = nftData.contentSource.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : null;
+    }
+    
+    // Try to extract from metadata
+    if (nftData.metadata && typeof nftData.metadata === 'object') {
+      const metadataStr = JSON.stringify(nftData.metadata);
+      const match = metadataStr.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+      return match ? match[1] : null;
+    }
+    
+    return null;
+  };
+
+  const youtubeVideoId = getYouTubeVideoId();
+  const isYouTubeVideo = nftData.rightType?.toLowerCase().includes('youtube') || 
+                        nftData.contentSource?.toLowerCase().includes('youtube') ||
+                        youtubeVideoId;
+
   return (
     <Card className={`bg-gradient-to-br ${rightDisplay.bg} to-white ${rightDisplay.border} shadow-lg ${className}`}>
       <CardHeader>
@@ -74,7 +102,7 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* NFT Visual Representation */}
-        <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-8 text-center relative overflow-hidden">
+        <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-6 text-center relative overflow-hidden">
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-5">
             <div className="grid grid-cols-8 gap-2 h-full">
@@ -86,9 +114,29 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
           
           {/* Main NFT visual */}
           <div className="relative z-10">
-            <div className={`w-24 h-24 bg-gradient-to-br ${rightDisplay.color} rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
-              <IconComponent className="w-12 h-12 text-white" />
-            </div>
+            {isYouTubeVideo && youtubeVideoId ? (
+              // YouTube Video Embed
+              <div className="mb-6">
+                <div className="relative w-full max-w-sm mx-auto">
+                  <YouTubeEmbed 
+                    videoId={youtubeVideoId}
+                    title={nftData.name || "YouTube Video Rights"}
+                    className="rounded-xl border-2 border-red-200"
+                    showControls={true}
+                    autoplay={false}
+                  />
+                  <div className="absolute -top-2 -right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                    NFT
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Default Icon Display
+              <div className={`w-24 h-24 bg-gradient-to-br ${rightDisplay.color} rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
+                <IconComponent className="w-12 h-12 text-white" />
+              </div>
+            )}
+            
             <h3 className="font-bold text-2xl text-gray-800 mb-2">
               {nftData.name || "Hedera NFT"}
             </h3>
