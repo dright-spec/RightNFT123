@@ -3,6 +3,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { configureProductionSecurity, setupErrorHandling, setupHealthCheck } from "./productionConfig";
+import { configureReservedVM, isReservedVM, getReservedVMPort, getReservedVMHost } from "./reserved-vm-config";
 import path from "path";
 import fs from "fs";
 
@@ -28,15 +29,15 @@ app.use(session({
   }
 }));
 
-// Enhanced domain detection for Autoscale deployment
+// Enhanced domain detection for Reserved VM deployment
 app.use((req: Request, res: Response, next: NextFunction) => {
   const host = req.get('host') || '';
-  const isDeployedDomain = host.includes('.replit.app') || host.includes('.repl.co');
+  const isDeployedDomain = host.includes('.replit.app') || host.includes('.repl.co') || host.includes('.replit.dev');
   
   if (isDeployedDomain) {
-    // Set deployment environment flag for Autoscale
+    // Set deployment environment flag for Reserved VM
     process.env.DEPLOYMENT_DETECTED = 'true';
-    res.header('X-Deployment-Mode', 'autoscale');
+    res.header('X-Deployment-Mode', 'reserved-vm');
   }
   
   next();
@@ -45,14 +46,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Configure production-level security
 configureProductionSecurity(app);
 
+// Configure Reserved VM specific settings
+configureReservedVM(app);
+
 // Set up health checks
 setupHealthCheck(app);
 
-// Add deployment health check endpoint
+// Add deployment health check endpoint for Reserved VM
 app.get('/api/deployment/health', (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production' || 
                       process.env.REPLIT_DEPLOYMENT === '1' ||
                       process.env.DEPLOYMENT_DETECTED === 'true' ||
+                      process.env.REPL_DEPLOYMENT === 'true' ||
                       (!process.env.REPL_HOME && !!process.env.REPLIT_CLUSTER);
   
   const staticPath = path.resolve(import.meta.dirname, "..", "dist", "public");
@@ -62,14 +67,17 @@ app.get('/api/deployment/health', (req, res) => {
   res.json({
     status: 'healthy',
     mode: isProduction ? 'production' : 'development',
+    deploymentType: 'reserved-vm',
     staticFiles: staticFilesExist,
     staticPath: staticPath,
     environment: {
       NODE_ENV: process.env.NODE_ENV,
       REPLIT_DEPLOYMENT: process.env.REPLIT_DEPLOYMENT,
+      REPL_DEPLOYMENT: process.env.REPL_DEPLOYMENT,
       DEPLOYMENT_DETECTED: process.env.DEPLOYMENT_DETECTED,
       REPL_HOME: !!process.env.REPL_HOME,
-      REPLIT_CLUSTER: !!process.env.REPLIT_CLUSTER
+      REPLIT_CLUSTER: !!process.env.REPLIT_CLUSTER,
+      PORT: process.env.PORT
     },
     timestamp: new Date().toISOString(),
     port: process.env.PORT || 5000,
@@ -113,10 +121,11 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Simplified deployment detection as per Instructions.md
+  // Enhanced deployment detection for Reserved VM
   const isProduction = process.env.NODE_ENV === 'production' || 
                       process.env.REPLIT_DEPLOYMENT === '1' ||
                       process.env.DEPLOYMENT_DETECTED === 'true' ||
+                      process.env.REPL_DEPLOYMENT === 'true' ||
                       (!process.env.REPL_HOME && !!process.env.REPLIT_CLUSTER);
   
   log(`Deployment mode: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`, "deployment");
@@ -168,14 +177,16 @@ app.use((req, res, next) => {
   // Configure production error handling AFTER frontend routing
   setupErrorHandling(app);
 
-  // Configure port for both development and deployment
-  const port = parseInt(process.env.PORT || '5000', 10);
-  const host = '0.0.0.0';
+  // Configure port and host for Reserved VM deployment
+  const port = getReservedVMPort();
+  const host = getReservedVMHost();
   
   server.listen(port, host, () => {
     log(`serving on ${host}:${port}`);
     log(`environment: ${process.env.NODE_ENV || 'development'}`);
-    log(`deployment: ${process.env.REPLIT_DEPLOYMENT || 'local'}`);
+    log(`deployment type: ${isReservedVM() ? 'reserved-vm' : 'local'}`);
+    log(`reserved vm detected: ${isReservedVM()}`);
+    log(`deployment env vars: REPLIT_DEPLOYMENT=${process.env.REPLIT_DEPLOYMENT}, REPL_DEPLOYMENT=${process.env.REPL_DEPLOYMENT}`);
     log(`port from ENV: ${process.env.PORT || 'not set, using default 5000'}`);
   });
 })();
