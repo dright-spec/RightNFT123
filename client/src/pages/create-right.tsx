@@ -744,6 +744,11 @@ export default function CreateRight() {
   };
 
   const onSubmit = async (data: CreateRightFormData) => {
+    console.log('Form submission triggered with data:', data);
+    console.log('Content source:', data.contentSource);
+    console.log('Selected videos:', selectedVideos);
+    console.log('Can mint NFT:', canMintNFT);
+
     // For YouTube content, require video selection and verification
     if (data.contentSource === 'youtube_video' && selectedVideos.length === 0) {
       toast({
@@ -755,7 +760,7 @@ export default function CreateRight() {
     }
 
     // For non-YouTube content, allow submission without verification (admin will review)
-    console.log('Submitting right with data:', data);
+    console.log('Proceeding with submission for:', data.contentSource);
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -1802,6 +1807,7 @@ export default function CreateRight() {
                     type="submit"
                     disabled={isUploading}
                     className="px-8"
+                    onClick={() => console.log('Submit button clicked')}
                   >
                     {isUploading ? 'Creating...' : 
                      canMintNFT ? `Create NFT${selectedVideos.length > 1 ? 's' : ''}` :
