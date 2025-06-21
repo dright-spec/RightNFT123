@@ -494,37 +494,63 @@ export default function Admin() {
                                 <div className="space-y-2">
                                   <Button
                                     onClick={() => {
+                                      console.log(`Quick approving right ${right.id}`);
                                       verifyRightMutation.mutate({
                                         rightId: right.id,
                                         status: "verified",
                                         notes: "Quick approval - content verified"
                                       });
                                     }}
-                                    disabled={verifyRightMutation.isPending}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white h-9 text-sm"
+                                    disabled={verifyRightMutation.isPending || right.verificationStatus === 'verified'}
+                                    className={`w-full h-9 text-sm ${
+                                      right.verificationStatus === 'verified' 
+                                        ? 'bg-green-100 text-green-600 cursor-not-allowed' 
+                                        : 'bg-green-600 hover:bg-green-700 text-white'
+                                    }`}
                                   >
-                                    {verifyRightMutation.isPending ? (
+                                    {right.verificationStatus === 'verified' ? (
+                                      <>
+                                        <CheckCircle className="w-3 h-3 mr-2" />
+                                        Approved ✓
+                                      </>
+                                    ) : verifyRightMutation.isPending ? (
                                       <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
                                     ) : (
-                                      <CheckCircle className="w-3 h-3 mr-2" />
+                                      <>
+                                        <CheckCircle className="w-3 h-3 mr-2" />
+                                        Quick Approve
+                                      </>
                                     )}
-                                    Quick Approve
                                   </Button>
                                   
                                   <Button
                                     onClick={() => {
+                                      console.log(`Quick rejecting right ${right.id}`);
                                       verifyRightMutation.mutate({
                                         rightId: right.id,
                                         status: "rejected",
                                         notes: "Content does not meet verification requirements"
                                       });
                                     }}
-                                    disabled={verifyRightMutation.isPending}
+                                    disabled={verifyRightMutation.isPending || right.verificationStatus === 'rejected'}
                                     variant="outline"
-                                    className="w-full border-red-200 text-red-600 hover:bg-red-50 h-9 text-sm"
+                                    className={`w-full h-9 text-sm ${
+                                      right.verificationStatus === 'rejected'
+                                        ? 'border-red-200 text-red-400 cursor-not-allowed bg-red-50'
+                                        : 'border-red-200 text-red-600 hover:bg-red-50'
+                                    }`}
                                   >
-                                    <XCircle className="w-3 h-3 mr-2" />
-                                    Quick Reject
+                                    {right.verificationStatus === 'rejected' ? (
+                                      <>
+                                        <XCircle className="w-3 h-3 mr-2" />
+                                        Rejected ✗
+                                      </>
+                                    ) : (
+                                      <>
+                                        <XCircle className="w-3 h-3 mr-2" />
+                                        Quick Reject
+                                      </>
+                                    )}
                                   </Button>
                                 </div>
 
