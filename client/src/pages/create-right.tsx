@@ -1685,7 +1685,15 @@ export default function CreateRight() {
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => setCurrentStep(4)}
+                    onClick={() => {
+                      console.log('Review & Submit clicked');
+                      console.log('Form values:', form.getValues());
+                      console.log('Form errors:', form.formState.errors);
+                      console.log('Price value:', form.watch("price"));
+                      console.log('Selected videos:', selectedVideos);
+                      console.log('Video pricing data:', videoPricingData);
+                      setCurrentStep(4);
+                    }}
                     disabled={selectedVideos.length > 0 ? videoPricingData.length === 0 : !form.watch("price")}
                     className="px-8"
                   >
@@ -1804,10 +1812,21 @@ export default function CreateRight() {
                     Back
                   </Button>
                   <Button
-                    type="submit"
+                    type="button"
                     disabled={isUploading}
                     className="px-8"
-                    onClick={() => console.log('Submit button clicked')}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      console.log('Submit button clicked directly');
+                      const formData = form.getValues();
+                      console.log('Manual submission with data:', formData);
+                      
+                      try {
+                        await onSubmit(formData);
+                      } catch (error) {
+                        console.error('Manual submission error:', error);
+                      }
+                    }}
                   >
                     {isUploading ? 'Creating...' : 
                      canMintNFT ? `Create NFT${selectedVideos.length > 1 ? 's' : ''}` :
