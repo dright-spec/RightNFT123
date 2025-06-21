@@ -170,10 +170,12 @@ app.use((req, res, next) => {
 
   // Configure port for both development and deployment
   const port = parseInt(process.env.PORT || '5000', 10);
+  const host = '0.0.0.0';
   
-  server.listen(port, '0.0.0.0', () => {
-    log(`serving on 0.0.0.0:${port}`);
+  server.listen(port, host, () => {
+    log(`serving on ${host}:${port}`);
     log(`environment: ${process.env.NODE_ENV || 'development'}`);
     log(`deployment: ${process.env.REPLIT_DEPLOYMENT || 'local'}`);
+    log(`port from ENV: ${process.env.PORT || 'not set, using default 5000'}`);
   });
 })();

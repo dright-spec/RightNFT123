@@ -2125,6 +2125,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // For Autoscale deployment, return the Express app directly
+  // The server will be started in index.ts with proper port binding
   const httpServer = createServer(app);
   return httpServer;
 }
