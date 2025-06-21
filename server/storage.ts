@@ -21,6 +21,11 @@ export interface IStorage {
   getTransaction(id: number): Promise<Transaction | undefined>;
   getTransactionsByRight(rightId: number): Promise<Transaction[]>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  
+  // Notification methods
+  createNotification(notification: any): Promise<any>;
+  getUserNotifications(userId: number): Promise<any[]>;
+  markNotificationAsRead(notificationId: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
