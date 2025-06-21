@@ -447,6 +447,22 @@ export default function Admin() {
                                       {right.price} {right.currency || 'HBAR'}
                                     </Badge>
                                   )}
+                                  {right.contentSource && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {right.contentSource.replace('_', ' ')}
+                                    </Badge>
+                                  )}
+                                  {right.contentFileUrl && (
+                                    <a 
+                                      href={right.contentFileUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                    >
+                                      <FileText className="w-3 h-3" />
+                                      View Document
+                                    </a>
+                                  )}
                                   <div className="text-xs text-gray-500">
                                     {new Date(right.createdAt).toLocaleDateString()}
                                   </div>

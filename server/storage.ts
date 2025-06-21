@@ -239,6 +239,32 @@ export class MemStorage implements IStorage {
     this.transactions.set(transaction.id, transaction);
     return transaction;
   }
+
+  // Mock notification methods (for now)
+  async createNotification(notification: any): Promise<any> {
+    console.log('Notification created:', notification);
+    return { id: Date.now(), ...notification };
+  }
+
+  async getUserNotifications(userId: number): Promise<any[]> {
+    // Return mock notifications for now
+    return [
+      {
+        id: 1,
+        userId,
+        type: 'right_approved',
+        title: 'Right Approved!',
+        message: 'Your patent submission has been approved and NFT minted successfully.',
+        isRead: false,
+        createdAt: new Date(),
+        actionUrl: '/marketplace'
+      }
+    ];
+  }
+
+  async markNotificationAsRead(notificationId: number): Promise<void> {
+    console.log('Notification marked as read:', notificationId);
+  }
 }
 
 import { db } from "./db";
