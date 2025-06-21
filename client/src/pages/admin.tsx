@@ -50,6 +50,28 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
 
+  // Always call hooks first, before any conditional returns
+  // Fetch admin stats
+  const { data: stats, isLoading: loadingStats, error: statsError } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
+    retry: 3,
+    enabled: isAuthenticated, // Only fetch when authenticated
+  });
+
+  // Fetch pending verifications
+  const { data: pendingRights, isLoading: loadingRights, error: rightsError } = useQuery<RightWithCreator[]>({
+    queryKey: ["/api/admin/rights", { status: statusFilter, search: searchTerm }],
+    retry: 3,
+    enabled: isAuthenticated, // Only fetch when authenticated
+  });
+
+  // Fetch users for management
+  const { data: users, isLoading: loadingUsers, error: usersError } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+    retry: 3,
+    enabled: isAuthenticated, // Only fetch when authenticated
+  });
+
   // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
@@ -82,24 +104,6 @@ export default function Admin() {
   if (!isAuthenticated) {
     return <AdminLogin onAuthenticated={() => setIsAuthenticated(true)} />;
   }
-
-  // Fetch admin stats
-  const { data: stats, isLoading: loadingStats, error: statsError } = useQuery<AdminStats>({
-    queryKey: ["/api/admin/stats"],
-    retry: 3,
-  });
-
-  // Fetch pending verifications
-  const { data: pendingRights, isLoading: loadingRights, error: rightsError } = useQuery<RightWithCreator[]>({
-    queryKey: ["/api/admin/rights", { status: statusFilter, search: searchTerm }],
-    retry: 3,
-  });
-
-  // Fetch users for management
-  const { data: users, isLoading: loadingUsers, error: usersError } = useQuery<User[]>({
-    queryKey: ["/api/admin/users"],
-    retry: 3,
-  });
 
   // Show loading state
   if (loadingStats && loadingRights && loadingUsers) {
@@ -563,6 +567,11 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Performance Tab */}
+          <TabsContent value="performance" className="space-y-6">
+            <PerformanceDashboard />
           </TabsContent>
 
           {/* Hedera Tab */}

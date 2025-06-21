@@ -1923,6 +1923,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Performance monitoring endpoints
+  const performanceMonitor = PerformanceMonitor.getInstance();
+
+  // Test admin credentials endpoint (development only)
+  app.get("/api/admin/test-credentials", async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ error: "Not found" });
+    }
+    
+    res.json({
+      message: "Admin test credentials for development",
+      credentials: {
+        username: "admin",
+        password: "admin123"
+      },
+      note: "These are test credentials for development only"
+    });
+  });
+
+  // Real-time metrics endpoint
+  app.get("/api/admin/performance/metrics", async (req, res) => {
+    try {
+      const metrics = await performanceMonitor.collectMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching performance metrics:", error);
+      res.status(500).json({ error: "Failed to fetch performance metrics" });
+    }
+  });
+
+  // Historical metrics endpoint
+  app.get("/api/admin/performance/history", async (req, res) => {
+    try {
+      const hours = parseInt(req.query.hours as string) || 24;
+      const metrics = performanceMonitor.getHistoricalMetrics(hours);
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching historical metrics:", error);
+      res.status(500).json({ error: "Failed to fetch historical metrics" });
+    }
+  });
+
+  // Performance alerts endpoint
+  app.get("/api/admin/performance/alerts", async (req, res) => {
+    try {
+      const unresolved = req.query.unresolved === 'true';
+      const alerts = performanceMonitor.getAlerts(unresolved);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching alerts:", error);
+      res.status(500).json({ error: "Failed to fetch alerts" });
+    }
+  });
+
+  // Resolve alert endpoint
+  app.post("/api/admin/performance/alerts/:id/resolve", async (req, res) => {
+    try {
+      const alertId = req.params.id;
+      const resolved = performanceMonitor.resolveAlert(alertId);
+      
+      if (resolved) {
+        res.json({ success: true, message: "Alert resolved" });
+      } else {
+        res.status(404).json({ error: "Alert not found" });
+      }
+    } catch (error) {
+      console.error("Error resolving alert:", error);
+      res.status(500).json({ error: "Failed to resolve alert" });
+    }
+  });
+
+  // Performance summary endpoint
+  app.get("/api/admin/performance/summary", async (req, res) => {
+    try {
+      const summary = performanceMonitor.getPerformanceSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching performance summary:", error);
+      res.status(500).json({ error: "Failed to fetch performance summary" });
+    }
+  });
+
   // Admin routes - for platform management
   app.get("/api/admin/stats", async (req, res) => {
     try {
