@@ -739,18 +739,18 @@ export default function CreateRight() {
   };
 
   const onSubmit = async (data: CreateRightFormData) => {
-    // For now, proceed without wallet connection check
-    // The platform will handle verification and minting after admin approval
-
-    // Verify that verification is complete before allowing submission
-    if (!canMintNFT && selectedVideos.length === 0) {
+    // For YouTube content, require video selection and verification
+    if (data.contentSource === 'youtube_video' && selectedVideos.length === 0) {
       toast({
-        title: "Verification Required",
-        description: "Please complete the verification process before minting your NFT.",
+        title: "Video Selection Required",
+        description: "Please select and verify your YouTube videos before submission.",
         variant: "destructive",
       });
       return;
     }
+
+    // For non-YouTube content, allow submission without verification (admin will review)
+    console.log('Submitting right with data:', data);
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -835,13 +835,14 @@ export default function CreateRight() {
 
         const rightData = {
           ...data,
+          symbol: `${data.type.substring(0, 3).toUpperCase()}${Date.now().toString().slice(-3)}`, // Generate unique symbol
           imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : null,
           youtubeUrl: youtubeUrl || null,
-          verificationStatus: verificationData?.status || "pending",
-          verificationMethod: verificationData?.method || "manual",
+          verificationStatus: data.contentSource === 'youtube_video' ? (verificationData?.status || "pending") : "pending",
+          verificationMethod: data.contentSource === 'youtube_video' ? (verificationData?.method || "manual") : "manual",
           verificationFiles: verificationData?.files || [],
           youtubeData: verificationData?.youtubeData,
-          isListed: true,
+          isListed: false, // Non-YouTube content starts unlisted until verified
           currency: "HBAR",
         };
 
