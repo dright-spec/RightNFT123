@@ -27,18 +27,19 @@ export function HederaTestPanel() {
   // Test minting mutation
   const testMintMutation = useMutation({
     mutationFn: async (formData: typeof testForm) => {
-      return await apiRequest("/api/hedera/test-mint", "POST", formData);
+      return await apiRequest("POST", "/api/hedera/test-mint", formData);
     },
     onSuccess: (data: any) => {
       toast({
-        title: "Test Minting Successful!",
-        description: `NFT ${data.mintResult.tokenId}/${data.mintResult.serialNumber} minted on Hedera testnet`,
+        title: "Live NFT Minting Successful!",
+        description: `NFT ${data.mintResult?.tokenId}/${data.mintResult?.serialNumber} minted on Hedera testnet`,
       });
     },
     onError: (error: any) => {
+      console.error("Test mint error:", error);
       toast({
         title: "Test Minting Failed",
-        description: error?.message || "Failed to mint test NFT",
+        description: error?.message || "Failed to mint test NFT on Hedera",
         variant: "destructive"
       });
     }

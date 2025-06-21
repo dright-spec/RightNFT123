@@ -348,8 +348,14 @@ export default function Admin() {
           <TabsContent value="verification" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Rights Verification</CardTitle>
-                <div className="flex gap-4">
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Rights Verification Center
+                </CardTitle>
+                <CardDescription>
+                  Review and approve rights for NFT minting on Hedera blockchain
+                </CardDescription>
+                <div className="flex gap-4 mt-4">
                   <div className="flex items-center gap-2">
                     <Search className="w-4 h-4" />
                     <Input
@@ -365,8 +371,8 @@ export default function Admin() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="verified">Verified</SelectItem>
+                      <SelectItem value="pending">Pending Review</SelectItem>
+                      <SelectItem value="verified">Verified & Minted</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
@@ -374,69 +380,158 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 {loadingRights ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                    <p className="text-muted-foreground">Loading rights...</p>
+                  <div className="text-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading rights for review...</p>
+                  </div>
+                ) : pendingRights?.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">All caught up!</h3>
+                    <p className="text-muted-foreground">No rights requiring verification at this time.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {pendingRights?.map((right) => (
-                      <div key={right.id} className="flex items-center justify-between p-4 border rounded">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{right.title}</h3>
-                          <p className="text-sm text-muted-foreground">{right.description}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="outline">{right.type}</Badge>
-                            <VerificationBadge status={right.verificationStatus} />
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setSelectedRight(right)}
-                              >
-                                Review
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Verify Right: {selectedRight?.title}</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <label className="text-sm font-medium">Verification Notes</label>
-                                  <Textarea
-                                    value={verificationNotes}
-                                    onChange={(e) => setVerificationNotes(e.target.value)}
-                                    placeholder="Add notes about the verification..."
-                                  />
+                      <Card key={right.id} className="border-l-4 border-l-yellow-400">
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 space-y-3">
+                              <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-semibold">{right.title}</h3>
+                                <VerificationBadge status={right.verificationStatus} />
+                              </div>
+                              
+                              <p className="text-muted-foreground leading-relaxed">
+                                {right.description}
+                              </p>
+                              
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="font-medium">
+                                    {right.type}
+                                  </Badge>
+                                  {right.price && (
+                                    <Badge variant="secondary">
+                                      {right.price} {right.currency || 'HBAR'}
+                                    </Badge>
+                                  )}
                                 </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    onClick={() => handleVerification("verified")}
-                                    disabled={verifyRightMutation.isPending}
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    <CheckCircle className="w-4 h-4 mr-2" />
-                                    Verify
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    onClick={() => handleVerification("rejected")}
-                                    disabled={verifyRightMutation.isPending}
-                                  >
-                                    <XCircle className="w-4 h-4 mr-2" />
-                                    Reject
-                                  </Button>
+                                <div className="text-sm text-muted-foreground">
+                                  Created: {new Date(right.createdAt).toLocaleDateString()}
                                 </div>
                               </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
+
+                              {right.contentSource && (
+                                <div className="bg-muted/30 p-3 rounded-lg">
+                                  <div className="text-sm font-medium text-muted-foreground mb-1">Content Source</div>
+                                  <div className="text-sm">{right.contentSource}</div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="ml-6 flex flex-col gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => setSelectedRight(right)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    <Shield className="w-4 h-4 mr-2" />
+                                    Review & Approve
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                  <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                      <Shield className="w-5 h-5" />
+                                      Verify Right: {selectedRight?.title}
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  
+                                  <div className="space-y-6">
+                                    {/* Right Details */}
+                                    <div className="bg-muted/30 p-4 rounded-lg space-y-2">
+                                      <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                          <span className="font-medium">Type:</span> {selectedRight?.type}
+                                        </div>
+                                        <div>
+                                          <span className="font-medium">Price:</span> {selectedRight?.price || 'Free'} {selectedRight?.currency || 'HBAR'}
+                                        </div>
+                                        <div>
+                                          <span className="font-medium">Status:</span> 
+                                          <VerificationBadge status={selectedRight?.verificationStatus} className="ml-2" />
+                                        </div>
+                                        <div>
+                                          <span className="font-medium">Created:</span> {selectedRight && new Date(selectedRight.createdAt).toLocaleDateString()}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Verification Notes */}
+                                    <div className="space-y-2">
+                                      <label className="text-sm font-medium">Verification Notes</label>
+                                      <Textarea
+                                        value={verificationNotes}
+                                        onChange={(e) => setVerificationNotes(e.target.value)}
+                                        placeholder="Add detailed notes about the verification decision..."
+                                        rows={4}
+                                        className="resize-none"
+                                      />
+                                    </div>
+
+                                    {/* Warning Banner */}
+                                    <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                      <div className="flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                                        <div className="text-sm">
+                                          <div className="font-medium text-yellow-800 mb-1">Important</div>
+                                          <div className="text-yellow-700">
+                                            Verifying this right will automatically trigger NFT minting on the Hedera blockchain. 
+                                            This action cannot be undone. Please ensure all content and ownership details are accurate.
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-3 pt-2">
+                                      <Button
+                                        onClick={() => handleVerification("verified")}
+                                        disabled={verifyRightMutation.isPending}
+                                        className="bg-green-600 hover:bg-green-700 flex-1"
+                                      >
+                                        {verifyRightMutation.isPending ? (
+                                          <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Minting Live NFT on Hedera...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                            Verify & Mint Live NFT
+                                          </>
+                                        )}
+                                      </Button>
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => handleVerification("rejected")}
+                                        disabled={verifyRightMutation.isPending}
+                                        className="flex-1"
+                                      >
+                                        <XCircle className="w-4 h-4 mr-2" />
+                                        Reject Right
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 )}
