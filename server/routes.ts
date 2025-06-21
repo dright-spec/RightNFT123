@@ -1907,7 +1907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { username, password } = req.body;
       
       // Simple authentication - in production, use proper password hashing
-      if (username === "admin" && password === "dright2024") {
+      if (username === "admin" && password === "admin123") {
         const token = Buffer.from(`${username}:${Date.now()}`).toString('base64');
         res.json({ 
           success: true, 

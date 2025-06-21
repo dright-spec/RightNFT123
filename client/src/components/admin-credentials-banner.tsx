@@ -42,10 +42,10 @@ export function AdminCredentialsBanner() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
-                Test Phase Admin Credentials
+                Live Test Credentials - Ready to Use
               </h3>
-              <Badge variant="outline" className="border-yellow-600 text-yellow-700">
-                Development Only
+              <Badge variant="outline" className="border-green-600 text-green-700">
+                Working
               </Badge>
             </div>
             
