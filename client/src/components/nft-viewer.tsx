@@ -165,7 +165,7 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
           <p className="text-xs font-medium opacity-90 mb-2">COMPLETE NFT IDENTIFIER</p>
           <div className="flex items-center justify-center gap-3">
             <p className="font-mono text-2xl font-bold tracking-wider">
-              {fullNFTId}
+              {nftData.tokenId ? fullNFTId : 'Loading...'}
             </p>
             <Button
               variant="ghost"
@@ -242,7 +242,7 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-          {nftData.explorerUrl && (
+          {nftData.explorerUrl ? (
             <Button
               variant="outline"
               onClick={() => {
@@ -253,6 +253,11 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               View on HashScan
+            </Button>
+          ) : (
+            <Button variant="outline" disabled className="flex-1">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              No Explorer Link
             </Button>
           )}
           <Button

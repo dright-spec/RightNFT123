@@ -273,15 +273,15 @@ export function HederaTestPanel() {
               {/* NFT Visual Preview */}
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h4 className="font-semibold text-blue-800 mb-3">🎨 NFT Preview</h4>
-                <NFTViewer 
-                  nftData={{
+                {(() => {
+                  const nftData = {
                     tokenId: (testMintMutation.data as any)?.mintResult?.tokenId || (testMintMutation.data as any)?.tokenInfo?.tokenId || '',
                     serialNumber: (testMintMutation.data as any)?.mintResult?.serialNumber || 1,
                     transactionId: (testMintMutation.data as any)?.mintResult?.transactionId || '',
                     explorerUrl: (testMintMutation.data as any)?.mintResult?.explorerUrl || '',
                     name: (testMintMutation.data as any)?.tokenInfo?.name || testForm.name,
                     symbol: (testMintMutation.data as any)?.tokenInfo?.symbol || testForm.symbol,
-                    metadata: {
+                    metadata: (testMintMutation.data as any)?.mintResult?.metadataUri || {
                       title: testForm.name,
                       description: testForm.description,
                       type: "copyright",
@@ -290,9 +290,10 @@ export function HederaTestPanel() {
                     },
                     rightType: "copyright",
                     contentSource: "youtube_video"
-                  }}
-                  className="border-blue-200"
-                />
+                  };
+                  console.log('Passing NFT data to viewer:', nftData);
+                  return <NFTViewer nftData={nftData} className="border-blue-200" />;
+                })()}
               </div>
             </div>
           )}
