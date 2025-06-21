@@ -182,9 +182,13 @@ export class HederaNFTService {
       }
 
       const network = process.env.HEDERA_NETWORK || "testnet";
+      // Extract timestamp from transaction ID (format: 0.0.account@timestamp.nanoseconds)
+      const timestampMatch = transactionId.match(/@(\d+\.\d+)/);
+      const timestamp = timestampMatch ? timestampMatch[1] : transactionId;
+      
       const explorerUrl = network === "mainnet" 
-        ? `https://hashscan.io/mainnet/transaction/${transactionId}`
-        : `https://hashscan.io/testnet/transaction/${transactionId}`;
+        ? `https://hashscan.io/mainnet/transaction/${timestamp}`
+        : `https://hashscan.io/testnet/transaction/${timestamp}`;
 
       return {
         tokenId: params.tokenId,

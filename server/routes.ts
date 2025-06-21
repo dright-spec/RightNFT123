@@ -1619,24 +1619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/users/:id/ban', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { banned } = req.body;
 
-      await db.update(users)
-        .set({ 
-          isBanned: banned,
-          updatedAt: new Date()
-        })
-        .where(eq(users.id, parseInt(id)));
-
-      res.json({ message: `User ${banned ? 'banned' : 'unbanned'} successfully` });
-    } catch (error) {
-      console.error("Error updating user ban status:", error);
-      res.status(500).json({ error: "Failed to update user status" });
-    }
-  });
 
   // YouTube video ownership verification endpoint
   app.post('/api/youtube/verify-ownership/:videoId', async (req, res) => {
@@ -2102,6 +2085,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.id);
       const { banned } = req.body;
 
+      console.log(`[admin] ${banned ? 'Banning' : 'Unbanning'} user ${userId}`);
+
       const [updatedUser] = await db
         .update(users)
         .set({ 
@@ -2112,10 +2097,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       if (!updatedUser) {
+        console.log(`[admin] User ${userId} not found`);
         return res.status(404).json({ error: "User not found" });
       }
 
-      res.json({ success: true, user: updatedUser });
+      console.log(`[admin] User ${userId} successfully ${banned ? 'banned' : 'unbanned'}`);
+      res.json({ 
+        success: true, 
+        user: updatedUser,
+        message: `User ${banned ? 'banned' : 'unbanned'} successfully`
+      });
     } catch (error) {
       console.error("Error updating user ban status:", error);
       res.status(500).json({ error: "Failed to update user status" });

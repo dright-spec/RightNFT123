@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Hash, Copy, Check, Eye } from "lucide-react";
+import { ExternalLink, Hash, Copy, Check, Eye, Music, Video, FileText, Palette, Code, Building, Book, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +14,7 @@ interface NFTViewerProps {
     name?: string;
     symbol?: string;
     metadata?: any;
+    rightType?: string;
   };
   className?: string;
 }
@@ -34,31 +35,77 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
 
   const fullNFTId = `${nftData.tokenId}/${nftData.serialNumber}`;
 
+  // Get icon and colors based on right type
+  const getRightTypeDisplay = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'copyright':
+        return { icon: FileText, color: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50', border: 'border-blue-200' };
+      case 'royalty':
+        return { icon: Music, color: 'from-purple-500 to-pink-600', bg: 'bg-purple-50', border: 'border-purple-200' };
+      case 'access':
+        return { icon: Eye, color: 'from-green-500 to-emerald-600', bg: 'bg-green-50', border: 'border-green-200' };
+      case 'ownership':
+        return { icon: Building, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50', border: 'border-amber-200' };
+      case 'license':
+        return { icon: Code, color: 'from-teal-500 to-cyan-600', bg: 'bg-teal-50', border: 'border-teal-200' };
+      case 'youtube video':
+        return { icon: Video, color: 'from-red-500 to-rose-600', bg: 'bg-red-50', border: 'border-red-200' };
+      case 'music track':
+        return { icon: Music, color: 'from-purple-500 to-violet-600', bg: 'bg-purple-50', border: 'border-purple-200' };
+      case 'artwork':
+        return { icon: Palette, color: 'from-pink-500 to-rose-600', bg: 'bg-pink-50', border: 'border-pink-200' };
+      case 'book':
+        return { icon: Book, color: 'from-brown-500 to-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' };
+      default:
+        return { icon: Lightbulb, color: 'from-gray-500 to-slate-600', bg: 'bg-gray-50', border: 'border-gray-200' };
+    }
+  };
+
+  const rightDisplay = getRightTypeDisplay(nftData.rightType);
+  const IconComponent = rightDisplay.icon;
+
   return (
-    <Card className={`bg-gradient-to-br from-green-50 to-blue-50 border-green-200 shadow-lg ${className}`}>
+    <Card className={`bg-gradient-to-br ${rightDisplay.bg} to-white ${rightDisplay.border} shadow-lg ${className}`}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-green-800">
-          <Eye className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-gray-800">
+          <IconComponent className="w-5 h-5" />
           NFT Successfully Minted
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* NFT Visual Representation */}
-        <div className="bg-white rounded-lg border-2 border-dashed border-blue-300 p-6 text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl mx-auto mb-4 flex items-center justify-center">
-            <Hash className="w-10 h-10 text-white" />
-          </div>
-          <h3 className="font-bold text-xl text-gray-800 mb-2">
-            {nftData.name || "Hedera NFT"}
-          </h3>
-          {nftData.symbol && (
-            <div className="text-sm text-gray-600 mb-3">
-              Symbol: {nftData.symbol}
+        <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-8 text-center relative overflow-hidden">
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="grid grid-cols-8 gap-2 h-full">
+              {[...Array(64)].map((_, i) => (
+                <div key={i} className={`bg-gradient-to-br ${rightDisplay.color} rounded`}></div>
+              ))}
             </div>
-          )}
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium">
-            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            Live on Hedera Testnet
+          </div>
+          
+          {/* Main NFT visual */}
+          <div className="relative z-10">
+            <div className={`w-24 h-24 bg-gradient-to-br ${rightDisplay.color} rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300`}>
+              <IconComponent className="w-12 h-12 text-white" />
+            </div>
+            <h3 className="font-bold text-2xl text-gray-800 mb-2">
+              {nftData.name || "Hedera NFT"}
+            </h3>
+            {nftData.rightType && (
+              <div className="text-sm text-gray-600 mb-2 font-medium">
+                {nftData.rightType.charAt(0).toUpperCase() + nftData.rightType.slice(1)} Rights
+              </div>
+            )}
+            {nftData.symbol && (
+              <div className="text-sm text-gray-500 mb-4">
+                Symbol: {nftData.symbol}
+              </div>
+            )}
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+              Live on Hedera Testnet
+            </div>
           </div>
         </div>
 

@@ -177,19 +177,34 @@ export function HederaTestPanel() {
                   </div>
                   
                   {/* NFT Visual Card */}
-                  <div className="bg-white rounded-lg border-2 border-dashed border-blue-300 p-6 text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                      <Hash className="w-8 h-8 text-white" />
+                  <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-8 text-center relative overflow-hidden">
+                    {/* Background pattern */}
+                    <div className="absolute inset-0 opacity-5">
+                      <div className="grid grid-cols-6 gap-2 h-full">
+                        {[...Array(36)].map((_, i) => (
+                          <div key={i} className="bg-gradient-to-br from-purple-500 to-blue-500 rounded"></div>
+                        ))}
+                      </div>
                     </div>
-                    <h3 className="font-bold text-lg text-gray-800 mb-2">
-                      {(testMintMutation.data as any)?.tokenInfo?.name}
-                    </h3>
-                    <div className="text-sm text-gray-600 mb-3">
-                      Symbol: {(testMintMutation.data as any)?.tokenInfo?.symbol}
-                    </div>
-                    <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                      Live on Hedera Testnet
+                    
+                    {/* Main content */}
+                    <div className="relative z-10">
+                      <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                        <Hash className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="font-bold text-xl text-gray-800 mb-2">
+                        {(testMintMutation.data as any)?.tokenInfo?.name}
+                      </h3>
+                      <div className="text-sm text-gray-600 mb-2 font-medium">
+                        Test NFT Rights
+                      </div>
+                      <div className="text-sm text-gray-500 mb-4">
+                        Symbol: {(testMintMutation.data as any)?.tokenInfo?.symbol}
+                      </div>
+                      <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
+                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        Live on Hedera Testnet
+                      </div>
                     </div>
                   </div>
 
