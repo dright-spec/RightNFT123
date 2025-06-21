@@ -662,18 +662,30 @@ export default function CreateRight() {
 
   const createRightMutation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest("/api/rights", "POST", data);
+      console.log('Making API request with data:', data);
+      const response = await fetch("/api/rights", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+      
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('Right created successfully:', result);
       queryClient.invalidateQueries({ queryKey: ["/api/rights"] });
-      // Check if this was an immediate NFT creation or submission for review
-      const isImmediateNFT = data.contentSource === 'youtube_video' && selectedVideos.length > 0;
       
       toast({
-        title: isImmediateNFT ? "NFT Created Successfully!" : "Right Submitted Successfully!",
-        description: isImmediateNFT ? 
-          "Your NFT has been minted and is now available on the marketplace." :
-          "Your right has been submitted for admin verification. You'll be notified when approved.",
+        title: "Right Submitted Successfully!",
+        description: "Your right has been submitted for admin verification. Once approved, you can mint your NFT.",
       });
       setLocation("/dashboard");
     },
