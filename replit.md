@@ -31,11 +31,11 @@ Dright is a comprehensive web3 marketplace for tokenizing and trading legal righ
 
 ## Key Components
 
-### Verification-Based NFT Minting
-The platform implements a comprehensive verification workflow where NFTs are only minted for fully verified rights:
+### Verification-Based NFT Approval
+The platform implements a comprehensive verification workflow where rights must be approved before users can mint NFTs:
 - **YouTube Auto-Verification**: Automatic verification for YouTube content ownership
 - **Admin Review Process**: Manual verification for non-YouTube content
-- **Automatic NFT Minting**: NFTs are minted automatically when rights are verified
+- **Manual NFT Minting**: Users can mint NFTs manually after admin approval
 - **Blockchain Recording**: All Hedera transaction data is recorded in the database
 
 ### Right Types and Categories
@@ -64,9 +64,10 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 2. YouTube content auto-verified via YouTube API
 3. Non-YouTube content marked as "pending"
 4. Admin reviews pending rights
-5. Upon verification, automatic NFT minting initiates
-6. Hedera blockchain data recorded in database
-7. Right becomes tradeable on marketplace
+5. Upon verification, user can manually mint NFT when ready
+6. User initiates minting process at their convenience
+7. Hedera blockchain data recorded in database
+8. Right becomes tradeable on marketplace
 
 ### Trading Flow
 1. Verified rights listed on marketplace
@@ -114,11 +115,11 @@ The platform implements a comprehensive verification workflow where NFTs are onl
 - Real-time updates via periodic data refreshing
 
 ## Changelog
-- June 21, 2025: **SECURE ADMIN PERFORMANCE DASHBOARD COMPLETED**: Implemented comprehensive real-time admin performance monitoring system with secure authentication (admin/admin123). Features include live system metrics (CPU, memory, response times), Hedera network status monitoring, automated performance alerts, historical data trends with 6-hour view, auto-refresh functionality every 30 seconds, and admin credentials display for test phase. Fixed React hooks rendering order issue and integrated performance dashboard into admin panel with dedicated Performance tab. All API endpoints functional and providing real-time data for comprehensive platform monitoring.
+- June 21, 2025: **STREAMLINED ADMIN VERIFICATION WORKFLOW**: Redesigned admin verification process to remove automatic NFT minting, allowing users full control over when to mint their approved rights. Enhanced admin panel with modern 4-column grid layout, quick approve/reject buttons, and improved visual design. Admin approval now simply enables user minting capability rather than triggering automatic blockchain transactions. Updated messaging across platform to reflect manual minting workflow where users decide when to create their NFTs after admin approval.
 - June 19, 2025: **WALLET CONNECTIVITY REBUILT**: Fixed broken UI and implemented proper WalletConnect modal system. Created clean, working wallet connection with MetaMask, WalletConnect, and injected wallet support. Removed complex Web3Modal dependencies that were causing errors. System now provides multiple wallet options through simple dialog interface with proper connection handling and error management. Users can connect via MetaMask, WalletConnect QR code, or any browser-injected wallet.
-- June 18, 2025: **HEDERA NFT MINTING FULLY OPERATIONAL - LIVE SUCCESS**: Successfully completed end-to-end NFT minting on Hedera testnet with confirmed token creation (hederaTokenId: 0.0.6186350). Fixed all authentication issues, metadata length constraints, and transaction fees. Account balance decreasing from 1000 to 963.67 HBAR showing successful blockchain transactions. Complete workflow verified: user creates rights → admin verification → automatic Hedera NFT token creation → NFT minting → marketplace listing. Platform now demonstrates real Hedera blockchain integration with multiple successful NFT creations across content types.
+- June 18, 2025: **HEDERA NFT MINTING FULLY OPERATIONAL - LIVE SUCCESS**: Successfully completed end-to-end NFT minting on Hedera testnet with confirmed token creation (hederaTokenId: 0.0.6186350). Fixed all authentication issues, metadata length constraints, and transaction fees. Account balance decreasing from 1000 to 963.67 HBAR showing successful blockchain transactions. Complete workflow verified: user creates rights → admin verification → user manual NFT minting → marketplace listing. Platform now demonstrates real Hedera blockchain integration with user-controlled NFT creation process.
 - June 18, 2025: **HEDERA AS PRIMARY BLOCKCHAIN**: Migrated platform fully to Hedera Hashgraph as the primary blockchain. Removed all Ethereum references and legacy code. Updated branding, documentation, and user interface to reflect Hedera-first approach. Live testnet NFT minting now working with provided credentials for real demonstration capability.
-- June 17, 2025: **PRODUCTION-READY NFT MINTING WORKFLOW**: Implemented comprehensive automated NFT minting system with real-time progress tracking and excellent UX. Features automatic minting when rights are verified, real-time status polling with live progress updates, dedicated minting progress page with step-by-step visualization, Hedera blockchain integration with token creation and transaction recording, error handling with retry mechanisms, and seamless user journey from verification to marketplace listing. Admin verification now triggers automatic background minting with status tracking API endpoints for monitoring progress.
+- June 17, 2025: **PRODUCTION-READY NFT MINTING WORKFLOW**: Implemented comprehensive manual NFT minting system with real-time progress tracking and excellent UX. Features user-controlled minting after rights are verified, real-time status polling with live progress updates, dedicated minting progress page with step-by-step visualization, Hedera blockchain integration with token creation and transaction recording, error handling with retry mechanisms, and seamless user journey from verification to manual minting to marketplace listing. Admin verification enables user minting capability with status tracking API endpoints for monitoring progress.
 - June 17, 2025: **COMPREHENSIVE DATABASE INTEGRATION & DEPLOYMENT READINESS**: Implemented complete PostgreSQL database system replacing in-memory storage across entire platform. Features comprehensive schema with users, rights, categories, bids, favorites, follows, transactions, and relations. Integrated secure music verification with manual review requiring cryptographic SHA-256 hashing and ownership documentation. Fixed all deployment issues including onboarding tooltip selectors, icon imports, and database migrations. Platform now production-ready with authentic data storage, comprehensive user management, marketplace functionality, and secure verification workflows. Database automatically seeds with test data and supports all platform features including auctions, favorites, search, and activity tracking.
 - June 17, 2025: **CONTEXT-AWARE ONBOARDING WITH WEB3 MASCOT**: Implemented comprehensive onboarding system with interactive tooltips guided by animated web3 mascot. Features welcome modal for new users with 3-slide introduction, context-aware tooltips that highlight specific UI elements, progress tracking with persistent localStorage state, separate onboarding flows for marketplace and create-right pages, and help tour button for returning users. Mascot includes multiple expressions (excited, explaining, celebrating, thinking) with animated particles and floating elements. System automatically detects new users and provides guided tours without being intrusive.
 - June 17, 2025: **NAVIGATION STREAMLINING**: Removed redundant auctions page since marketplace handles all auction functionality through tabs. Updated all navigation references to point to marketplace with proper tab context, eliminating user confusion and maintaining clean architecture.

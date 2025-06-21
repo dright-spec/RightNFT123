@@ -2055,6 +2055,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rightId = parseInt(req.params.id);
       const { status, notes } = req.body;
 
+      console.log(`[admin] Verifying right ${rightId} with status: ${status}`);
+
       if (!["pending", "verified", "rejected"].includes(status)) {
         return res.status(400).json({ error: "Invalid verification status" });
       }
@@ -2073,7 +2075,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Right not found" });
       }
 
-      res.json({ success: true, right: updatedRight });
+      console.log(`[admin] Right ${rightId} verification updated to: ${status}`);
+
+      // Note: No automatic NFT minting - users will mint manually when ready
+      res.json({ 
+        success: true, 
+        message: status === 'verified' 
+          ? 'Right approved - user can now mint NFT manually'
+          : `Right ${status} successfully`,
+        right: updatedRight
+      });
     } catch (error) {
       console.error("Error updating right verification:", error);
       res.status(500).json({ error: "Failed to update verification status" });
