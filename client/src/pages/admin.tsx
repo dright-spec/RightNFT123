@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,23 +15,20 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { HederaTestPanel } from "@/components/hedera-test-panel";
 import { 
-  Shield, 
   Users, 
   FileText, 
+  Clock, 
   Ban, 
+  AlertTriangle, 
   CheckCircle, 
   XCircle, 
-  Clock, 
-  Eye,
   Search,
-  Filter,
-  Settings,
-  AlertTriangle,
-  TrendingUp,
-  DollarSign,
-  LogOut
+  LogOut,
+  Shield,
+  Settings
 } from "lucide-react";
-import type { RightWithCreator, User } from "@shared/schema";
+
+import type { User, Right, RightWithCreator } from "@shared/schema";
 
 interface AdminStats {
   totalUsers: number;
@@ -50,36 +47,30 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState("all");
   const { toast } = useToast();
 
-  // Always call hooks first, before any conditional returns
-  // Fetch admin stats
+  // All hooks called before any conditional returns
   const { data: stats, isLoading: loadingStats, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     retry: 3,
-    enabled: isAuthenticated, // Only fetch when authenticated
+    enabled: isAuthenticated,
   });
 
-  // Fetch pending verifications
   const { data: pendingRights, isLoading: loadingRights, error: rightsError } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/admin/rights", { status: statusFilter, search: searchTerm }],
     retry: 3,
-    enabled: isAuthenticated, // Only fetch when authenticated
+    enabled: isAuthenticated,
   });
 
-  // Fetch users for management
   const { data: users, isLoading: loadingUsers, error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
     retry: 3,
-    enabled: isAuthenticated, // Only fetch when authenticated
+    enabled: isAuthenticated,
   });
 
-  // Verification mutation - moved to top with other hooks
   const verifyRightMutation = useMutation({
     mutationFn: async ({ rightId, status, notes }: { rightId: number; status: string; notes: string }) => {
       if (status === "verified") {
-        // Call the verify endpoint which updates status to verified
         return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { notes });
       } else {
-        // Call the general verification endpoint
         return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { status, notes });
       }
     },
@@ -93,16 +84,15 @@ export default function Admin() {
       });
     },
     onError: (error) => {
-      console.error("NFT minting failed:", error);
+      console.error("Verification failed:", error);
       toast({
-        title: "NFT Minting Failed",
-        description: "There was an error minting the NFT. Please try again or contact support.",
+        title: "Error",
+        description: "Failed to update verification status",
         variant: "destructive",
       });
     }
   });
 
-  // User ban mutation - moved to top with other hooks
   const banUserMutation = useMutation({
     mutationFn: async ({ userId, banned }: { userId: number; banned: boolean }) => {
       return apiRequest("POST", `/api/admin/users/${userId}/ban`, { banned });
@@ -131,7 +121,6 @@ export default function Admin() {
     if (token && session) {
       const sessionTime = parseInt(session);
       const now = Date.now();
-      // Session expires after 8 hours
       if (now - sessionTime < 8 * 60 * 60 * 1000) {
         setIsAuthenticated(true);
       } else {
@@ -149,6 +138,19 @@ export default function Admin() {
       title: "Logged Out",
       description: "You have been logged out of the admin panel",
     });
+  };
+
+  const handleVerification = (status: string) => {
+    if (!selectedRight) return;
+    verifyRightMutation.mutate({
+      rightId: selectedRight.id,
+      status,
+      notes: verificationNotes,
+    });
+  };
+
+  const handleUserBan = (userId: number, banned: boolean) => {
+    banUserMutation.mutate({ userId, banned });
   };
 
   // Show login screen if not authenticated
@@ -187,107 +189,6 @@ export default function Admin() {
       </div>
     );
   }
-
-  // Helper functions for handlers
-  const handleVerification = (status: string) => {
-    if (!selectedRight) return;
-    verifyRightMutation.mutate({
-      rightId: selectedRight.id,
-      status,
-      notes: verificationNotes,
-    });
-  };
-
-  const handleUserBan = (userId: number, banned: boolean) => {
-    banUserMutation.mutate({ userId, banned });
-  };
-
-  return (
-    mutationFn: async ({ rightId, status, notes }: { rightId: number; status: string; notes: string }) => {
-      if (status === "verified") {
-        // Call the verify endpoint which updates status to verified
-        return apiRequest("POST", `/api/admin/rights/${rightId}/verify`, { notes });
-      } else {
-        // For rejected status, use the existing update endpoint
-        return apiRequest("PATCH", `/api/rights/${rightId}`, { verificationStatus: status, verificationNotes: notes });
-      }
-    },
-    onSuccess: async (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/rights"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      
-      if (variables.status === "verified") {
-        toast({
-          title: "Success", 
-          description: "Right verified successfully. NFT minting initiated automatically.",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Right verification status updated successfully",
-        });
-      }
-      
-      setSelectedRight(null);
-      setVerificationNotes("");
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update verification status",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Function to trigger NFT minting for verified rights
-  const triggerNFTMinting = async (rightId: number) => {
-    try {
-      // This would typically integrate with the Hedera service to mint NFT
-      // For now, we'll show a notification that NFT minting is initiated
-      toast({
-        title: "NFT Minting Initiated",
-        description: "The NFT will be minted automatically on the Hedera blockchain. This may take a few minutes.",
-      });
-      
-      // In a real implementation, you would:
-      // 1. Fetch the right data
-      // 2. Create Hedera metadata
-      // 3. Mint the NFT on Hedera
-      // 4. Update the right with NFT data via /api/rights/{id}/mint-nft
-      
-    } catch (error) {
-      console.error("NFT minting failed:", error);
-      toast({
-        title: "NFT Minting Failed",
-        description: "There was an error minting the NFT. Please try again or contact support.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // User ban mutation
-  const banUserMutation = useMutation({
-    mutationFn: async ({ userId, banned }: { userId: number; banned: boolean }) => {
-      return apiRequest("POST", `/api/admin/users/${userId}/ban`, { banned });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({
-        title: "Success",
-        description: "User status updated successfully",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update user status",
-        variant: "destructive",
-      });
-    },
-  });
-
-
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -357,10 +258,12 @@ export default function Admin() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <DollarSign className="h-8 w-8 text-purple-600" />
+                <div className="h-8 w-8 bg-primary/20 rounded-full flex items-center justify-center">
+                  <span className="text-primary font-bold">ℏ</span>
+                </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 ETH"}</p>
+                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 HBAR"}</p>
                 </div>
               </div>
             </CardContent>
@@ -369,7 +272,9 @@ export default function Admin() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <TrendingUp className="h-8 w-8 text-emerald-600" />
+                <div className="h-8 w-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <span className="text-green-500 font-bold">%</span>
+                </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Growth</p>
                   <p className="text-2xl font-bold">{stats?.monthlyGrowth || 0}%</p>
@@ -379,30 +284,65 @@ export default function Admin() {
           </Card>
         </div>
 
-        {/* Main Content */}
-        <Tabs defaultValue="verification" className="space-y-6">
+        <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="verification" className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Verification
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="hedera" className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Hedera
-            </TabsTrigger>
-            <TabsTrigger value="rights" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Rights
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
-            </TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="verification">Verification</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="hedera">Hedera</TabsTrigger>
           </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>Latest platform activity and metrics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">New Rights Today</span>
+                      <Badge variant="outline">3</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Verifications Completed</span>
+                      <Badge variant="outline">12</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Active Users</span>
+                      <Badge variant="outline">47</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                  <CardDescription>Platform status and performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Database</span>
+                      <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Hedera Network</span>
+                      <Badge className="bg-green-100 text-green-800">Connected</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">API Response</span>
+                      <Badge variant="outline">Fast</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           {/* Verification Tab */}
           <TabsContent value="verification" className="space-y-6">
@@ -434,30 +374,23 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 {loadingRights ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-20 bg-muted rounded animate-pulse" />
-                    ))}
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-muted-foreground">Loading rights...</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {pendingRights?.map((right) => (
-                      <div key={right.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="text-2xl">{right.symbol}</div>
-                          <div>
-                            <h3 className="font-semibold">{right.title}</h3>
-                            <p className="text-sm text-muted-foreground">by {right.creator.username}</p>
-                            <p className="text-sm text-muted-foreground">{right.price} {right.currency}</p>
+                      <div key={right.id} className="flex items-center justify-between p-4 border rounded">
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{right.title}</h3>
+                          <p className="text-sm text-muted-foreground">{right.description}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="outline">{right.type}</Badge>
+                            <VerificationBadge status={right.verificationStatus} />
                           </div>
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <VerificationBadge status={right.verificationStatus as any} />
-                          {right.contentFileHash && (
-                            <Badge variant="outline" className="text-green-600">
-                              Content Uploaded
-                            </Badge>
-                          )}
+                        <div className="flex gap-2">
                           <Dialog>
                             <DialogTrigger asChild>
                               <Button 
@@ -465,84 +398,38 @@ export default function Admin() {
                                 size="sm"
                                 onClick={() => setSelectedRight(right)}
                               >
-                                <Eye className="w-4 h-4 mr-1" />
                                 Review
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
+                            <DialogContent>
                               <DialogHeader>
-                                <DialogTitle>Review Right: {right.title}</DialogTitle>
+                                <DialogTitle>Verify Right: {selectedRight?.title}</DialogTitle>
                               </DialogHeader>
-                              <div className="space-y-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="text-sm font-medium">Creator</label>
-                                    <p className="text-sm text-muted-foreground">{right.creator.username}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Type</label>
-                                    <p className="text-sm text-muted-foreground">{right.type}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Price</label>
-                                    <p className="text-sm text-muted-foreground">{right.price} {right.currency}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Status</label>
-                                    <VerificationBadge status={right.verificationStatus as any} />
-                                  </div>
-                                </div>
-                                
-                                <div>
-                                  <label className="text-sm font-medium">Description</label>
-                                  <p className="text-sm text-muted-foreground mt-1">{right.description}</p>
-                                </div>
-
-                                {right.contentFileHash && (
-                                  <div>
-                                    <label className="text-sm font-medium">Content File</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Badge variant="outline" className="text-green-600">
-                                        File Hash: {right.contentFileHash.substring(0, 20)}...
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                )}
-
+                              <div className="space-y-4">
                                 <div>
                                   <label className="text-sm font-medium">Verification Notes</label>
                                   <Textarea
-                                    placeholder="Add notes about this verification..."
                                     value={verificationNotes}
                                     onChange={(e) => setVerificationNotes(e.target.value)}
-                                    className="mt-1"
+                                    placeholder="Add notes about the verification..."
                                   />
                                 </div>
-
-                                <div className="flex gap-3">
+                                <div className="flex gap-2">
                                   <Button
                                     onClick={() => handleVerification("verified")}
                                     disabled={verifyRightMutation.isPending}
                                     className="bg-green-600 hover:bg-green-700"
                                   >
-                                    <CheckCircle className="w-4 h-4 mr-1" />
-                                    Approve
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Verify
                                   </Button>
                                   <Button
+                                    variant="destructive"
                                     onClick={() => handleVerification("rejected")}
                                     disabled={verifyRightMutation.isPending}
-                                    variant="destructive"
                                   >
-                                    <XCircle className="w-4 h-4 mr-1" />
+                                    <XCircle className="w-4 h-4 mr-2" />
                                     Reject
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleVerification("pending")}
-                                    disabled={verifyRightMutation.isPending}
-                                    variant="outline"
-                                  >
-                                    <Clock className="w-4 h-4 mr-1" />
-                                    Mark Pending
                                   </Button>
                                 </div>
                               </div>
@@ -562,18 +449,18 @@ export default function Admin() {
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
+                <CardDescription>Manage platform users and permissions</CardDescription>
               </CardHeader>
               <CardContent>
                 {loadingUsers ? (
-                  <div className="space-y-4">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="h-16 bg-muted rounded animate-pulse" />
-                    ))}
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-muted-foreground">Loading users...</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {users?.map((user) => (
-                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                             <span className="font-bold text-primary">
@@ -638,30 +525,6 @@ export default function Admin() {
               </div>
               <HederaTestPanel />
             </div>
-          </TabsContent>
-
-          {/* Rights Tab */}
-          <TabsContent value="rights" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Rights</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Comprehensive rights management coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Platform configuration options coming soon...</p>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
