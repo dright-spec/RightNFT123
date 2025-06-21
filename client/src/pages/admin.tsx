@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { VerificationBadge } from "@/components/verification-badge";
 import { AdminLogin } from "@/components/admin-login";
 import { PerformanceDashboard } from "@/components/admin/performance-dashboard";
+import { NFTViewer } from "@/components/nft-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { HederaTestPanel } from "@/components/hedera-test-panel";
@@ -426,6 +427,24 @@ export default function Admin() {
                                 <div className="bg-muted/30 p-3 rounded-lg">
                                   <div className="text-sm font-medium text-muted-foreground mb-1">Content Source</div>
                                   <div className="text-sm">{right.contentSource}</div>
+                                </div>
+                              )}
+
+                              {/* Show NFT Viewer for verified rights with Hedera data */}
+                              {right.verificationStatus === 'verified' && right.hederaTokenId && (
+                                <div className="mt-4">
+                                  <NFTViewer 
+                                    nftData={{
+                                      tokenId: right.hederaTokenId,
+                                      serialNumber: right.hederaSerialNumber || 1,
+                                      transactionId: right.hederaTransactionId || '',
+                                      explorerUrl: `https://hashscan.io/testnet/transaction/${right.hederaTransactionId}`,
+                                      name: right.title,
+                                      symbol: 'DRIGHT',
+                                      metadata: right.metadata || {}
+                                    }}
+                                    className="border-green-200"
+                                  />
                                 </div>
                               )}
                             </div>

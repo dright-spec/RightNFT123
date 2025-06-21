@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle, AlertCircle, ExternalLink, Coins, Hash } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, ExternalLink, Coins, Hash, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -168,45 +168,111 @@ export function HederaTestPanel() {
           </Button>
 
           {testMintMutation.data && (
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="pt-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <h4 className="font-semibold text-green-800">Test NFT Minted Successfully!</h4>
+            <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200 shadow-lg">
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <h4 className="text-xl font-bold text-green-800">🎉 Live NFT Successfully Created!</h4>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Token ID:</p>
-                      <p className="font-mono text-xs bg-white p-2 rounded border">
-                        {(testMintMutation.data as any)?.mintResult?.tokenId}
-                      </p>
+                  {/* NFT Visual Card */}
+                  <div className="bg-white rounded-lg border-2 border-dashed border-blue-300 p-6 text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                      <Hash className="w-8 h-8 text-white" />
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Serial Number:</p>
-                      <p className="font-mono text-xs bg-white p-2 rounded border">
+                    <h3 className="font-bold text-lg text-gray-800 mb-2">
+                      {(testMintMutation.data as any)?.tokenInfo?.name}
+                    </h3>
+                    <div className="text-sm text-gray-600 mb-3">
+                      Symbol: {(testMintMutation.data as any)?.tokenInfo?.symbol}
+                    </div>
+                    <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      Live on Hedera Testnet
+                    </div>
+                  </div>
+
+                  {/* NFT Details Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="bg-white p-3 rounded-lg border">
+                      <p className="text-xs font-medium text-gray-500 mb-1">TOKEN ID</p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-mono text-sm font-bold text-gray-800">
+                          {(testMintMutation.data as any)?.mintResult?.tokenId}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigator.clipboard.writeText((testMintMutation.data as any)?.mintResult?.tokenId)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Hash className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg border">
+                      <p className="text-xs font-medium text-gray-500 mb-1">SERIAL NUMBER</p>
+                      <p className="font-mono text-sm font-bold text-gray-800">
                         #{(testMintMutation.data as any)?.mintResult?.serialNumber}
                       </p>
                     </div>
                   </div>
-                  
-                  <div>
-                    <p className="text-muted-foreground text-sm">Transaction ID:</p>
-                    <p className="font-mono text-xs bg-white p-2 rounded border break-all">
+
+                  {/* Full NFT ID Display */}
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-lg text-white text-center">
+                    <p className="text-xs font-medium opacity-90 mb-1">COMPLETE NFT IDENTIFIER</p>
+                    <div className="flex items-center justify-center gap-2">
+                      <p className="font-mono text-lg font-bold">
+                        {(testMintMutation.data as any)?.mintResult?.tokenId}/{(testMintMutation.data as any)?.mintResult?.serialNumber}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigator.clipboard.writeText(`${(testMintMutation.data as any)?.mintResult?.tokenId}/${(testMintMutation.data as any)?.mintResult?.serialNumber}`)}
+                        className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                      >
+                        <Hash className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Transaction Details */}
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-xs font-medium text-gray-500 mb-2">TRANSACTION HASH</p>
+                    <p className="font-mono text-xs text-gray-700 break-all leading-relaxed">
                       {(testMintMutation.data as any)?.mintResult?.transactionId}
                     </p>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open((testMintMutation.data as any)?.mintResult?.explorerUrl, '_blank')}
-                    className="w-full"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    View on HashScan Explorer
-                  </Button>
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const explorerUrl = (testMintMutation.data as any)?.mintResult?.explorerUrl;
+                        console.log('Opening explorer URL:', explorerUrl);
+                        window.open(explorerUrl, '_blank');
+                      }}
+                      className="flex-1"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View on HashScan
+                    </Button>
+                    <Button
+                      onClick={() => navigator.clipboard.writeText(JSON.stringify((testMintMutation.data as any)?.mintResult, null, 2))}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Hash className="h-4 w-4 mr-2" />
+                      Copy NFT Data
+                    </Button>
+                  </div>
+
+                  {/* Success Message */}
+                  <div className="text-center text-sm text-green-700 bg-green-100 p-3 rounded-lg border border-green-200">
+                    <strong>✓ Success!</strong> This is a real NFT minted on Hedera testnet blockchain. 
+                    <br />You can now trade, transfer, or showcase this digital asset.
+                  </div>
                 </div>
               </CardContent>
             </Card>
