@@ -21,7 +21,7 @@ import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
 import SecureMusicVerifier from "@/components/secure-music-verifier";
 import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
-import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle, Clock } from "lucide-react";
 import { z } from "zod";
 
 // Extended form schema for the create right page
