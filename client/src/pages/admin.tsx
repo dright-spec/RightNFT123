@@ -870,14 +870,6 @@ export default function Admin() {
                       </Card>
                     ))}
                   </div>
-                                </DialogContent>
-                              </Dialog>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
                 )}
               </CardContent>
             </Card>
