@@ -684,8 +684,9 @@ export default function CreateRight() {
       queryClient.invalidateQueries({ queryKey: ["/api/rights"] });
       
       toast({
-        title: "Right Submitted Successfully!",
-        description: "Your right has been submitted for admin verification. Once approved, you can mint your NFT.",
+        title: "Application Submitted for Verification!",
+        description: "Your right has been submitted for admin review. You'll be notified once the status changes and will be able to mint your NFT once approved.",
+        duration: 8000,
       });
       setLocation("/dashboard");
     },
@@ -1840,9 +1841,9 @@ export default function CreateRight() {
                       }
                     }}
                   >
-                    {isUploading ? 'Creating...' : 
+                    {isUploading ? 'Submitting Application...' : 
                      canMintNFT ? `Create NFT${selectedVideos.length > 1 ? 's' : ''}` :
-                     'Submit for Review'}
+                     'Submit Application for Verification'}
                     <Zap className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
