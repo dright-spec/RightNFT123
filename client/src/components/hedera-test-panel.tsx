@@ -9,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, CheckCircle, AlertCircle, ExternalLink, Coins, Hash, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { NFTViewer } from "@/components/nft-viewer";
 
 export function HederaTestPanel() {
   const [testForm, setTestForm] = useState({
-    name: "Test Rights NFT",
-    symbol: "TRNFT",
-    description: "Test NFT for demonstrating Hedera integration"
+    name: "YouTube Video Rights Test",
+    symbol: "YTNFT",
+    description: "Test NFT for YouTube video rights demonstration",
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" // Example YouTube URL
   });
   const { toast } = useToast();
 
@@ -44,6 +46,12 @@ export function HederaTestPanel() {
       });
     }
   });
+
+  // Extract YouTube video ID from URL
+  const extractYouTubeId = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : null;
+  };
 
   const handleTestMint = () => {
     testMintMutation.mutate(testForm);
@@ -145,8 +153,23 @@ export function HederaTestPanel() {
               value={testForm.description}
               onChange={(e) => setTestForm(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Enter NFT description"
-              rows={3}
+              rows={2}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="test-youtube">YouTube URL (Optional - for video preview)</Label>
+            <Input
+              id="test-youtube"
+              value={testForm.youtubeUrl}
+              onChange={(e) => setTestForm(prev => ({ ...prev, youtubeUrl: e.target.value }))}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
+            {testForm.youtubeUrl && extractYouTubeId(testForm.youtubeUrl) && (
+              <div className="text-xs text-green-600">
+                ✓ Valid YouTube URL detected - video will be embedded in NFT preview
+              </div>
+            )}
           </div>
 
           <Button
@@ -167,130 +190,30 @@ export function HederaTestPanel() {
             )}
           </Button>
 
+          {/* Enhanced NFT Display with Full Visualization */}
           {testMintMutation.data && (
-            <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200 shadow-lg">
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                    <h4 className="text-xl font-bold text-green-800">🎉 Live NFT Successfully Created!</h4>
-                  </div>
-                  
-                  {/* NFT Visual Card */}
-                  <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-8 text-center relative overflow-hidden">
-                    {/* Background pattern */}
-                    <div className="absolute inset-0 opacity-5">
-                      <div className="grid grid-cols-6 gap-2 h-full">
-                        {[...Array(36)].map((_, i) => (
-                          <div key={i} className="bg-gradient-to-br from-purple-500 to-blue-500 rounded"></div>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Main content */}
-                    <div className="relative z-10">
-                      <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                        <Hash className="w-10 h-10 text-white" />
-                      </div>
-                      <h3 className="font-bold text-xl text-gray-800 mb-2">
-                        {(testMintMutation.data as any)?.tokenInfo?.name}
-                      </h3>
-                      <div className="text-sm text-gray-600 mb-2 font-medium">
-                        Test NFT Rights
-                      </div>
-                      <div className="text-sm text-gray-500 mb-4">
-                        Symbol: {(testMintMutation.data as any)?.tokenInfo?.symbol}
-                      </div>
-                      <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium shadow-sm">
-                        <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-                        Live on Hedera Testnet
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* NFT Details Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="bg-white p-3 rounded-lg border">
-                      <p className="text-xs font-medium text-gray-500 mb-1">TOKEN ID</p>
-                      <div className="flex items-center justify-between">
-                        <p className="font-mono text-sm font-bold text-gray-800">
-                          {(testMintMutation.data as any)?.mintResult?.tokenId}
-                        </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigator.clipboard.writeText((testMintMutation.data as any)?.mintResult?.tokenId)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Hash className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="bg-white p-3 rounded-lg border">
-                      <p className="text-xs font-medium text-gray-500 mb-1">SERIAL NUMBER</p>
-                      <p className="font-mono text-sm font-bold text-gray-800">
-                        #{(testMintMutation.data as any)?.mintResult?.serialNumber}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Full NFT ID Display */}
-                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-lg text-white text-center">
-                    <p className="text-xs font-medium opacity-90 mb-1">COMPLETE NFT IDENTIFIER</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <p className="font-mono text-lg font-bold">
-                        {(testMintMutation.data as any)?.mintResult?.tokenId}/{(testMintMutation.data as any)?.mintResult?.serialNumber}
-                      </p>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigator.clipboard.writeText(`${(testMintMutation.data as any)?.mintResult?.tokenId}/${(testMintMutation.data as any)?.mintResult?.serialNumber}`)}
-                        className="h-6 w-6 p-0 text-white hover:bg-white/20"
-                      >
-                        <Hash className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Transaction Details */}
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs font-medium text-gray-500 mb-2">TRANSACTION HASH</p>
-                    <p className="font-mono text-xs text-gray-700 break-all leading-relaxed">
-                      {(testMintMutation.data as any)?.mintResult?.transactionId}
-                    </p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const explorerUrl = (testMintMutation.data as any)?.mintResult?.explorerUrl;
-                        console.log('Opening explorer URL:', explorerUrl);
-                        window.open(explorerUrl, '_blank');
-                      }}
-                      className="flex-1"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View on HashScan
-                    </Button>
-                    <Button
-                      onClick={() => navigator.clipboard.writeText(JSON.stringify((testMintMutation.data as any)?.mintResult, null, 2))}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <Hash className="h-4 w-4 mr-2" />
-                      Copy NFT Data
-                    </Button>
-                  </div>
-
-                  {/* Success Message */}
-                  <div className="text-center text-sm text-green-700 bg-green-100 p-3 rounded-lg border border-green-200">
-                    <strong>✓ Success!</strong> This is a real NFT minted on Hedera testnet blockchain. 
-                    <br />You can now trade, transfer, or showcase this digital asset.
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="mt-6">
+              <div className="mb-4 text-center">
+                <h3 className="text-lg font-bold text-green-800 mb-2">🎉 Live NFT Successfully Minted!</h3>
+                <p className="text-sm text-gray-600">Your test NFT is now live on Hedera testnet blockchain</p>
+              </div>
+              
+              <NFTViewer 
+                nftData={{
+                  tokenId: (testMintMutation.data as any)?.mintResult?.tokenId || '',
+                  serialNumber: (testMintMutation.data as any)?.mintResult?.serialNumber || 1,
+                  transactionId: (testMintMutation.data as any)?.mintResult?.transactionId || '',
+                  explorerUrl: (testMintMutation.data as any)?.mintResult?.explorerUrl || '',
+                  name: (testMintMutation.data as any)?.tokenInfo?.name || testForm.name,
+                  symbol: (testMintMutation.data as any)?.tokenInfo?.symbol || testForm.symbol,
+                  metadata: (testMintMutation.data as any)?.mintResult?.metadataUri || {},
+                  rightType: testForm.youtubeUrl && extractYouTubeId(testForm.youtubeUrl) ? 'YouTube Video' : 'Test Rights',
+                  contentSource: testForm.youtubeUrl || undefined,
+                  youtubeVideoId: extractYouTubeId(testForm.youtubeUrl || '') || undefined
+                }}
+                className="border-green-200 bg-gradient-to-br from-green-50 to-blue-50"
+              />
+            </div>
           )}
         </CardContent>
       </Card>
