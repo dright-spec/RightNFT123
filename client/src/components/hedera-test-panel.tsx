@@ -193,6 +193,16 @@ export function HederaTestPanel() {
           {/* Enhanced NFT Display with Full Visualization */}
           {testMintMutation.data && (
             <div className="mt-6 space-y-4">
+              {/* Debug Data Display */}
+              <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <details>
+                  <summary className="cursor-pointer text-yellow-800 font-medium">Debug: Raw API Response</summary>
+                  <pre className="mt-2 text-yellow-700 whitespace-pre-wrap">
+                    {JSON.stringify(testMintMutation.data, null, 2)}
+                  </pre>
+                </details>
+              </div>
+              
               {/* Minting Results Section */}
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h4 className="font-semibold text-green-800 mb-3">✅ Test NFT Minted Successfully</h4>

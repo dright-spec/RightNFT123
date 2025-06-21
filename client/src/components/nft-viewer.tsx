@@ -25,6 +25,9 @@ interface NFTViewerProps {
 export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
   const [copied, setCopied] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Debug logging
+  console.log('NFTViewer received data:', nftData);
 
   const copyToClipboard = async (text: string, type: string) => {
     await navigator.clipboard.writeText(text);
@@ -181,42 +184,46 @@ export function NFTViewer({ nftData, className = "" }: NFTViewerProps) {
             <p className="text-xs font-medium text-gray-500 mb-2">TOKEN ID</p>
             <div className="flex items-center justify-between">
               <p className="font-mono text-sm font-bold text-gray-800">
-                {nftData.tokenId}
+                {nftData.tokenId || 'No Token ID'}
               </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(nftData.tokenId, 'Token ID')}
-                className="h-6 w-6 p-0"
-              >
-                {copied === 'Token ID' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              </Button>
+              {nftData.tokenId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(nftData.tokenId, 'Token ID')}
+                  className="h-6 w-6 p-0"
+                >
+                  {copied === 'Token ID' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                </Button>
+              )}
             </div>
           </div>
           
           <div className="bg-white p-4 rounded-lg border shadow-sm">
             <p className="text-xs font-medium text-gray-500 mb-2">SERIAL NUMBER</p>
             <p className="font-mono text-sm font-bold text-gray-800">
-              #{nftData.serialNumber}
+              #{nftData.serialNumber || 'N/A'}
             </p>
           </div>
         </div>
 
         {/* Transaction Information */}
-        <div className="bg-gray-50 p-4 rounded-lg border">
+        <div className="bg-gray-50 p-4 rounded-lg border col-span-full">
           <p className="text-xs font-medium text-gray-500 mb-2">TRANSACTION HASH</p>
           <div className="flex items-start gap-2">
             <p className="font-mono text-xs text-gray-700 break-all leading-relaxed flex-1">
-              {nftData.transactionId}
+              {nftData.transactionId || 'No Transaction ID'}
             </p>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => copyToClipboard(nftData.transactionId, 'Transaction Hash')}
-              className="h-6 w-6 p-0 flex-shrink-0"
-            >
-              {copied === 'Transaction Hash' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-            </Button>
+            {nftData.transactionId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(nftData.transactionId, 'Transaction Hash')}
+                className="h-6 w-6 p-0 flex-shrink-0"
+              >
+                {copied === 'Transaction Hash' ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              </Button>
+            )}
           </div>
         </div>
 
