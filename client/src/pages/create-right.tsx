@@ -1560,6 +1560,7 @@ export default function CreateRight() {
                 ) : (
                   <VerificationWorkflow 
                     rightType={form.watch("type") || "copyright"}
+                    contentSource={form.watch("contentSource")}
                     initialYouTubeUrl={form.watch("youtubeUrl")}
                     onVerificationComplete={handleVerificationComplete}
                     onCanMintNFT={handleCanMintNFT}
