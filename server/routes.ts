@@ -1212,7 +1212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (newBidAmount < minimumBid) {
         return res.status(400).json({ 
-          error: `Bid must be at least ${minimumBid.toFixed(4)} ETH` 
+          error: `Bid must be at least ${minimumBid.toFixed(4)} HBAR` 
         });
       }
       
@@ -1220,7 +1220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rightId,
         bidderId: mockUserId,
         amount,
-        currency: "ETH",
+        currency: "HBAR",
       });
       
       res.status(201).json(bid);

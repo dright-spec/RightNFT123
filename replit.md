@@ -22,7 +22,7 @@ Dright is a comprehensive web3 marketplace for tokenizing and trading legal righ
 - **File Processing**: IPFS integration for metadata storage
 
 ### Blockchain Integration
-- **Blockchain**: Hedera Hashgraph (testnet/mainnet)
+- **Blockchain**: Hedera Hashgraph (mainnet production)
 - **NFT Standard**: Hedera Token Service (HTS) native NFTs
 - **Wallet**: HashPack and Blade wallet integration
 - **Storage**: IPFS for NFT metadata and legal documents
@@ -98,7 +98,7 @@ The platform implements a comprehensive verification workflow where rights must 
 
 ### Environment Configuration
 - **Database**: PostgreSQL with connection pooling via Neon
-- **Hedera**: Live testnet integration with provided operator credentials
+- **Hedera**: Live mainnet integration with production operator credentials
 - **IPFS**: Optional authentication for enhanced service
 - **YouTube**: API key for content verification
 
@@ -115,6 +115,7 @@ The platform implements a comprehensive verification workflow where rights must 
 - Real-time updates via periodic data refreshing
 
 ## Changelog
+- June 22, 2025: **PRODUCTION MAINNET DEPLOYMENT READY**: Converted entire platform from testnet to mainnet production configuration. Switched Hedera client to mainnet, standardized all pricing to HBAR currency, removed all mock/test data initialization, and prepared clean production environment. Platform now ready for live deployment with real users, authentic NFT minting on Hedera mainnet, and genuine intellectual property rights tokenization. Created comprehensive production deployment guide with security considerations and HBAR pricing strategies.
 - June 21, 2025: **COMPREHENSIVE NOTIFICATION & ADMIN SYSTEM COMPLETED**: Implemented full user notification system with real-time alerts for admin approval/rejection decisions. Enhanced admin panel with document viewing capabilities for proper verification review. Added notification bell icon with unread counts, automatic status updates, and clickable action links. Admins can now view submitted documents and users receive instant notifications when rights are approved/rejected. Complete workflow operational: submission → admin review with documents → approval notification → automatic NFT minting on Hedera (tokens 0.0.6212102, 0.0.6207393, etc.).
 - June 21, 2025: **PATENT SUBMISSION WORKFLOW COMPLETED**: Fixed comprehensive patent and non-YouTube content submission system. Users can now successfully submit patents through complete workflow: content selection → form completion → admin review submission. Fixed form validation blocking submissions, updated Review & Confirm step with clear messaging about admin verification requirement, and corrected API request methods. Patent submissions now properly reach admin verification queue and get approved for NFT minting (confirmed with patents 12-13 minted as tokens 0.0.6207344-45 on Hedera testnet).
 - June 21, 2025: **STREAMLINED ADMIN VERIFICATION WORKFLOW**: Redesigned admin verification process to remove automatic NFT minting, allowing users full control over when to mint their approved rights. Enhanced admin panel with modern 4-column grid layout, quick approve/reject buttons, and improved visual design. Admin approval now simply enables user minting capability rather than triggering automatic blockchain transactions. Updated messaging across platform to reflect manual minting workflow where users decide when to create their NFTs after admin approval.

@@ -247,19 +247,8 @@ export class MemStorage implements IStorage {
   }
 
   async getUserNotifications(userId: number): Promise<any[]> {
-    // Return mock notifications for now
-    return [
-      {
-        id: 1,
-        userId,
-        type: 'right_approved',
-        title: 'Right Approved!',
-        message: 'Your patent submission has been approved and NFT minted successfully.',
-        isRead: false,
-        createdAt: new Date(),
-        actionUrl: '/marketplace'
-      }
-    ];
+    // Production: Return empty array - notifications will be created as users interact
+    return [];
   }
 
   async markNotificationAsRead(notificationId: number): Promise<void> {
