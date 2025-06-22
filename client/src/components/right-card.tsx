@@ -68,10 +68,10 @@ export function RightCard({ right }: RightCardProps) {
           </div>
         </div>
         
-        <h3 className="font-bold text-lg text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300">
+        <h3 className="font-bold text-base text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300 break-words">
           {right.title}
         </h3>
-        <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed transition-all duration-300 group-hover:text-foreground/80">
+        <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed transition-all duration-300 group-hover:text-foreground/80 break-words">
           {right.description}
         </p>
         
@@ -87,8 +87,8 @@ export function RightCard({ right }: RightCardProps) {
             )}
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gradient transition-all duration-300 group-hover:scale-105">
-              {right.price} {right.currency}
+            <div className="text-lg font-bold text-gradient transition-all duration-300 group-hover:scale-105 break-words">
+              {parseFloat(right.price || '0').toLocaleString()} {right.currency || 'HBAR'}
             </div>
           </div>
         </div>

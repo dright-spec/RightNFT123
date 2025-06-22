@@ -222,6 +222,12 @@ export class MemStorage implements IStorage {
     return Array.from(this.transactions.values()).filter(t => t.rightId === rightId);
   }
 
+  async getTransactionsByUser(userId: number): Promise<Transaction[]> {
+    return Array.from(this.transactions.values()).filter(
+      transaction => transaction.fromUserId === userId || transaction.toUserId === userId
+    );
+  }
+
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const transaction: Transaction = {
       id: this.currentTransactionId++,

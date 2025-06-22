@@ -46,14 +46,22 @@ export default function Dashboard() {
     queryFn: () => fetch("/api/users/1").then(res => res.json()),
   });
 
-  // Calculate dashboard metrics
+  // Get real user stats from API
+  const { data: userStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/users/stats'],
+    retry: false,
+  });
+
+  const { data: userActivity, isLoading: activityLoading } = useQuery({
+    queryKey: ['/api/users/activity'], 
+    retry: false,
+  });
+
+  // Calculate dashboard metrics from real data
   const totalRights = userRights.length;
   const activeListings = userRights.filter(right => right.isListed).length;
   const totalViews = userRights.reduce((sum, right) => sum + (right.views || 0), 0);
-  const totalRevenue = userRights.reduce((sum, right) => {
-    const price = parseFloat(right.price || "0");
-    return sum + (right.isListed ? 0 : price); // Sold items contribute to revenue
-  }, 0);
+  const totalRevenue = userStats?.totalRevenue || "0.00";
 
   const verifiedRights = userRights.filter(right => right.verificationStatus === "verified").length;
   const pendingRights = userRights.filter(right => right.verificationStatus === "pending").length;
@@ -84,21 +92,17 @@ export default function Dashboard() {
       changeType: "positive" as const
     },
     {
-      title: "Revenue Generated",
-      value: `${totalRevenue.toFixed(2)} ETH`,
+      title: "Revenue Generated", 
+      value: statsLoading ? "..." : `${totalRevenue} HBAR`,
       description: "From sales & royalties",
       icon: DollarSign,
-      change: "+8.2% this month",
+      change: "+0% this month",
       changeType: "positive" as const
     }
   ];
 
-  const recentActivity = [
-    { type: "sale", title: "Copyright sold", description: "Midnight Dreams streaming rights", time: "2 hours ago", amount: "0.5 ETH" },
-    { type: "listing", title: "New listing created", description: "Patent License: AI Algorithm", time: "1 day ago", amount: "2.0 ETH" },
-    { type: "verification", title: "Right verified", description: "YouTube video ownership confirmed", time: "3 days ago", amount: null },
-    { type: "bid", title: "New bid received", description: "Royalty share in indie film", time: "1 week ago", amount: "1.2 ETH" }
-  ];
+  // Use real activity data from API
+  const recentActivity = activityLoading ? [] : (userActivity || []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -303,39 +307,44 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <div className={`p-2 rounded-full ${
-                        activity.type === 'sale' ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400' :
-                        activity.type === 'listing' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400' :
-                        activity.type === 'verification' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400' :
-                        'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400'
-                      }`}>
-                        {activity.type === 'sale' && <DollarSign className="h-4 w-4" />}
-                        {activity.type === 'listing' && <Gavel className="h-4 w-4" />}
-                        {activity.type === 'verification' && <CheckCircle className="h-4 w-4" />}
-                        {activity.type === 'bid' && <TrendingUp className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {activity.type === 'sale' ? 'Right Sold' :
-                           activity.type === 'bid' ? 'Bid Received' :
-                           activity.type === 'mint' ? 'NFT Minted' : 'Transaction'}
+                  {activityLoading ? (
+                    <div className="text-center py-4 text-muted-foreground">Loading activity...</div>
+                  ) : recentActivity.length > 0 ? (
+                    recentActivity.map((activity: any, index: number) => (
+                      <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div className={`p-2 rounded-full ${
+                          activity.type === 'sale' ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400' :
+                          activity.type === 'listing' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400' :
+                          activity.type === 'verification' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-400' :
+                          'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400'
+                        }`}>
+                          {activity.type === 'sale' && <DollarSign className="h-4 w-4" />}
+                          {activity.type === 'listing' && <Gavel className="h-4 w-4" />}
+                          {activity.type === 'verification' && <CheckCircle className="h-4 w-4" />}
+                          {activity.type === 'bid' && <TrendingUp className="h-4 w-4" />}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {activity.rightTitle || `Transaction #${activity.id}`}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        {activity.amount && (
-                          <div className="font-medium text-green-600 dark:text-green-400">
-                            {activity.amount} HBAR
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {activity.type === 'sale' ? 'Right Sold' :
+                             activity.type === 'bid' ? 'Bid Received' :
+                             activity.type === 'mint' ? 'NFT Minted' : 'Transaction'}
                           </div>
-                        )}
-                        <div className="text-xs text-muted-foreground">
-                          {new Date(activity.date).toLocaleDateString()}
+                          <div className="text-sm text-muted-foreground">
+                            {activity.rightTitle || `Transaction #${activity.id}`}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {activity.amount && (
+                            <div className="font-medium text-green-600 dark:text-green-400">
+                              {activity.amount} HBAR
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(activity.date).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
+                    ))
                     </div>
                     ))
                   ) : (
