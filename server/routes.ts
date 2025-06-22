@@ -1140,13 +1140,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Wallet connection endpoint
+  // Enhanced wallet connection endpoint
   app.post("/api/wallet/connect", async (req, res) => {
     try {
-      const { walletAddress } = req.body;
+      const { walletAddress, walletType } = req.body;
       
       if (!walletAddress) {
         return res.status(400).json({ error: "Wallet address required" });
+      }
+      
+      // Validate wallet type and address format
+      const isHederaAddress = walletAddress.match(/^0\.0\.\d+$/);
+      const isEthereumAddress = walletAddress.match(/^0x[a-fA-F0-9]{40}$/);
+      
+      if (!isHederaAddress && !isEthereumAddress) {
+        return res.status(400).json({ error: "Invalid wallet address format" });
       }
       
       // Check if user exists with this wallet address
@@ -1154,20 +1162,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!user) {
         // Create new user for this wallet
+        const username = isHederaAddress 
+          ? `hedera_${walletAddress.split('.')[2]}` 
+          : `user_${walletAddress.slice(-6)}`;
+          
         user = await storage.createUser({
-          username: `user_${walletAddress.slice(-6)}`,
+          username,
           password: "secure_password",
           walletAddress,
         });
+      }
+      
+      // Store wallet type in session if needed
+      if (req.session) {
+        req.session.walletType = walletType;
+        req.session.walletAddress = walletAddress;
       }
       
       const { password, ...userWithoutPassword } = user;
       res.json({ 
         success: true, 
         user: userWithoutPassword,
+        walletType: walletType || 'unknown',
+        network: isHederaAddress ? 'hedera' : 'ethereum',
         message: "Wallet connected successfully" 
       });
     } catch (error) {
+      console.error("Wallet connection error:", error);
       res.status(500).json({ error: "Failed to connect wallet" });
     }
   });
