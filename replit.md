@@ -52,7 +52,8 @@ The platform implements a comprehensive verification workflow where rights must 
 - **Activity Feed**: Real-time trading activity and market statistics
 
 ### Admin Panel
-- **Verification Management**: Review and approve/reject rights
+- **Verification Management**: Review and approve/reject rights (approval only - users control minting)
+- **Document Review**: Access to submitted files and ownership proofs
 - **User Management**: Monitor user activity and ban enforcement
 - **Analytics Dashboard**: Platform statistics and revenue tracking
 - **Content Moderation**: Tools for maintaining platform quality
@@ -60,14 +61,15 @@ The platform implements a comprehensive verification workflow where rights must 
 ## Data Flow
 
 ### Right Creation Flow
-1. User creates right through frontend form
+1. User creates right through frontend form with document uploads
 2. YouTube content auto-verified via YouTube API
-3. Non-YouTube content marked as "pending"
-4. Admin reviews pending rights
-5. Upon verification, user can manually mint NFT when ready
-6. User initiates minting process at their convenience
-7. Hedera blockchain data recorded in database
-8. Right becomes tradeable on marketplace
+3. Non-YouTube content marked as "pending" for admin review
+4. Admin reviews pending rights with access to submitted documents
+5. Admin approves/rejects rights (no automatic minting)
+6. Upon approval, user receives notification and can mint NFT when ready
+7. User initiates minting process at their convenience
+8. Hedera blockchain data recorded in database
+9. Right becomes tradeable on marketplace
 
 ### Trading Flow
 1. Verified rights listed on marketplace
@@ -115,6 +117,7 @@ The platform implements a comprehensive verification workflow where rights must 
 - Real-time updates via periodic data refreshing
 
 ## Changelog
+- June 22, 2025: **ADMIN APPROVAL WORKFLOW REFINED**: Updated admin verification process to remove automatic NFT minting. Admin approval now only verifies rights authenticity and enables user minting capability. Enhanced admin panel with comprehensive document viewing including main files, ownership proofs, and preview images. Users receive approval notifications and maintain full control over when to mint their NFTs after admin verification.
 - June 22, 2025: **PRODUCTION MAINNET DEPLOYMENT READY**: Converted entire platform from testnet to mainnet production configuration. Switched Hedera client to mainnet, standardized all pricing to HBAR currency, removed all mock/test data initialization, and prepared clean production environment. Platform now ready for live deployment with real users, authentic NFT minting on Hedera mainnet, and genuine intellectual property rights tokenization. Created comprehensive production deployment guide with security considerations and HBAR pricing strategies.
 - June 21, 2025: **COMPREHENSIVE NOTIFICATION & ADMIN SYSTEM COMPLETED**: Implemented full user notification system with real-time alerts for admin approval/rejection decisions. Enhanced admin panel with document viewing capabilities for proper verification review. Added notification bell icon with unread counts, automatic status updates, and clickable action links. Admins can now view submitted documents and users receive instant notifications when rights are approved/rejected. Complete workflow operational: submission → admin review with documents → approval notification → automatic NFT minting on Hedera (tokens 0.0.6212102, 0.0.6207393, etc.).
 - June 21, 2025: **PATENT SUBMISSION WORKFLOW COMPLETED**: Fixed comprehensive patent and non-YouTube content submission system. Users can now successfully submit patents through complete workflow: content selection → form completion → admin review submission. Fixed form validation blocking submissions, updated Review & Confirm step with clear messaging about admin verification requirement, and corrected API request methods. Patent submissions now properly reach admin verification queue and get approved for NFT minting (confirmed with patents 12-13 minted as tokens 0.0.6207344-45 on Hedera testnet).

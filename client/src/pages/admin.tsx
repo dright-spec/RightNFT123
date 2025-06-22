@@ -457,10 +457,21 @@ export default function Admin() {
                                       href={right.contentFileUrl} 
                                       target="_blank" 
                                       rel="noopener noreferrer"
-                                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium"
                                     >
                                       <FileText className="w-3 h-3" />
-                                      View Document
+                                      View Submitted Document
+                                    </a>
+                                  )}
+                                  {right.ownershipDocumentUrl && (
+                                    <a 
+                                      href={right.ownershipDocumentUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-green-600 hover:text-green-800 flex items-center gap-1 font-medium"
+                                    >
+                                      <FileText className="w-3 h-3" />
+                                      Ownership Proof
                                     </a>
                                   )}
                                   <div className="text-xs text-gray-500">
