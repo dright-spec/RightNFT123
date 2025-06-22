@@ -21,7 +21,7 @@ export function HederaWalletConnect() {
 
   const initializeWallets = async () => {
     try {
-      await hederaWalletManager.initialize()
+      // Don't wait for initialization, just get wallets
       setAvailableWallets(hederaWalletManager.getAvailableWallets())
       setIsConnected(hederaWalletManager.isConnected)
       setConnectedAccount(hederaWalletManager.connectedAccount || null)

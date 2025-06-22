@@ -39,7 +39,21 @@ export class HederaWalletManager {
   private async safeInitialize() {
     try {
       this.hashConnect = new HashConnect(false); // Use testnet for development
+      
+      // Add event listeners before initializing
+      this.hashConnect.foundExtensionEvent.on((data) => {
+        console.log('HashConnect extension found:', data);
+      });
+      
+      this.hashConnect.pairingEvent.on((data) => {
+        console.log('HashConnect paired:', data);
+      });
+
       await this.hashConnect.init(this.appMetadata);
+      
+      // Wait for connection to be ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       this.isInitialized = true;
       console.log('HashConnect initialized successfully');
     } catch (error) {
@@ -86,7 +100,22 @@ export class HederaWalletManager {
 
     try {
       if (this.hashConnect) {
-        await this.hashConnect.connect();
+        // Check if already connected
+        if (this.isConnected) {
+          return this.hashConnect.pairingData;
+        }
+        
+        // Attempt connection with timeout
+        const connectionPromise = this.hashConnect.connect();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Connection timeout')), 10000)
+        );
+        
+        await Promise.race([connectionPromise, timeoutPromise]);
+        
+        // Wait a bit for pairing data to be available
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         return this.hashConnect.pairingData;
       }
       throw new Error('HashConnect not initialized');
@@ -116,11 +145,17 @@ export class HederaWalletManager {
 
   // Manual connection method for any Hedera wallet
   async connectManual() {
-    // For now, just open HashPack download page
+    // Check if HashPack is already installed
+    if (typeof window !== 'undefined' && (window as any).hashconnect) {
+      // Try to connect using existing installation
+      return this.connectHashPack();
+    }
+    
+    // Open HashPack download page
     if (typeof window !== 'undefined') {
       window.open('https://www.hashpack.app/download', '_blank');
     }
-    throw new Error('Please install HashPack wallet and try again.');
+    throw new Error('Please install HashPack wallet and refresh the page to try again.');
   }
 
   // Disconnect wallet
