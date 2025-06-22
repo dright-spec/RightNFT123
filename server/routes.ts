@@ -1097,7 +1097,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mock wallet connection endpoint
+  // User statistics route
+  app.get('/api/users/stats', async (req, res) => {
+    try {
+      const userId = 1; // In production this would come from auth
+      const userRights = await storage.getRightsByCreator(userId);
+      
+      const stats = {
+        totalRevenue: "0.00",
+        pendingRevenue: "0.00", 
+        totalRights: userRights.length,
+        activeListings: userRights.filter(r => r.isListed && r.verificationStatus === 'verified').length,
+        pendingVerification: userRights.filter(r => r.verificationStatus === 'pending').length,
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      res.status(500).json({ error: 'Failed to fetch user stats' });
+    }
+  });
+
+  // User activity route  
+  app.get('/api/users/activity', async (req, res) => {
+    try {
+      const userId = 1; // In production this would come from auth
+      const userTransactions = await storage.getTransactionsByUser(userId);
+      
+      const activity = userTransactions.slice(0, 10).map(t => ({
+        id: t.id,
+        type: t.type,
+        amount: t.price,
+        date: t.createdAt,
+        rightTitle: 'User Right',
+        buyer: t.fromUserId !== userId ? `User ${t.fromUserId}` : null
+      }));
+      
+      res.json(activity);
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+      res.status(500).json({ error: 'Failed to fetch user activity' });
+    }
+  });
+
+  // Wallet connection endpoint
   app.post("/api/wallet/connect", async (req, res) => {
     try {
       const { walletAddress } = req.body;
@@ -1113,7 +1156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create new user for this wallet
         user = await storage.createUser({
           username: `user_${walletAddress.slice(-6)}`,
-          password: "mock_password",
+          password: "secure_password",
           walletAddress,
         });
       }
