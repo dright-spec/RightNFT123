@@ -199,7 +199,6 @@ export const insertRightSchema = createInsertSchema(rights).pick({
   categoryId: true,
   description: true,
   tags: true,
-  symbol: true,
   imageUrl: true,
   paysDividends: true,
   paymentAddress: true,
@@ -220,6 +219,10 @@ export const insertRightSchema = createInsertSchema(rights).pick({
   minBidAmount: true,
   ownershipDocumentHash: true,
   ownershipDocumentUrl: true,
+}).extend({
+  symbol: z.string().optional(),
+  contentSource: z.string(),
+  verificationStatus: z.string(),
 });
 
 export const insertBidSchema = createInsertSchema(bids).pick({
