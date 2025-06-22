@@ -48,21 +48,21 @@ export function RightCard({ right }: RightCardProps) {
   };
 
   return (
-    <Card className="rights-card-hover cursor-pointer group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 animate-fade-in-up">
-      {/* Beautiful image header */}
-      <div className="relative h-48 overflow-hidden">
+    <Card className="cursor-pointer group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+      {/* OpenSea-style image header */}
+      <div className="relative h-64 overflow-hidden rounded-t-xl">
         <img
           src={imageUrl}
           alt={right.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
           loading="lazy"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            // Fallback to universal default if specific image fails
             target.src = optimizeImageUrl("https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&auto=format&q=80", 'card');
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <div className="absolute top-3 left-3">
           <Badge className={`${getBadgeColor(right.type)} backdrop-blur-sm`}>
             {rightLabel}
