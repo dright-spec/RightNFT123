@@ -912,6 +912,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = insertRightSchema.parse(req.body);
       
+      // Ensure user exists - create anonymous user if needed
+      let user = await storage.getUser(mockUserId);
+      if (!user) {
+        console.log('User not found, creating anonymous user with ID:', mockUserId);
+        try {
+          user = await storage.createUser({
+            username: `user_${mockUserId}`,
+            email: `user_${mockUserId}@dright.com`,
+            walletAddress: null,
+            bio: 'Demo user for production testing',
+            isVerified: false
+          });
+          console.log('Created user:', user);
+        } catch (createError) {
+          console.error('Failed to create user:', createError);
+          // Try to get the user again in case it was created by another request
+          user = await storage.getUser(mockUserId);
+          if (!user) {
+            throw new Error('Unable to create or find user');
+          }
+        }
+      }
+      
       const right = await storage.createRight({
         ...validatedData,
         creatorId: mockUserId,
