@@ -23,6 +23,7 @@ import SecureMusicVerifier from "@/components/secure-music-verifier";
 import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle, Clock } from "lucide-react";
 import { z } from "zod";
+import { getDefaultNFTImage } from "@/lib/image-utils";
 
 // Extended form schema for the create right page
 const createRightFormSchema = insertRightSchema.extend({
