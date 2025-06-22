@@ -1355,8 +1355,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.verifiedBy = 'Dright Team';
       }
 
-      await storage.updateRight(parseInt(id), updateData);
-      res.json({ message: "Verification status updated successfully" });
+      const rightId = parseInt(id);
+      const updatedRight = await storage.updateRight(rightId, updateData);
+      
+      if (status === 'verified' && updatedRight) {
+        // Create notification for user - approval only
+        await storage.createNotification({
+          userId: updatedRight.creatorId,
+          type: 'right_approved',
+          title: 'Right Approved!',
+          message: `Your right "${updatedRight.title}" has been approved. You can now mint your NFT when ready.`,
+          relatedRightId: rightId,
+          actionUrl: `/dashboard`
+        });
+      }
+      
+      res.json({ success: true, message: 'Right approved successfully. User can now mint NFT when ready.' });
     } catch (error) {
       console.error("Error updating verification status:", error);
       res.status(500).json({ error: "Failed to update verification status" });

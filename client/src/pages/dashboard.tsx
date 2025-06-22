@@ -317,19 +317,34 @@ export default function Dashboard() {
                         {activity.type === 'bid' && <TrendingUp className="h-4 w-4" />}
                       </div>
                       <div className="flex-1">
-                        <div className="font-medium">{activity.title}</div>
-                        <div className="text-sm text-muted-foreground">{activity.description}</div>
+                        <div className="font-medium">
+                          {activity.type === 'sale' ? 'Right Sold' :
+                           activity.type === 'bid' ? 'Bid Received' :
+                           activity.type === 'mint' ? 'NFT Minted' : 'Transaction'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {activity.rightTitle || `Transaction #${activity.id}`}
+                        </div>
                       </div>
                       <div className="text-right">
                         {activity.amount && (
                           <div className="font-medium text-green-600 dark:text-green-400">
-                            {activity.amount}
+                            {activity.amount} HBAR
                           </div>
                         )}
-                        <div className="text-xs text-muted-foreground">{activity.time}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(activity.date).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No recent activity yet</p>
+                      <p className="text-sm">Start by creating your first right!</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
