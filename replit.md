@@ -2,7 +2,7 @@
 
 ## Overview
 
-Dright is a comprehensive web3 marketplace for tokenizing and trading legal rights as NFTs on the Hedera blockchain. The platform enables creators to mint, verify, and trade intellectual property rights (copyright, royalty, access, ownership, license) as Hedera Token Service (HTS) NFTs with built-in revenue distribution capabilities.
+Dright is a comprehensive web3 marketplace for tokenizing and trading legal rights as NFTs on the Hedera network. The platform enables creators to mint, verify, and trade intellectual property rights (copyright, royalty, access, ownership, license) as Hedera Token Service (HTS) NFTs with built-in revenue distribution capabilities.
 
 ## System Architecture
 
