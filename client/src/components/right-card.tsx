@@ -75,8 +75,8 @@ export function RightCard({ right }: RightCardProps) {
           {right.description}
         </p>
         
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <div className="text-sm text-muted-foreground flex-1 min-w-0">
             {right.paysDividends ? (
               <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 transition-all duration-300 hover:bg-primary/20 hover:scale-105">
                 <TrendingUp className="w-3 h-3 text-primary transition-transform duration-300 group-hover:scale-110" />
@@ -86,9 +86,16 @@ export function RightCard({ right }: RightCardProps) {
               <span className="px-3 py-1 rounded-full bg-muted/50 text-xs transition-all duration-300 hover:bg-muted/70">One-time purchase</span>
             )}
           </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-gradient transition-all duration-300 group-hover:scale-105 break-words">
-              {parseFloat(right.price || '0').toLocaleString()} {right.currency || 'HBAR'}
+          <div className="text-right flex-shrink-0 min-w-0 max-w-[100px]">
+            <div className="text-xs font-bold text-gradient transition-all duration-300 group-hover:scale-105 truncate">
+              {parseFloat(right.price || '0') > 1000000 
+                ? `${(parseFloat(right.price || '0') / 1000000).toFixed(1)}M` 
+                : parseFloat(right.price || '0') > 1000 
+                ? `${(parseFloat(right.price || '0') / 1000).toFixed(1)}K`
+                : parseFloat(right.price || '0').toFixed(0)}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              {right.currency || 'HBAR'}
             </div>
           </div>
         </div>
