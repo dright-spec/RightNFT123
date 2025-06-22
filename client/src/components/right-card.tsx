@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, X, TrendingUp, Sparkles, ArrowRight, FileCheck } from "lucide-react";
 import { VerificationStatusBadge } from "./verification-status-badge";
+import { getDefaultImageForType, getImageWithOverlay } from "@/utils/imageUtils";
 import type { RightWithCreator } from "@shared/schema";
 import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
 
@@ -14,6 +15,7 @@ interface RightCardProps {
 export function RightCard({ right }: RightCardProps) {
   const rightSymbol = rightTypeSymbols[right.type as keyof typeof rightTypeSymbols] || "📄";
   const rightLabel = rightTypeLabels[right.type as keyof typeof rightTypeLabels] || "Unknown";
+  const imageUrl = right.imageUrl || getDefaultImageForType(right.type);
 
   const getBadgeColor = (type: string) => {
     switch (type) {
@@ -34,23 +36,36 @@ export function RightCard({ right }: RightCardProps) {
 
   return (
     <Card className="rights-card-hover cursor-pointer group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:-translate-y-1 animate-fade-in-up">
+      {/* Beautiful image header */}
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={getImageWithOverlay(imageUrl)}
+          alt={right.title}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute top-3 left-3">
+          <Badge className={`${getBadgeColor(right.type)} backdrop-blur-sm`}>
+            {rightLabel}
+          </Badge>
+        </div>
+        <div className="absolute top-3 right-3">
+          <VerificationStatusBadge 
+            status={right.verificationStatus || "pending"}
+            hasFiles={right.contentFileHash ? true : false}
+            isYouTubeVerified={false}
+          />
+        </div>
+      </div>
+      
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
-      <CardContent className="p-6 relative z-10">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 group-hover:animate-pulse-glow">
-              <span className="text-2xl transition-transform duration-300 group-hover:scale-110">{rightSymbol}</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Badge className={`${getBadgeColor(right.type)} transition-all duration-300 hover:scale-105`}>
-                {rightLabel}
-              </Badge>
-              <VerificationStatusBadge 
-                status={right.verificationStatus || "pending"}
-                hasFiles={right.contentFileHash ? true : false}
-                isYouTubeVerified={false}
-              />
+      <CardContent className="p-4 relative z-10">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <span className="text-lg transition-transform duration-300 group-hover:scale-110">{rightSymbol}</span>
             </div>
           </div>
           <div className="flex items-center space-x-1">
@@ -68,10 +83,10 @@ export function RightCard({ right }: RightCardProps) {
           </div>
         </div>
         
-        <h3 className="font-bold text-base text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300 break-words">
+        <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-300 break-words">
           {right.title}
         </h3>
-        <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed transition-all duration-300 group-hover:text-foreground/80 break-words">
+        <p className="text-xs text-muted-foreground mb-3 line-clamp-2 leading-relaxed transition-all duration-300 group-hover:text-foreground/80 break-words">
           {right.description}
         </p>
         
@@ -100,8 +115,8 @@ export function RightCard({ right }: RightCardProps) {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border/50">
-          <div className="flex items-center justify-between mb-3">
+        <div className="pt-3 border-t border-border/50">
+          <div className="flex items-center justify-between mb-2">
             <div className="text-xs text-muted-foreground flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                 <span className="text-xs font-bold text-primary">{right.creator.username.charAt(0).toUpperCase()}</span>
