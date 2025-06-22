@@ -860,7 +860,7 @@ export default function CreateRight() {
         const rightData = {
           ...data,
           symbol: `${data.type.substring(0, 3).toUpperCase()}${Date.now().toString().slice(-3)}`, // Generate unique symbol
-          imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : null,
+          imageUrl: selectedFile ? URL.createObjectURL(selectedFile) : getDefaultNFTImage(data.contentSource, data.type),
           youtubeUrl: youtubeUrl || null,
           verificationStatus: data.contentSource === 'youtube_video' ? (verificationData?.status || "pending") : "pending",
           verificationMethod: data.contentSource === 'youtube_video' ? (verificationData?.method || "manual") : "manual",

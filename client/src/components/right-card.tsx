@@ -4,9 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, X, TrendingUp, Sparkles, ArrowRight, FileCheck } from "lucide-react";
 import { VerificationStatusBadge } from "./verification-status-badge";
-import { getDefaultImageForType, getImageWithOverlay } from "@/utils/imageUtils";
+import { getDefaultNFTImage, optimizeImageUrl } from "@/lib/image-utils";
 import type { RightWithCreator } from "@shared/schema";
 import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
+import { formatCurrency } from "@/lib/utils";
 
 interface RightCardProps {
   right: RightWithCreator;
@@ -15,7 +16,19 @@ interface RightCardProps {
 export function RightCard({ right }: RightCardProps) {
   const rightSymbol = rightTypeSymbols[right.type as keyof typeof rightTypeSymbols] || "📄";
   const rightLabel = rightTypeLabels[right.type as keyof typeof rightTypeLabels] || "Unknown";
-  const imageUrl = right.imageUrl || getDefaultImageForType(right.type);
+  
+  // Get high-quality image with proper fallback handling
+  const getDisplayImage = () => {
+    if (right.imageUrl && right.imageUrl.startsWith('http')) {
+      return optimizeImageUrl(right.imageUrl, 'card');
+    }
+    
+    // Use the new image utility with content source awareness
+    const contentSource = (right as any).contentSource;
+    return optimizeImageUrl(getDefaultNFTImage(contentSource, right.type), 'card');
+  };
+
+  const imageUrl = getDisplayImage();
 
   const getBadgeColor = (type: string) => {
     switch (type) {
@@ -39,12 +52,17 @@ export function RightCard({ right }: RightCardProps) {
       {/* Beautiful image header */}
       <div className="relative h-48 overflow-hidden">
         <img
-          src={getImageWithOverlay(imageUrl)}
+          src={imageUrl}
           alt={right.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            // Fallback to universal default if specific image fails
+            target.src = optimizeImageUrl("https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&auto=format&q=80", 'card');
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute top-3 left-3">
           <Badge className={`${getBadgeColor(right.type)} backdrop-blur-sm`}>
             {rightLabel}
@@ -103,11 +121,7 @@ export function RightCard({ right }: RightCardProps) {
           </div>
           <div className="text-right flex-shrink-0 min-w-0 max-w-[100px]">
             <div className="text-xs font-bold text-gradient transition-all duration-300 group-hover:scale-105 truncate">
-              {parseFloat(right.price || '0') > 1000000 
-                ? `${(parseFloat(right.price || '0') / 1000000).toFixed(1)}M` 
-                : parseFloat(right.price || '0') > 1000 
-                ? `${(parseFloat(right.price || '0') / 1000).toFixed(1)}K`
-                : parseFloat(right.price || '0').toFixed(0)}
+              {formatCurrency(parseFloat(right.price || '0'))}
             </div>
             <div className="text-xs text-muted-foreground truncate">
               {right.currency || 'HBAR'}
