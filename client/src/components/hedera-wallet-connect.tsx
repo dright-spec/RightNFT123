@@ -45,9 +45,11 @@ export function HederaWalletConnect() {
       })
     } catch (error) {
       console.error('Wallet connection failed:', error)
+      const errorMessage = error instanceof Error ? error.message : `Failed to connect to ${wallet.name}. Please try again.`
+      
       toast({
         title: "Connection Failed",
-        description: `Failed to connect to ${wallet.name}. Please try again.`,
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -158,6 +160,16 @@ export function HederaWalletConnect() {
             <div className="text-xs text-muted-foreground">
               <p className="font-medium mb-1">New to Hedera wallets?</p>
               <p>HashPack is the most popular choice for Hedera users. It's free and easy to set up.</p>
+              <p className="mt-1">
+                <a 
+                  href="https://www.hashpack.app/download" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Download HashPack →
+                </a>
+              </p>
             </div>
           </div>
         </div>
