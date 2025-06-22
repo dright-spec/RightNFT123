@@ -12,6 +12,7 @@ import { CheckCircle, Clock, AlertTriangle, FileText, Youtube, Shield, Zap } fro
 
 interface VerificationWorkflowProps {
   rightType: string;
+  contentSource?: string;
   initialYouTubeUrl?: string;
   onVerificationComplete: (verificationData: VerificationData) => void;
   onCanMintNFT: (canMint: boolean) => void;
@@ -26,11 +27,15 @@ interface VerificationData {
   verifiedAt?: Date;
 }
 
-export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificationComplete, onCanMintNFT }: VerificationWorkflowProps) {
+export function VerificationWorkflow({ rightType, contentSource, initialYouTubeUrl, onVerificationComplete, onCanMintNFT }: VerificationWorkflowProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [verificationMethod, setVerificationMethod] = useState<'youtube' | 'manual' | 'hybrid'>(() => {
-    // Auto-select YouTube verification if URL is provided
-    return initialYouTubeUrl && initialYouTubeUrl.trim() ? 'youtube' : 'manual';
+    // Auto-select YouTube verification if URL is provided and content is YouTube
+    if (contentSource === 'youtube_video' && initialYouTubeUrl && initialYouTubeUrl.trim()) {
+      return 'youtube';
+    }
+    // For non-YouTube content, default to manual verification
+    return 'manual';
   });
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [youtubeVerification, setYoutubeVerification] = useState<any>(null);
@@ -216,52 +221,54 @@ export function VerificationWorkflow({ rightType, initialYouTubeUrl, onVerificat
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4">
-                {/* YouTube Verification Option */}
-                <div 
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    verificationMethod === 'youtube' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/50'
-                  }`}
-                  onClick={() => setVerificationMethod('youtube')}
-                >
-                  <div className="flex items-start gap-3">
-                    <Youtube className="w-6 h-6 text-red-500 mt-1" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium">YouTube Auto-Verification</h3>
-                        <Badge className="bg-green-100 text-green-800 border-green-300">
-                          <Zap className="w-3 h-3 mr-1" />
-                          Instant
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        <strong>Perfect for YouTube videos!</strong> Connect your Google account to automatically verify you own the video. Your NFT will be ready to mint immediately.
-                      </p>
-                      <div className="bg-green-50 p-3 rounded-md mb-3">
-                        <p className="text-xs text-green-800 font-medium mb-2">How YouTube verification works:</p>
-                        <ol className="text-xs text-green-700 space-y-1 list-decimal list-inside">
-                          <li>Paste your YouTube video URL</li>
-                          <li>Sign in with your Google account</li>
-                          <li>We verify you own the channel</li>
-                          <li>Instant approval - mint your NFT right away!</li>
-                        </ol>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-green-700">
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          Instant approval
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Shield className="w-3 h-3" />
-                          100% secure
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          No waiting
-                        </span>
+                {/* YouTube Verification Option - Only show for YouTube content */}
+                {contentSource === 'youtube_video' && (
+                  <div 
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      verificationMethod === 'youtube' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/50'
+                    }`}
+                    onClick={() => setVerificationMethod('youtube')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Youtube className="w-6 h-6 text-red-500 mt-1" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-medium">YouTube Auto-Verification</h3>
+                          <Badge className="bg-green-100 text-green-800 border-green-300">
+                            <Zap className="w-3 h-3 mr-1" />
+                            Instant
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          <strong>Perfect for YouTube videos!</strong> Connect your Google account to automatically verify you own the video. Your NFT will be ready to mint immediately.
+                        </p>
+                        <div className="bg-green-50 p-3 rounded-md mb-3">
+                          <p className="text-xs text-green-800 font-medium mb-2">How YouTube verification works:</p>
+                          <ol className="text-xs text-green-700 space-y-1 list-decimal list-inside">
+                            <li>Paste your YouTube video URL</li>
+                            <li>Sign in with your Google account</li>
+                            <li>We verify you own the channel</li>
+                            <li>Instant approval - mint your NFT right away!</li>
+                          </ol>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-green-700">
+                          <span className="flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Instant approval
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Shield className="w-3 h-3" />
+                            100% secure
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            No waiting
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Manual Verification Option */}
                 <div 
