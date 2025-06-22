@@ -1,32 +1,16 @@
 import { http, createConfig } from 'wagmi'
-import { mainnet, sepolia, arbitrum, polygon, base, optimism } from 'wagmi/chains'
-import { injected, metaMask, walletConnect } from 'wagmi/connectors'
+import { mainnet, sepolia } from 'wagmi/chains'
+import { injected, metaMask } from 'wagmi/connectors'
 
-// Get environment variables with Vite's import.meta.env
-const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'demo-project-id'
-
-// Simple wagmi configuration without Web3Modal dependencies
+// Simplified wagmi configuration without WalletConnect to avoid API issues
 export const wagmiConfig = createConfig({
-  chains: [mainnet, sepolia, arbitrum, polygon, base, optimism],
+  chains: [mainnet, sepolia],
   connectors: [
     injected(),
     metaMask(),
-    walletConnect({
-      projectId,
-      metadata: {
-        name: 'Dright - Rights Marketplace',
-        description: 'Hedera NFT marketplace for tokenizing legal rights',
-        url: typeof window !== 'undefined' ? window.location.origin : 'https://dright.com',
-        icons: ['/favicon.ico']
-      }
-    }),
   ],
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http(),
-    [arbitrum.id]: http(),
-    [polygon.id]: http(),
-    [base.id]: http(),
-    [optimism.id]: http(),
   },
 })

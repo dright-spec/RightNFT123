@@ -81,17 +81,15 @@ export function SimpleWalletConnect() {
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">
                       {connector.name === 'MetaMask' && '🦊'}
-                      {connector.name === 'WalletConnect' && '🔗'}
                       {connector.name === 'Injected' && '🌐'}
-                      {(!['MetaMask', 'WalletConnect', 'Injected'].includes(connector.name)) && '💳'}
+                      {(!['MetaMask', 'Injected'].includes(connector.name)) && '💳'}
                     </div>
                     <div>
                       <h3 className="font-medium">{connector.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         {connector.name === 'MetaMask' && 'Popular browser extension wallet'}
-                        {connector.name === 'WalletConnect' && 'Connect via QR code or deep link'}
                         {connector.name === 'Injected' && 'Browser wallet extension'}
-                        {(!['MetaMask', 'WalletConnect', 'Injected'].includes(connector.name)) && 'Crypto wallet'}
+                        {(!['MetaMask', 'Injected'].includes(connector.name)) && 'Crypto wallet'}
                       </p>
                     </div>
                   </div>
