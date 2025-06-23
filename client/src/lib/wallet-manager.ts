@@ -1,4 +1,4 @@
-import { connectWalletConnect, isWalletConnectAvailable } from './walletconnect';
+// Removed problematic WalletConnect import
 import { config } from './env';
 
 export interface WalletInfo {
@@ -129,6 +129,25 @@ async function connectMetaMask(): Promise<string> {
     }
     throw error;
   }
+}
+
+// Simplified WalletConnect that opens a prompt for manual entry
+async function connectWalletConnect(): Promise<string> {
+  const address = prompt('Enter your wallet address (0x... for Ethereum or 0.0.xxx for Hedera):');
+  
+  if (!address) {
+    throw new Error('Connection cancelled by user');
+  }
+  
+  // Basic validation
+  const isEthAddress = /^0x[a-fA-F0-9]{40}$/.test(address);
+  const isHederaAccount = /^0\.0\.\d+$/.test(address);
+  
+  if (!isEthAddress && !isHederaAccount) {
+    throw new Error('Invalid address format. Use 0x... for Ethereum or 0.0.xxx for Hedera');
+  }
+  
+  return address;
 }
 
 // Blade wallet connection

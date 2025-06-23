@@ -1,7 +1,7 @@
 // Environment configuration for client-side
 export const config = {
   walletConnect: {
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || process.env.WALLETCONNECT_PROJECT_ID,
+    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
   }
 };
 
