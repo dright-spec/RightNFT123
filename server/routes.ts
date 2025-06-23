@@ -689,13 +689,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Start real Hedera minting process - user initiated
-      const mintingResult = await triggerUserControlledNFTMinting(right);
+      console.log(`User initiated NFT minting for right ${rightId}: ${right.title}`);
       
-      res.json({
-        success: true,
-        message: "NFT minting initiated by user",
-        minting: mintingResult
-      });
+      try {
+        const mintingResult = await triggerUserControlledNFTMinting(right);
+        
+        res.json({
+          success: true,
+          message: "NFT minting completed successfully",
+          minting: mintingResult
+        });
+      } catch (mintingError) {
+        console.error(`Minting failed for right ${rightId}:`, mintingError);
+        
+        // Update minting status to failed
+        await storage.updateRight(rightId, { mintingStatus: "failed" });
+        
+        throw mintingError;
+      }
 
     } catch (error) {
       console.error("Error initiating NFT minting:", error);
