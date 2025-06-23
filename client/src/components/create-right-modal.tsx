@@ -623,9 +623,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       let shouldMintNFT = false;
 
       // Check if this is YouTube content that can be auto-verified
-      if (data.contentUrl && data.contentUrl.includes("youtube.com")) {
+      if (youtubeUrl && youtubeUrl.includes("youtube.com")) {
         try {
-          const videoId = data.contentUrl.split("v=")[1]?.split("&")[0];
+          const videoId = extractYouTubeVideoId(youtubeUrl);
           if (videoId) {
             setProgressMessage("Verifying YouTube ownership...");
             setUploadProgress(40);
@@ -633,15 +633,22 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
             const verificationResponse = await fetch(`/api/youtube/verify-ownership/${videoId}`, {
               method: 'POST'
             });
+            
+            if (!verificationResponse.ok) {
+              throw new Error(`Verification failed: ${verificationResponse.status}`);
+            }
+            
             const verificationResult = await verificationResponse.json();
             
-            if (verificationResult.canVerify) {
+            if (verificationResult.canVerify && verificationResult.verified) {
               verificationStatus = "verified";
               shouldMintNFT = true;
+              setProgressMessage("YouTube ownership verified successfully!");
             }
           }
         } catch (error) {
-          console.log("YouTube verification failed, will remain pending");
+          console.error("YouTube verification failed:", error);
+          setProgressMessage("YouTube verification failed, will remain pending for admin review");
         }
       }
 
