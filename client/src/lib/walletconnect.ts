@@ -1,8 +1,10 @@
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import { createModal } from '@walletconnect/modal';
 
+import { config } from './env';
+
 // WalletConnect configuration for real wallet connections
-const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+const projectId = config.walletConnect.projectId;
 
 if (!projectId) {
   console.warn('WalletConnect Project ID not found. Some wallet features may not work.');

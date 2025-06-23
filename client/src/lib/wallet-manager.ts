@@ -1,4 +1,5 @@
 import { connectWalletConnect, isWalletConnectAvailable } from './walletconnect';
+import { config } from './env';
 
 export interface WalletInfo {
   id: string;
@@ -43,7 +44,7 @@ export function detectAvailableWallets(): WalletInfo[] {
       name: 'WalletConnect',
       description: 'Connect with 300+ wallets via QR code',
       icon: '🔗',
-      isAvailable: isWalletConnectAvailable(),
+      isAvailable: !!config.walletConnect.projectId,
       downloadUrl: 'https://walletconnect.com/'
     },
     {
