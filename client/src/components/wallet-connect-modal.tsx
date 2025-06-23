@@ -31,7 +31,8 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
   const detectWalletStatus = (walletId: string): 'available' | 'not_installed' => {
     switch (walletId) {
       case 'hashpack':
-        return (window as any).hashconnect ? 'available' : 'not_installed';
+        // HashPack injects itself as window.hashpack, not hashconnect
+        return (window as any).hashpack ? 'available' : 'not_installed';
       case 'blade':
         return (window as any).bladeWallet ? 'available' : 'not_installed';
       case 'metamask':
@@ -125,33 +126,29 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
   };
 
   const connectHashPack = async (): Promise<string> => {
-    if (!(window as any).hashconnect) {
-      throw new Error('HashPack wallet not installed');
+    if (!(window as any).hashpack) {
+      throw new Error('HashPack wallet not installed. Please install the HashPack browser extension.');
     }
 
-    // Initialize HashConnect
-    const hashconnect = (window as any).hashconnect;
-    const appMetadata = {
-      name: "Dright",
-      description: "Hedera NFT Rights Marketplace",
-      icon: window.location.origin + "/favicon.ico"
-    };
-
-    await hashconnect.init(appMetadata);
-    
-    // Get available pairings or create new one
-    const pairings = hashconnect.getPairings();
-    if (pairings.length > 0) {
-      return pairings[0].accountIds[0];
+    try {
+      // Use the HashPack injected API directly
+      const hashpack = (window as any).hashpack;
+      
+      // Request connection to HashPack
+      const connectionResponse = await hashpack.requestAccountInfo();
+      
+      if (!connectionResponse || !connectionResponse.accountId) {
+        throw new Error('Failed to get account information from HashPack');
+      }
+      
+      const accountId = connectionResponse.accountId;
+      console.log('HashPack connected successfully:', accountId);
+      
+      return accountId;
+    } catch (error) {
+      console.error('HashPack connection error:', error);
+      throw new Error(`HashPack connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-
-    // Create new pairing
-    const pairing = await hashconnect.pair();
-    if (pairing.accountIds && pairing.accountIds.length > 0) {
-      return pairing.accountIds[0];
-    }
-
-    throw new Error('Failed to connect HashPack wallet');
   };
 
   const connectBlade = async (): Promise<string> => {
