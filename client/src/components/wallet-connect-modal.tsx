@@ -133,7 +133,7 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
     try {
       const hashpack = (window as any).hashpack;
       
-      // Use HashPack's requestAccountInfo method to connect and get account
+      // Request account info which should prompt the user to connect if not already connected
       const result = await hashpack.requestAccountInfo();
       
       if (!result || !result.accountId) {
@@ -142,6 +142,11 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
       
       const accountId = result.accountId;
       console.log('HashPack connected successfully:', accountId);
+      
+      // Verify this is a real Hedera account ID format
+      if (!/^0\.0\.\d+$/.test(accountId)) {
+        throw new Error('Invalid Hedera account ID format received from HashPack');
+      }
       
       // Store connection state
       localStorage.setItem('hashpack_connected', 'true');
