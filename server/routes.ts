@@ -476,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin verification endpoint that triggers automatic NFT minting
+  // Admin verification endpoint - only verifies, does not mint NFT
   app.post("/api/admin/rights/:id/verify", async (req, res) => {
     try {
       const rightId = parseInt(req.params.id);
@@ -486,7 +486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid right ID" });
       }
 
-      // Update right status to verified
+      // Update right status to verified - user can now mint NFT when ready
       const updatedRight = await storage.updateRight(rightId, {
         verificationStatus: "verified",
         verifiedAt: new Date(),
@@ -498,14 +498,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Right not found" });
       }
 
-      // Trigger automatic NFT minting process asynchronously
-      triggerAutomaticNFTMinting(updatedRight).catch((mintError: any) => {
-        console.error("NFT minting failed after verification:", mintError);
-      });
-      
       res.json({
         success: true,
-        message: "Right verified and NFT minting initiated",
+        message: "Right verified successfully. User can now mint NFT when ready.",
         right: updatedRight
       });
     } catch (error) {
@@ -517,9 +512,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Real-time minting status tracking
   const mintingStatus = new Map<number, any>();
 
-  // Automatic NFT minting function with real-time status updates
-  async function triggerAutomaticNFTMinting(right: any) {
-    console.log(`Starting automatic NFT minting for right ${right.id}: ${right.title}`);
+  // Manual NFT minting function triggered by user after admin approval
+  async function triggerUserControlledNFTMinting(right: any) {
+    console.log(`Starting user-controlled NFT minting for right ${right.id}: ${right.title}`);
     
     // Initialize minting status
     mintingStatus.set(right.id, {
@@ -527,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       status: "processing",
       currentStep: 0,
       steps: [
-        { id: "verification", title: "Ownership Verification", status: "completed" },
+        { id: "verification", title: "Admin Verification", status: "completed" },
         { id: "metadata", title: "Metadata Preparation", status: "processing" },
         { id: "ipfs", title: "IPFS Upload", status: "pending" },
         { id: "token-creation", title: "Hedera Token Creation", status: "pending" },
@@ -693,12 +688,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
-      // Start real Hedera minting process
-      const mintingResult = await triggerAutomaticNFTMinting(right);
+      // Start real Hedera minting process - user initiated
+      const mintingResult = await triggerUserControlledNFTMinting(right);
       
       res.json({
         success: true,
-        message: "NFT minting initiated",
+        message: "NFT minting initiated by user",
         minting: mintingResult
       });
 

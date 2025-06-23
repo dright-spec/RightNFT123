@@ -12,6 +12,7 @@ import { VerificationBadge } from "@/components/verification-badge";
 import { AdminLogin } from "@/components/admin-login";
 import { PerformanceDashboard } from "@/components/admin/performance-dashboard";
 import { NFTViewer } from "@/components/nft-viewer";
+import { AdminDocumentViewer } from "@/components/admin-document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { HederaTestPanel } from "@/components/hedera-test-panel";
@@ -731,70 +732,8 @@ export default function Admin() {
                                           </div>
                                         </div>
 
-                                        {/* File Attachments Section */}
-                                        <Card className="border-2 border-dashed border-gray-300">
-                                          <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                              <FileText className="w-5 h-5" />
-                                              Supporting Documents & Files
-                                            </CardTitle>
-                                          </CardHeader>
-                                          <CardContent>
-                                            {/* Simulated file display - in real implementation, this would show actual uploaded files */}
-                                            <div className="space-y-3">
-                                              <div className="text-sm text-gray-600 mb-3">
-                                                Review all supporting documentation before making a verification decision:
-                                              </div>
-                                              
-                                              {/* Example files based on content source */}
-                                              {selectedRight?.contentSource === 'YouTube Video' ? (
-                                                <div className="space-y-2">
-                                                  <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded">
-                                                    <Video className="w-5 h-5 text-red-600" />
-                                                    <div className="flex-1">
-                                                      <div className="font-medium text-sm">YouTube Video Link</div>
-                                                      <div className="text-xs text-gray-600">Video ownership verification required</div>
-                                                    </div>
-                                                    <Button variant="outline" size="sm">View Video</Button>
-                                                  </div>
-                                                  <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded">
-                                                    <FileText className="w-5 h-5 text-green-600" />
-                                                    <div className="flex-1">
-                                                      <div className="font-medium text-sm">Channel Ownership Proof</div>
-                                                      <div className="text-xs text-gray-600">Screenshot or verification code</div>
-                                                    </div>
-                                                    <Button variant="outline" size="sm">Review Proof</Button>
-                                                  </div>
-                                                </div>
-                                              ) : selectedRight?.contentSource === 'Music Track' ? (
-                                                <div className="space-y-2">
-                                                  <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded">
-                                                    <Music className="w-5 h-5 text-purple-600" />
-                                                    <div className="flex-1">
-                                                      <div className="font-medium text-sm">Audio File</div>
-                                                      <div className="text-xs text-gray-600">Original music track for verification</div>
-                                                    </div>
-                                                    <Button variant="outline" size="sm">Play Audio</Button>
-                                                  </div>
-                                                  <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                                    <FileText className="w-5 h-5 text-blue-600" />
-                                                    <div className="flex-1">
-                                                      <div className="font-medium text-sm">Copyright Documentation</div>
-                                                      <div className="text-xs text-gray-600">Proof of authorship and ownership</div>
-                                                    </div>
-                                                    <Button variant="outline" size="sm">View Docs</Button>
-                                                  </div>
-                                                </div>
-                                              ) : (
-                                                <div className="text-center py-6 text-gray-500">
-                                                  <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                                  <div className="text-sm">No supporting files uploaded</div>
-                                                  <div className="text-xs">Manual verification required</div>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </CardContent>
-                                        </Card>
+                                        {/* File Attachments Section - Now using AdminDocumentViewer */}
+                                        {selectedRight && <AdminDocumentViewer right={selectedRight} />}
 
                                         {/* Verification Decision Section */}
                                         <Card className="border-2 border-yellow-300 bg-yellow-50">
@@ -817,36 +756,39 @@ export default function Admin() {
                                               />
                                             </div>
 
-                                            {/* Verification Checklist */}
-                                            <div className="bg-white p-4 rounded border">
-                                              <div className="text-sm font-medium mb-3">Verification Checklist</div>
-                                              <div className="space-y-2 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                  <input type="checkbox" className="rounded" />
-                                                  <span>Creator identity and ownership verified</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <input type="checkbox" className="rounded" />
-                                                  <span>Content authenticity confirmed</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <input type="checkbox" className="rounded" />
-                                                  <span>Supporting documentation reviewed</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <input type="checkbox" className="rounded" />
-                                                  <span>No copyright conflicts detected</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <input type="checkbox" className="rounded" />
-                                                  <span>Pricing and terms are reasonable</span>
+                                            {/* Verification Actions */}
+                                            <div className="flex gap-3">
+                                              <Button
+                                                onClick={() => handleVerification("verified")}
+                                                disabled={verifyRightMutation.isPending}
+                                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                              >
+                                                {verifyRightMutation.isPending ? "Processing..." : "✅ Approve Rights"}
+                                              </Button>
+                                              <Button
+                                                onClick={() => handleVerification("rejected")}
+                                                disabled={verifyRightMutation.isPending}
+                                                variant="destructive"
+                                                className="flex-1"
+                                              >
+                                                {verifyRightMutation.isPending ? "Processing..." : "❌ Reject Rights"}
+                                              </Button>
+                                            </div>
+                                            
+                                            {/* User-Controlled Minting Notice */}
+                                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                              <div className="flex items-start gap-3">
+                                                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                                <div>
+                                                  <p className="font-medium text-blue-800 mb-1">User-Controlled Minting</p>
+                                                  <p className="text-sm text-blue-700">
+                                                    Approval only verifies ownership rights. The user controls when to mint their NFT and pays the minting fees.
+                                                  </p>
                                                 </div>
                                               </div>
                                             </div>
-
-                                            {/* Warning Banner */}
-                                            <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                                              <div className="flex items-start gap-3">
+                                          </CardContent>
+                                        </Card>
                                                 <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                                                 <div className="text-sm">
                                                   <div className="font-medium text-red-800 mb-1">Critical Decision Point</div>
