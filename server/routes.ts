@@ -1749,31 +1749,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/google/client-id', (req, res) => {
     res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
   });
-          title: video.snippet.title,
-          channelId: video.snippet.channelId,
-          channelTitle: video.snippet.channelTitle,
-          publishedAt: video.snippet.publishedAt,
-          status: video.status
-        },
-        channel: channelData ? {
-          id: channelData.id,
-          title: channelData.snippet.title,
-          customUrl: channelData.snippet.customUrl,
-          subscriberCount: channelData.statistics?.subscriberCount,
-          videoCount: channelData.statistics?.videoCount
-        } : null,
-        message: 'Video found but ownership not yet verified. Choose a verification method.'
-      });
-    } catch (error) {
-      console.error('Video verification error:', error);
-      res.status(500).json({ error: 'Failed to verify video' });
-    }
-  });
 
-  // Google OAuth endpoints
-  app.get('/api/auth/google/client-id', (req, res) => {
-    res.json({ clientId: process.env.GOOGLE_CLIENT_ID });
-  });
+  // Exchange authorization code for access token
+  app.post('/api/auth/google/token', async (req, res) => {
+    try {
+      const { code } = req.body;
 
   // Exchange authorization code for access token
   app.post('/api/auth/google/token', async (req, res) => {
