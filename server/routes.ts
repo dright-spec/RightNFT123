@@ -1754,11 +1754,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/google/token', async (req, res) => {
     try {
       const { code } = req.body;
-
-  // Exchange authorization code for access token
-  app.post('/api/auth/google/token', async (req, res) => {
-    try {
-      const { code } = req.body;
       
       if (!code) {
         return res.status(400).json({ error: 'Authorization code required' });
@@ -2271,8 +2266,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // For Autoscale deployment, return the Express app directly
-  // The server will be started in index.ts with proper port binding
   const httpServer = createServer(app);
   return httpServer;
 }
