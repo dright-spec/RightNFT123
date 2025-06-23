@@ -131,22 +131,29 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
     }
 
     try {
-      // Use the HashPack injected API directly
       const hashpack = (window as any).hashpack;
       
-      // Request connection to HashPack
-      const connectionResponse = await hashpack.requestAccountInfo();
+      // Use HashPack's requestAccountInfo method to connect and get account
+      const result = await hashpack.requestAccountInfo();
       
-      if (!connectionResponse || !connectionResponse.accountId) {
+      if (!result || !result.accountId) {
         throw new Error('Failed to get account information from HashPack');
       }
       
-      const accountId = connectionResponse.accountId;
+      const accountId = result.accountId;
       console.log('HashPack connected successfully:', accountId);
+      
+      // Store connection state
+      localStorage.setItem('hashpack_connected', 'true');
+      localStorage.setItem('hashpack_account', accountId);
       
       return accountId;
     } catch (error) {
       console.error('HashPack connection error:', error);
+      // Handle user rejection gracefully
+      if (error.message?.includes('User rejected') || error.code === 4001) {
+        throw new Error('Connection cancelled by user');
+      }
       throw new Error(`HashPack connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };

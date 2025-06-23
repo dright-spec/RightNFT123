@@ -251,26 +251,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Wallet authentication endpoint
   app.post('/api/auth/wallet', async (req, res) => {
     try {
-      const { walletAddress } = req.body;
+      const { walletType, address } = req.body;
       
-      if (!walletAddress) {
+      if (!address) {
         return res.status(400).json({ message: 'Wallet address required' });
       }
 
-      // Store wallet address in session
-      req.session.walletAddress = walletAddress.toLowerCase();
+      // Validate Hedera account ID format (0.0.xxxxx)
+      const hederaAccountRegex = /^0\.0\.\d+$/;
+      const isValidHederaAccount = hederaAccountRegex.test(address);
       
-      // Check if user exists
-      const existingUser = await storage.getUserByWalletAddress(walletAddress.toLowerCase());
-      if (existingUser) {
-        req.session.userId = existingUser.id;
+      // Validate Ethereum address format (0x...)
+      const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
+      const isValidEthAddress = ethAddressRegex.test(address);
+      
+      if (!isValidHederaAccount && !isValidEthAddress) {
+        return res.status(400).json({ 
+          message: 'Invalid wallet address format. Expected Hedera account ID (0.0.xxxxx) or Ethereum address (0x...)' 
+        });
       }
 
-      res.json({ 
-        success: true, 
-        hasProfile: !!existingUser,
-        user: existingUser 
-      });
+      console.log(`Wallet authentication: ${walletType} - ${address}`);
+
+      // Store wallet info in session
+      req.session.walletAddress = address;
+      req.session.walletType = walletType;
+      
+      // Check if user exists
+      let existingUser = await storage.getUserByWalletAddress(address);
+      
+      if (existingUser) {
+        req.session.userId = existingUser.id;
+        return res.json({ 
+          success: true, 
+          hasProfile: true,
+          user: existingUser,
+          isAuthenticated: true
+        });
+      }
+
+      // Create new user for this wallet
+      try {
+        const newUser = await storage.createUser({
+          username: `${walletType}_${address.slice(-8)}`,
+          email: `${address}@dright.com`,
+          walletAddress: address,
+          bio: `User connected via ${walletType || 'wallet'}`,
+          isVerified: walletType === 'hashpack'
+        });
+        
+        req.session.userId = newUser.id;
+        console.log(`New user created for wallet ${address}:`, newUser.id);
+        
+        return res.json({
+          success: true,
+          hasProfile: true,
+          user: newUser,
+          isAuthenticated: true,
+          isNewUser: true
+        });
+      } catch (createError) {
+        console.error('Failed to create user:', createError);
+        return res.json({
+          success: true,
+          hasProfile: false,
+          walletAddress: address,
+          isAuthenticated: false
+        });
+      }
     } catch (error) {
       console.error('Wallet auth error:', error);
       res.status(500).json({ message: 'Authentication failed' });
