@@ -644,6 +644,8 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
               verificationStatus = "verified";
               shouldMintNFT = true;
               setProgressMessage("YouTube ownership verified successfully!");
+            } else {
+              console.log("Verification result:", verificationResult);
             }
           }
         } catch (error) {
