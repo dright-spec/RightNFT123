@@ -789,48 +789,6 @@ export default function Admin() {
                                             </div>
                                           </CardContent>
                                         </Card>
-                                                <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                                                <div className="text-sm">
-                                                  <div className="font-medium text-red-800 mb-1">Critical Decision Point</div>
-                                                  <div className="text-red-700 leading-relaxed">
-                                                    <strong>APPROVAL</strong> will immediately trigger NFT minting on Hedera blockchain and make this right tradeable. 
-                                                    This action is <strong>irreversible</strong>. Ensure all verification steps are complete before proceeding.
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-
-                                            {/* Action Buttons */}
-                                            <div className="flex gap-3 pt-4">
-                                              <Button
-                                                onClick={() => handleVerification("verified")}
-                                                disabled={verifyRightMutation.isPending}
-                                                className="bg-green-600 hover:bg-green-700 flex-1 h-12"
-                                              >
-                                                {verifyRightMutation.isPending ? (
-                                                  <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    Minting Live NFT on Hedera...
-                                                  </>
-                                                ) : (
-                                                  <>
-                                                    <CheckCircle className="w-5 h-5 mr-2" />
-                                                    APPROVE RIGHT
-                                                  </>
-                                                )}
-                                              </Button>
-                                              <Button
-                                                variant="destructive"
-                                                onClick={() => handleVerification("rejected")}
-                                                disabled={verifyRightMutation.isPending}
-                                                className="flex-1 h-12"
-                                              >
-                                                <XCircle className="w-5 h-5 mr-2" />
-                                                REJECT RIGHT
-                                              </Button>
-                                            </div>
-                                          </CardContent>
-                                        </Card>
                                       </div>
                                     </DialogContent>
                                   </Dialog>
