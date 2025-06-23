@@ -53,7 +53,7 @@ export const rights = pgTable("rights", {
   categoryId: integer("category_id").references(() => categories.id),
   description: text("description").notNull(),
   tags: text("tags").array().default([]), // searchable tags
-  symbol: text("symbol").notNull(), // 📄, 💰, 🔐, etc.
+  symbol: text("symbol"), // 📄, 💰, 🔐, etc.
   imageUrl: text("image_url"),
   paysDividends: boolean("pays_dividends").default(false),
   paymentAddress: text("payment_address"),
