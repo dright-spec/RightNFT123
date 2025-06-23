@@ -20,13 +20,28 @@ export interface ConnectedWallet {
 
 // Detect available wallets in the browser
 export function detectAvailableWallets(): WalletInfo[] {
+  // More comprehensive HashPack detection
+  const hasHashPack = !!(
+    (window as any).hashpack || 
+    (window as any).HashPack || 
+    (window as any).hashconnect
+  );
+  
+  // Debug HashPack detection
+  console.log('HashPack detection:', {
+    hashpack: !!(window as any).hashpack,
+    HashPack: !!(window as any).HashPack,
+    hashconnect: !!(window as any).hashconnect,
+    detected: hasHashPack
+  });
+  
   const wallets: WalletInfo[] = [
     {
       id: 'hashpack',
       name: 'HashPack',
       description: 'Official Hedera wallet with native HTS support',
       icon: '🟡',
-      isAvailable: !!(window as any).hashpack,
+      isAvailable: hasHashPack,
       isRecommended: true,
       isHederaNative: true,
       downloadUrl: 'https://www.hashpack.app/'
@@ -42,9 +57,9 @@ export function detectAvailableWallets(): WalletInfo[] {
     {
       id: 'walletconnect',
       name: 'WalletConnect',
-      description: 'Connect with 300+ wallets via QR code',
+      description: 'Connect manually with wallet address',
       icon: '🔗',
-      isAvailable: !!config.walletConnect.projectId,
+      isAvailable: true, // Always available as manual entry
       downloadUrl: 'https://walletconnect.com/'
     },
     {
@@ -52,7 +67,7 @@ export function detectAvailableWallets(): WalletInfo[] {
       name: 'Blade Wallet',
       description: 'Multi-chain wallet with Hedera support',
       icon: '⚔️',
-      isAvailable: !!(window as any).bladeWallet,
+      isAvailable: !!(window as any).bladeWallet || !!(window as any).blade,
       isHederaNative: true,
       downloadUrl: 'https://bladewallet.io/'
     }
@@ -77,33 +92,50 @@ export async function connectToWallet(walletId: string): Promise<string> {
   }
 }
 
-// HashPack connection
+// HashPack connection with multiple detection methods
 async function connectHashPack(): Promise<string> {
-  if (!(window as any).hashpack) {
-    throw new Error('HashPack wallet not installed. Please install the HashPack browser extension.');
+  // Try multiple HashPack detection methods
+  const hashpack = (window as any).hashpack || (window as any).HashPack;
+  
+  if (!hashpack) {
+    throw new Error('HashPack wallet not detected. Please install HashPack browser extension and refresh the page.');
   }
 
   try {
-    const hashpack = (window as any).hashpack;
+    console.log('Attempting HashPack connection...');
     
-    // Request account info which prompts connection if needed
-    const result = await hashpack.requestAccountInfo();
-    
-    if (!result || !result.accountId) {
-      throw new Error('Failed to get account information from HashPack');
+    // Try requestAccountInfo method first
+    if (hashpack.requestAccountInfo) {
+      const result = await hashpack.requestAccountInfo();
+      
+      if (result && result.accountId) {
+        // Validate Hedera account format
+        if (!/^0\.0\.\d+$/.test(result.accountId)) {
+          throw new Error('Invalid Hedera account ID format received');
+        }
+        
+        console.log('HashPack connected successfully:', result.accountId);
+        return result.accountId;
+      }
     }
     
-    // Validate Hedera account format
-    if (!/^0\.0\.\d+$/.test(result.accountId)) {
-      throw new Error('Invalid Hedera account ID format');
+    // Try alternative connection method
+    if (hashpack.connect) {
+      const connectResult = await hashpack.connect();
+      if (connectResult && connectResult.accountId) {
+        return connectResult.accountId;
+      }
     }
     
-    return result.accountId;
+    throw new Error('Failed to get account information from HashPack');
   } catch (error) {
+    console.error('HashPack connection error:', error);
+    
     if (error.message?.includes('User rejected') || error.code === 4001) {
       throw new Error('Connection cancelled by user');
     }
-    throw error;
+    
+    throw new Error(`HashPack connection failed: ${error.message || 'Unknown error'}`);
   }
 }
 
