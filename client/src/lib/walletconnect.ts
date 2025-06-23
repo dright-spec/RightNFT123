@@ -1,5 +1,4 @@
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
-import { createModal } from '@walletconnect/modal';
 
 import { config } from './env';
 
@@ -10,8 +9,6 @@ if (!projectId) {
   console.warn('WalletConnect Project ID not found. Some wallet features may not work.');
 }
 
-// WalletConnect modal instance
-let modal: any = null;
 let provider: EthereumProvider | null = null;
 
 export async function initializeWalletConnect() {
@@ -33,14 +30,7 @@ export async function initializeWalletConnect() {
       }
     });
 
-    // Create modal
-    modal = createModal({
-      projectId,
-      chains: [1, 295], // Ethereum + Hedera (if supported)
-      defaultChain: 1
-    });
-
-    return { provider, modal };
+    return { provider };
   } catch (error) {
     console.error('Failed to initialize WalletConnect:', error);
     throw error;
