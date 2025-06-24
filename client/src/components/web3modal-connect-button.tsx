@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Wallet } from "lucide-react";
+import { Wallet, LogOut } from "lucide-react";
 import { WalletConnectModal } from "./wallet-connect-modal";
 import { storeWalletConnection, clearWalletConnection, getStoredWalletConnection } from "@/lib/wallet-manager";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 export function Web3ModalConnectButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,6 +45,7 @@ export function Web3ModalConnectButton() {
       if (data.success) {
         setIsConnected(true);
         setConnectedWallet({ walletId, address });
+        setIsOpen(false); // Close modal on success
         
         console.log(`Wallet connection successful:`, data);
         
@@ -98,11 +98,12 @@ export function Web3ModalConnectButton() {
       <Button
         onClick={handleDisconnect}
         variant="outline"
+        size="sm"
         className="flex items-center gap-2"
       >
         <div className="w-2 h-2 bg-green-500 rounded-full" />
         <span className="hidden sm:inline">{formatAddress(connectedWallet.address)}</span>
-        <Wallet className="h-4 w-4" />
+        <LogOut className="h-4 w-4" />
       </Button>
     );
   }
@@ -112,6 +113,8 @@ export function Web3ModalConnectButton() {
       <Button
         onClick={() => setIsOpen(true)}
         disabled={connecting}
+        variant="outline"
+        size="sm"
         className="flex items-center gap-2"
       >
         <Wallet className="h-4 w-4" />

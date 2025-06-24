@@ -52,6 +52,15 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
               icon: '🦊',
               isAvailable: !!(window as any).ethereum?.isMetaMask,
               downloadUrl: 'https://metamask.io/'
+            },
+            {
+              id: 'walletconnect',
+              name: 'WalletConnect',
+              description: 'Connect using WalletConnect protocol',
+              icon: '🔗',
+              isAvailable: true,
+              isHederaNative: false,
+              downloadUrl: 'https://walletconnect.com/'
             }
           ]);
         }
