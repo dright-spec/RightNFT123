@@ -24,7 +24,7 @@ export function clearBrowserCache() {
 
 // Initialize cache clearing on page load
 if (typeof window !== 'undefined') {
-  // Clear cache on reload in development
+  // Clear cache on reload in development (but don't force reload)
   if (import.meta.env.DEV) {
     clearBrowserCache();
   }

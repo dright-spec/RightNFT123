@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
 import { WalletConnectModal } from "./wallet-connect-modal";
-import { storeWalletConnection, clearWalletConnection } from "@/lib/wallet-manager";
+import { storeWalletConnection, clearWalletConnection, getStoredWalletConnection } from "@/lib/wallet-manager";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -15,11 +15,10 @@ export function Web3ModalConnectButton() {
 
   // Check for existing connection on component mount
   useEffect(() => {
-    const walletId = localStorage.getItem('connected_wallet');
-    const address = localStorage.getItem('wallet_address');
-    if (walletId && address) {
+    const stored = getStoredWalletConnection();
+    if (stored && stored.isConnected) {
       setIsConnected(true);
-      setConnectedWallet({ walletId, address });
+      setConnectedWallet({ walletId: stored.walletId, address: stored.address });
     }
   }, []);
 
@@ -33,7 +32,7 @@ export function Web3ModalConnectButton() {
       storeWalletConnection(walletId, address);
       
       // Authenticate with backend
-      const response = await apiRequest('/api/auth/wallet', {
+      const response = await fetch('/api/auth/wallet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -42,18 +41,20 @@ export function Web3ModalConnectButton() {
         })
       });
       
-      if (response.success) {
+      const data = await response.json();
+      
+      if (data.success) {
         setIsConnected(true);
         setConnectedWallet({ walletId, address });
         
-        console.log(`Wallet connection successful:`, response);
+        console.log(`Wallet connection successful:`, data);
         
         toast({
           title: "Wallet Connected",
           description: `Successfully connected ${walletId === 'hashpack' ? 'HashPack' : walletId} wallet`,
         });
       } else {
-        throw new Error(response.message || 'Connection failed');
+        throw new Error(data.message || 'Connection failed');
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
