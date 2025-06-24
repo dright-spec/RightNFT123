@@ -1,118 +1,118 @@
-// Direct HashPack connection using HashConnect library
-import { HashConnect, HashConnectTypes, MessageTypes } from '@hashgraph/hashconnect';
+// Official HashConnect SDK integration for HashPack wallet
+import { HashConnect, HashConnectTypes } from '@hashgraph/hashconnect';
 
 export class HashPackConnector {
   private hashConnect: HashConnect;
-  private appMetadata: HashConnectTypes.AppMetadata = {
-    name: "Dright Marketplace",
-    description: "Hedera Rights Marketplace",
-    icon: window.location.origin + "/favicon.ico",
-    url: window.location.origin
-  };
+  private appMetadata: HashConnectTypes.AppMetadata;
+  private state: 'disconnected' | 'initializing' | 'connecting' | 'connected' = 'disconnected';
   
   constructor() {
-    this.hashConnect = new HashConnect(true); // Enable debug logging
-  }
-
-  async initializeAndConnect(): Promise<string> {
-    try {
-      console.log('Initializing HashConnect...');
-      
-      // Initialize HashConnect
-      await this.hashConnect.init(this.appMetadata);
-      console.log('HashConnect initialized successfully');
-
-      // Get available extensions
-      const extensions = this.hashConnect.foundExtensionEvent;
-      console.log('Available extensions:', extensions);
-
-      // Try to pair with HashPack
-      console.log('Attempting to pair with HashPack...');
-      
-      // Find HashPack extension
-      const hashpackExtension = this.hashConnect.findLocalWallets().find(
-        wallet => wallet.name.toLowerCase().includes('hashpack')
-      );
-      
-      if (!hashpackExtension) {
-        throw new Error('HashPack extension not found in available wallets');
-      }
-      
-      console.log('Found HashPack extension:', hashpackExtension);
-      
-      // Connect to HashPack
-      const pairing = await this.hashConnect.connectToLocalWallet();
-      console.log('Pairing result:', pairing);
-      
-      if (pairing && pairing.accountIds && pairing.accountIds.length > 0) {
-        const accountId = pairing.accountIds[0];
-        console.log('Successfully connected to HashPack account:', accountId);
-        return accountId;
-      } else {
-        throw new Error('No account IDs received from HashPack');
-      }
-      
-    } catch (error) {
-      console.error('HashPack connection failed:', error);
-      throw new Error(`HashPack connection failed: ${error.message}`);
-    }
-  }
-
-  async connectViaLegacyAPI(): Promise<string> {
-    try {
-      console.log('Attempting legacy HashPack API connection...');
-      
-      // Wait for HashPack to be available
-      let attempts = 0;
-      const maxAttempts = 10;
-      
-      while (attempts < maxAttempts) {
-        if ((window as any).hashpack) {
-          console.log('HashPack API found, attempting connection...');
-          
-          const result = await (window as any).hashpack.requestAccountInfo();
-          console.log('HashPack legacy API result:', result);
-          
-          if (result && result.accountId) {
-            return result.accountId;
-          } else {
-            throw new Error('No account ID in HashPack response');
-          }
-        }
-        
-        console.log(`HashPack not found, attempt ${attempts + 1}/${maxAttempts}`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-      }
-      
-      throw new Error('HashPack API not available after waiting');
-      
-    } catch (error) {
-      console.error('Legacy HashPack connection failed:', error);
-      throw error;
-    }
+    this.hashConnect = new HashConnect(true); // Enable debug mode
+    this.appMetadata = {
+      name: "Dright Marketplace",
+      description: "Decentralized Rights Trading Platform",
+      icon: window.location.origin + "/favicon.ico",
+      url: window.location.origin
+    };
   }
 
   async connect(): Promise<string> {
-    console.log('Starting HashPack connection process...');
+    if (this.state === 'connecting') {
+      throw new Error('Connection already in progress');
+    }
+
+    this.state = 'initializing';
+    console.log('🔄 Initializing HashConnect SDK...');
     
     try {
-      // First try the official HashConnect method
-      return await this.initializeAndConnect();
+      // Initialize HashConnect
+      await this.hashConnect.init(this.appMetadata);
+      console.log('✅ HashConnect SDK initialized');
+
+      this.state = 'connecting';
+      console.log('🔄 Scanning for available wallets...');
+
+      // Set up event listeners for wallet discovery
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('HashPack connection timeout - no wallets found'));
+        }, 15000); // 15 second timeout
+
+        // Listen for wallet discovery
+        this.hashConnect.foundExtensionEvent.once((walletMetadata) => {
+          console.log('🔍 Found wallet extension:', walletMetadata);
+          
+          // Check if it's HashPack
+          if (walletMetadata.name.toLowerCase().includes('hashpack')) {
+            console.log('✅ HashPack wallet detected');
+            this.connectToWallet(walletMetadata, resolve, reject, timeout);
+          } else {
+            console.log('ℹ️ Non-HashPack wallet found, continuing search...');
+          }
+        });
+
+        // Listen for pairing events
+        this.hashConnect.pairingEvent.once((pairingData) => {
+          console.log('🔗 Wallet pairing successful:', pairingData);
+          clearTimeout(timeout);
+          
+          if (pairingData.accountIds && pairingData.accountIds.length > 0) {
+            const accountId = pairingData.accountIds[0];
+            this.state = 'connected';
+            console.log('✅ Connected to account:', accountId);
+            resolve(accountId);
+          } else {
+            this.state = 'disconnected';
+            reject(new Error('No account IDs received from wallet'));
+          }
+        });
+
+        // Start looking for wallets
+        console.log('🔄 Starting wallet discovery...');
+        this.hashConnect.findLocalWallets();
+      });
+
     } catch (error) {
-      console.log('HashConnect method failed, trying legacy API...');
-      
-      try {
-        // Fallback to legacy API
-        return await this.connectViaLegacyAPI();
-      } catch (legacyError) {
-        console.error('Both connection methods failed');
-        throw new Error(
-          `HashPack connection failed. ` +
-          `HashConnect: ${error.message}. ` +
-          `Legacy API: ${legacyError.message}`
-        );
-      }
+      this.state = 'disconnected';
+      console.error('❌ HashConnect initialization failed:', error);
+      throw new Error(`HashConnect initialization failed: ${error.message || 'Unknown error'}`);
     }
+  }
+
+  private async connectToWallet(
+    walletMetadata: any, 
+    resolve: (value: string) => void, 
+    reject: (reason: any) => void,
+    timeout: NodeJS.Timeout
+  ) {
+    try {
+      console.log('🔄 Attempting to connect to HashPack...');
+      
+      // Connect to the specific wallet
+      await this.hashConnect.connectToLocalWallet(walletMetadata);
+      console.log('🔗 Connection request sent to HashPack');
+      
+      // The pairing event listener will handle the response
+      
+    } catch (error) {
+      clearTimeout(timeout);
+      this.state = 'disconnected';
+      console.error('❌ Failed to connect to HashPack:', error);
+      reject(new Error(`Failed to connect to HashPack: ${error.message || 'Unknown error'}`));
+    }
+  }
+
+  disconnect() {
+    try {
+      this.hashConnect.disconnect();
+      this.state = 'disconnected';
+      console.log('✅ HashConnect disconnected');
+    } catch (error) {
+      console.error('❌ Error during disconnect:', error);
+    }
+  }
+
+  getState() {
+    return this.state;
   }
 }

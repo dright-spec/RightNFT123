@@ -8,30 +8,14 @@ export function detectMetaMask(): boolean {
 import { HashPackDetector } from './hashpack-detector';
 
 export function detectHashPack(): boolean {
-  // Always return true if HashConnect library is available (since we use official SDK)
-  try {
-    // Check if HashConnect is available
-    if (typeof window !== 'undefined') {
-      // HashPack is always "available" if we have HashConnect library
-      console.log('✅ HashPack available via HashConnect SDK');
-      return true;
-    }
-  } catch (error) {
-    console.log('HashConnect SDK not available');
-  }
-  
-  // Check for manual override
-  if (localStorage.getItem('hashpack-manual-override') === 'true') {
-    console.log('✅ HashPack detection via manual override');
+  // HashPack is always "available" when using official HashConnect SDK
+  // The SDK handles wallet discovery and connection automatically
+  if (typeof window !== 'undefined') {
+    console.log('✅ HashPack available via official HashConnect SDK');
     return true;
   }
   
-  // Use the advanced detector as fallback
-  const detector = HashPackDetector.getInstance();
-  const isDetected = detector.getDetectionStatus();
-  detector.forceRecheck();
-  
-  return isDetected;
+  return false;
 }
 
 export function detectBlade(): boolean {

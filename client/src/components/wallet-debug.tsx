@@ -105,30 +105,30 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('Testing HashPack connection with HashConnect SDK...');
+                  console.log('🚀 Testing official HashConnect SDK integration...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('Attempting HashPack connection...');
+                    console.log('🔄 Starting HashPack connection via official SDK...');
                     const accountId = await connector.connect();
                     
-                    console.log('HashConnect test successful:', accountId);
-                    alert(`✅ HashPack connected successfully!\n\nAccount: ${accountId}\n\nThe HashConnect SDK is working properly with your HashPack wallet.`);
+                    console.log('✅ HashConnect SDK test successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount ID: ${accountId}\n\nOfficial HashConnect SDK is working perfectly with your HashPack wallet.`);
                     
                   } catch (error) {
-                    console.error('HashConnect test failed:', error);
+                    console.error('❌ HashConnect SDK test failed:', error);
                     
                     const errorMsg = error.message || 'Unknown error';
-                    console.log('Detailed error information:', error);
+                    console.log('📋 Detailed error:', error);
                     
-                    alert(`❌ HashConnect test failed:\n\n${errorMsg}\n\nThis might indicate:\n- HashPack needs to be unlocked\n- Extension needs page refresh\n- HashConnect SDK issues`);
+                    alert(`❌ HashConnect SDK Test Failed\n\n${errorMsg}\n\nPossible solutions:\n• Ensure HashPack is installed and unlocked\n• Refresh the page and try again\n• Check HashPack extension permissions`);
                   }
                 }}
                 className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
               >
-                Test HashConnect
+                Test Official SDK
               </button>
               <button 
                 onClick={() => {

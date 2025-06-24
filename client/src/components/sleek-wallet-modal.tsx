@@ -35,26 +35,28 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
     
     try {
       if (walletId === 'hashpack') {
-        console.log('Starting HashPack connection process...');
+        console.log('🚀 Starting HashPack connection via official HashConnect SDK...');
         
         try {
           const connector = new HashPackConnector();
+          console.log('🔄 Initializing connection to HashPack wallet...');
+          
           const accountId = await connector.connect();
           
-          console.log('HashPack connection successful:', accountId);
+          console.log('✅ HashPack connected successfully:', accountId);
           onConnect?.(accountId);
           onClose();
           toast({
             title: "HashPack Connected",
-            description: `Successfully connected to account ${accountId}`,
+            description: `Connected to Hedera account ${accountId}`,
           });
           return;
           
         } catch (error) {
-          console.error('HashPack connection failed:', error);
+          console.error('❌ HashPack connection failed:', error);
           toast({
             title: "HashPack Connection Failed",
-            description: error.message,
+            description: `${error.message || 'Unknown error occurred'}`,
             variant: "destructive",
           });
           return;
