@@ -21,20 +21,20 @@ export interface ConnectedWallet {
 }
 
 // Detect available wallets in the browser
-export function detectAvailableWallets(): WalletInfo[] {
+export async function detectAvailableWallets(): Promise<WalletInfo[]> {
   // Check if HashConnect is already connected
   const isHashConnected = isHashConnectConnected();
   
-  // Enhanced HashPack detection
-  const hasHashPack = detectHashPack() || isHashConnected;
+  // Enhanced HashPack detection with async support
+  const hasHashPack = await detectHashPack();
   
   // Debug wallet detection
   console.log('Wallet detection:', {
-    hashpack: detectHashPack(),
+    hashpack: hasHashPack,
     hashConnected: isHashConnected,
     metamask: detectMetaMask(),
     blade: detectBlade(),
-    hasHashPack
+    finalHashPackAvailable: hasHashPack || isHashConnected
   });
   
   const wallets: WalletInfo[] = [
@@ -43,7 +43,7 @@ export function detectAvailableWallets(): WalletInfo[] {
       name: 'HashPack',
       description: 'Official Hedera wallet with native HTS support',
       icon: '🟡',
-      isAvailable: hasHashPack,
+      isAvailable: hasHashPack || isHashConnected,
       isRecommended: true,
       isHederaNative: true,
       downloadUrl: 'https://www.hashpack.app/'

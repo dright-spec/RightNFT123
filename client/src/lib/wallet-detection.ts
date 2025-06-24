@@ -1,5 +1,5 @@
 // Enhanced wallet detection with retry logic
-export function detectHashPack(): boolean {
+export async function detectHashPack(): Promise<boolean> {
   // Check multiple possible HashPack globals
   const checks = [
     () => !!(window as any).hashpack,
@@ -9,6 +9,21 @@ export function detectHashPack(): boolean {
     () => !!document.querySelector('meta[name="hashpack"]')
   ];
   
+  // Initial synchronous check
+  const syncResult = checks.some(check => {
+    try {
+      return check();
+    } catch {
+      return false;
+    }
+  });
+  
+  if (syncResult) return true;
+  
+  // Wait for potential async wallet loading
+  await waitForWalletExtensions(1000); // 1 second wait
+  
+  // Re-check after waiting
   return checks.some(check => {
     try {
       return check();
