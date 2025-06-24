@@ -66,8 +66,9 @@ export async function connectWallet(): Promise<string> {
     if (!accountIds.length) {
       console.log('Opening HashPack wallet connection...');
       
-      // Try to connect to local wallet extensions
+      // Check if we have pairable data (local wallets)
       if (hashconnect && hashconnect.pairableData && hashconnect.pairableData.length > 0) {
+        console.log('Found local wallet extensions, attempting connection...');
         hashconnect.pairableData.forEach(pd => {
           try {
             hashconnect.connectToLocalWallet(pd.topic);
@@ -76,22 +77,26 @@ export async function connectWallet(): Promise<string> {
           }
         });
       } else {
-        // Fallback: trigger pairing modal
+        console.log('No local wallets found, opening pairing interface...');
+        // Open the pairing interface for QR code connection
         try {
-          hashconnect.connectToLocalWallet(topic);
+          hashconnect.openRequestedPairing();
         } catch (error) {
-          console.warn('Error opening pairing modal:', error);
+          console.warn('Error opening pairing interface:', error);
+          // Fallback to connectToLocalWallet
+          hashconnect.connectToLocalWallet(topic);
         }
       }
       
       // Wait for user approval with timeout
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('Connection timeout - please ensure HashPack is installed and unlocked'));
-        }, 30000); // 30 second timeout
+          reject(new Error('Connection timeout - please ensure HashPack is installed and try pairing via QR code'));
+        }, 45000); // 45 second timeout for QR code pairing
         
         if (hashconnect && hashconnect.pairingEvent) {
-          const sub = hashconnect.pairingEvent.subscribe(() => { 
+          const sub = hashconnect.pairingEvent.subscribe((pairingData) => { 
+            console.log('Pairing successful:', pairingData);
             clearTimeout(timeout);
             sub.unsubscribe(); 
             resolve(); 
@@ -104,9 +109,10 @@ export async function connectWallet(): Promise<string> {
     }
     
     if (!accountIds.length) {
-      throw new Error('No account connected - please try again');
+      throw new Error('No account connected after pairing - please check HashPack wallet');
     }
     
+    console.log('✅ HashConnect connection successful:', accountIds[0]);
     return accountIds[0];
   } catch (error) {
     console.error('HashConnect wallet connection failed:', error);

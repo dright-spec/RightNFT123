@@ -2,6 +2,7 @@
 import { connectWallet as connectHashConnect, isConnected as isHashConnectConnected, getConnectedAccountIds } from './hashconnect';
 import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
 import { debugWalletEnvironment } from './debug-wallet';
+import { hashPackWallet } from './hashpack-direct';
 import { config } from './env';
 
 export interface WalletInfo {
@@ -35,7 +36,12 @@ export async function detectAvailableWallets(): Promise<WalletInfo[]> {
     // Enhanced HashPack detection using community-recommended approach
     let hasHashPack = false;
     try {
-      hasHashPack = await detectHashPack(1500); // Give more time for detection
+      hasHashPack = await detectHashPack(3000); // Give more time for detection
+      
+      // Also check using our direct API
+      if (!hasHashPack) {
+        hasHashPack = await hashPackWallet.isAvailable();
+      }
     } catch (error) {
       console.warn('Error detecting HashPack:', error);
     }

@@ -9,18 +9,32 @@ let hashconnect: HashConnect | null = null;
 export async function detectHashPack(timeout = 2000): Promise<boolean> {
   console.log('🔍 Starting comprehensive HashPack detection...');
   
-  // 1) Quick direct checks - try multiple possible global names
-  const directChecks = [
-    () => typeof (window as any).hashpack !== "undefined",
+  // 1) Priority check for direct HashPack API
+  if (typeof (window as any).hashpack !== "undefined") {
+    console.log('✅ HashPack detected via window.hashpack API');
+    return true;
+  }
+  
+  // 2) Wait for delayed injection
+  for (let i = 0; i < 20; i++) {
+    if (typeof (window as any).hashpack !== "undefined") {
+      console.log('✅ HashPack detected after delayed injection');
+      return true;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+  
+  // 3) Other possible global names
+  const alternativeChecks = [
     () => typeof (window as any).HashPack !== "undefined", 
     () => typeof (window as any).hcSdk !== "undefined",
     () => typeof (window as any).hedera !== "undefined",
     () => typeof (window as any).hashconnect !== "undefined"
   ];
   
-  for (let i = 0; i < directChecks.length; i++) {
-    if (directChecks[i]()) {
-      console.log(`✅ HashPack detected via direct check ${i + 1}`);
+  for (let i = 0; i < alternativeChecks.length; i++) {
+    if (alternativeChecks[i]()) {
+      console.log(`✅ HashPack detected via alternative check ${i + 1}`);
       return true;
     }
   }
