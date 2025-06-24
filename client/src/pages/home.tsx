@@ -121,13 +121,13 @@ export default function Home() {
                   How It Works
                 </Button>
               </Link>
-              <Link href="/auctions">
+              <Link href="/marketplace?tab=auctions">
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <TrendingUp className="mr-2 h-5 w-5" />
                   Live Auctions
                 </Button>
               </Link>
-              <Link href="/about">
+              <Link href="/marketplace">
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <Shield className="mr-2 h-5 w-5" />
                   Legal Framework
