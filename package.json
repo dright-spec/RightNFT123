@@ -53,6 +53,7 @@
     "@walletconnect/ethereum-provider": "^2.21.3",
     "@walletconnect/modal": "^2.7.0",
     "@walletconnect/utils": "^2.21.3",
+    "@web3modal/ethers": "^5.1.11",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
