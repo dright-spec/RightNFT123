@@ -1,4 +1,5 @@
-// Removed problematic WalletConnect import
+// Import the proper HashConnect integration
+import { connectWallet as connectHashConnect, isConnected as isHashConnectConnected, getConnectedAccountIds } from './hashconnect';
 import { config } from './env';
 
 export interface WalletInfo {
@@ -20,18 +21,21 @@ export interface ConnectedWallet {
 
 // Detect available wallets in the browser
 export function detectAvailableWallets(): WalletInfo[] {
-  // More comprehensive HashPack detection
+  // Check if HashConnect is already connected
+  const isHashConnected = isHashConnectConnected();
+  
+  // HashPack detection via HashConnect
   const hasHashPack = !!(
     (window as any).hashpack || 
     (window as any).HashPack || 
-    (window as any).hashconnect
+    isHashConnected
   );
   
   // Debug HashPack detection
   console.log('HashPack detection:', {
     hashpack: !!(window as any).hashpack,
     HashPack: !!(window as any).HashPack,
-    hashconnect: !!(window as any).hashconnect,
+    hashConnected: isHashConnected,
     detected: hasHashPack
   });
   
@@ -92,42 +96,21 @@ export async function connectToWallet(walletId: string): Promise<string> {
   }
 }
 
-// HashPack connection with multiple detection methods
+// HashPack connection using proper HashConnect SDK
 async function connectHashPack(): Promise<string> {
-  // Try multiple HashPack detection methods
-  const hashpack = (window as any).hashpack || (window as any).HashPack;
-  
-  if (!hashpack) {
-    throw new Error('HashPack wallet not detected. Please install HashPack browser extension and refresh the page.');
-  }
-
   try {
-    console.log('Attempting HashPack connection...');
+    console.log('Attempting HashPack connection via HashConnect...');
     
-    // Try requestAccountInfo method first
-    if (hashpack.requestAccountInfo) {
-      const result = await hashpack.requestAccountInfo();
-      
-      if (result && result.accountId) {
-        // Validate Hedera account format
-        if (!/^0\.0\.\d+$/.test(result.accountId)) {
-          throw new Error('Invalid Hedera account ID format received');
-        }
-        
-        console.log('HashPack connected successfully:', result.accountId);
-        return result.accountId;
-      }
+    // Use the official HashConnect integration
+    const accountId = await connectHashConnect();
+    
+    // Validate Hedera account format
+    if (!/^0\.0\.\d+$/.test(accountId)) {
+      throw new Error('Invalid Hedera account ID format received');
     }
     
-    // Try alternative connection method
-    if (hashpack.connect) {
-      const connectResult = await hashpack.connect();
-      if (connectResult && connectResult.accountId) {
-        return connectResult.accountId;
-      }
-    }
-    
-    throw new Error('Failed to get account information from HashPack');
+    console.log('HashPack connected successfully via HashConnect:', accountId);
+    return accountId;
   } catch (error) {
     console.error('HashPack connection error:', error);
     
