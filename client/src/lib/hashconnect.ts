@@ -60,42 +60,58 @@ export function getClient(): Client | null {
 }
 
 export async function connectWallet(): Promise<string> {
-  await initializeHashConnect();
-  
-  if (!accountIds.length) {
-    console.log('Opening HashPack wallet connection...');
+  try {
+    await initializeHashConnect();
     
-    // Try to connect to local wallet extensions
-    if (hashconnect.pairableData.length > 0) {
-      hashconnect.pairableData.forEach(pd => {
-        hashconnect.connectToLocalWallet(pd.topic);
+    if (!accountIds.length) {
+      console.log('Opening HashPack wallet connection...');
+      
+      // Try to connect to local wallet extensions
+      if (hashconnect && hashconnect.pairableData && hashconnect.pairableData.length > 0) {
+        hashconnect.pairableData.forEach(pd => {
+          try {
+            hashconnect.connectToLocalWallet(pd.topic);
+          } catch (error) {
+            console.warn('Error connecting to local wallet:', error);
+          }
+        });
+      } else {
+        // Fallback: trigger pairing modal
+        try {
+          hashconnect.connectToLocalWallet(topic);
+        } catch (error) {
+          console.warn('Error opening pairing modal:', error);
+        }
+      }
+      
+      // Wait for user approval with timeout
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Connection timeout - please ensure HashPack is installed and unlocked'));
+        }, 30000); // 30 second timeout
+        
+        if (hashconnect && hashconnect.pairingEvent) {
+          const sub = hashconnect.pairingEvent.subscribe(() => { 
+            clearTimeout(timeout);
+            sub.unsubscribe(); 
+            resolve(); 
+          });
+        } else {
+          clearTimeout(timeout);
+          reject(new Error('HashConnect pairing event not available'));
+        }
       });
-    } else {
-      // Fallback: trigger pairing modal
-      hashconnect.connectToLocalWallet(topic);
     }
     
-    // Wait for user approval with timeout
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Connection timeout - please ensure HashPack is installed and unlocked'));
-      }, 30000); // 30 second timeout
-      
-      const sub = hashconnect
-        .pairingEvent!
-        .subscribe(() => { 
-          clearTimeout(timeout);
-          sub.unsubscribe(); 
-          resolve(); 
-        });
-    });
+    if (!accountIds.length) {
+      throw new Error('No account connected - please try again');
+    }
+    
+    return accountIds[0];
+  } catch (error) {
+    console.error('HashConnect wallet connection failed:', error);
+    throw error;
   }
-  
-  if (!accountIds.length) {
-    throw new Error('No account connected - please try again');
-  }
-  
-  return accountIds[0];
 }
 
 export async function disconnectWallet(): Promise<void> {
@@ -106,9 +122,17 @@ export async function disconnectWallet(): Promise<void> {
 }
 
 export function isConnected(): boolean {
-  return accountIds.length > 0;
+  try {
+    return accountIds.length > 0;
+  } catch (error) {
+    return false;
+  }
 }
 
 export function getConnectedAccountIds(): string[] {
-  return [...accountIds];
+  try {
+    return [...accountIds];
+  } catch (error) {
+    return [];
+  }
 }

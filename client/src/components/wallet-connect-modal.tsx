@@ -32,8 +32,27 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
           setWallets(detectedWallets);
         } catch (error) {
           console.error('Error detecting wallets:', error);
-          // Fallback to empty array or basic wallets if detection fails
-          setWallets([]);
+          // Fallback to basic wallets if detection fails
+          setWallets([
+            {
+              id: 'hashpack',
+              name: 'HashPack',
+              description: 'Official Hedera wallet with native HTS support',
+              icon: '🟡',
+              isAvailable: !!(window as any).hashpack || !!(window as any).HashPack,
+              isRecommended: true,
+              isHederaNative: true,
+              downloadUrl: 'https://www.hashpack.app/'
+            },
+            {
+              id: 'metamask',
+              name: 'MetaMask',
+              description: 'Popular Ethereum wallet',
+              icon: '🦊',
+              isAvailable: !!(window as any).ethereum?.isMetaMask,
+              downloadUrl: 'https://metamask.io/'
+            }
+          ]);
         }
       };
       

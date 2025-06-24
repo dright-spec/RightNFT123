@@ -1,6 +1,7 @@
 // Import the proper HashConnect integration
 import { connectWallet as connectHashConnect, isConnected as isHashConnectConnected, getConnectedAccountIds } from './hashconnect';
 import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
+import { debugWalletEnvironment } from './debug-wallet';
 import { config } from './env';
 
 export interface WalletInfo {
@@ -24,18 +25,44 @@ export interface ConnectedWallet {
 export async function detectAvailableWallets(): Promise<WalletInfo[]> {
   try {
     // Check if HashConnect is already connected
-    const isHashConnected = isHashConnectConnected();
+    let isHashConnected = false;
+    try {
+      isHashConnected = isHashConnectConnected();
+    } catch (error) {
+      console.warn('Error checking HashConnect status:', error);
+    }
     
     // Enhanced HashPack detection with async support
-    const hasHashPack = await detectHashPack();
+    let hasHashPack = false;
+    try {
+      hasHashPack = await detectHashPack();
+    } catch (error) {
+      console.warn('Error detecting HashPack:', error);
+    }
+    
+    // Additional manual HashPack check for debugging
+    const manualHashPackCheck = !!(
+      (window as any).hashpack || 
+      (window as any).HashPack ||
+      (window as any).hashconnect
+    );
+    
+    // Run comprehensive wallet debugging
+    debugWalletEnvironment();
     
     // Debug wallet detection
     console.log('Wallet detection:', {
       hashpack: hasHashPack,
+      manualHashPackCheck,
       hashConnected: isHashConnected,
       metamask: detectMetaMask(),
       blade: detectBlade(),
-      finalHashPackAvailable: hasHashPack || isHashConnected
+      finalHashPackAvailable: hasHashPack || isHashConnected || manualHashPackCheck,
+      windowObjects: {
+        hashpack: typeof (window as any).hashpack,
+        HashPack: typeof (window as any).HashPack,
+        hashconnect: typeof (window as any).hashconnect
+      }
     });
     
     const wallets: WalletInfo[] = [
@@ -44,7 +71,7 @@ export async function detectAvailableWallets(): Promise<WalletInfo[]> {
         name: 'HashPack',
         description: 'Official Hedera wallet with native HTS support',
         icon: '🟡',
-        isAvailable: hasHashPack || isHashConnected,
+        isAvailable: hasHashPack || isHashConnected || manualHashPackCheck,
         isRecommended: true,
         isHederaNative: true,
         downloadUrl: 'https://www.hashpack.app/'
@@ -88,7 +115,7 @@ export async function detectAvailableWallets(): Promise<WalletInfo[]> {
         name: 'HashPack',
         description: 'Official Hedera wallet with native HTS support',
         icon: '🟡',
-        isAvailable: false,
+        isAvailable: !!(window as any).hashpack || !!(window as any).HashPack,
         isRecommended: true,
         isHederaNative: true,
         downloadUrl: 'https://www.hashpack.app/'
