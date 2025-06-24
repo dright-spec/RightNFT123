@@ -105,19 +105,25 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('Testing HashPack connection with HashConnect...');
+                  console.log('Testing HashPack connection with HashConnect SDK...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
+                    
+                    console.log('Attempting HashPack connection...');
                     const accountId = await connector.connect();
                     
                     console.log('HashConnect test successful:', accountId);
-                    alert(`HashPack connection successful!\nAccount: ${accountId}`);
+                    alert(`✅ HashPack connected successfully!\n\nAccount: ${accountId}\n\nThe HashConnect SDK is working properly with your HashPack wallet.`);
                     
                   } catch (error) {
                     console.error('HashConnect test failed:', error);
-                    alert(`HashConnect test failed:\n${error.message}`);
+                    
+                    const errorMsg = error.message || 'Unknown error';
+                    console.log('Detailed error information:', error);
+                    
+                    alert(`❌ HashConnect test failed:\n\n${errorMsg}\n\nThis might indicate:\n- HashPack needs to be unlocked\n- Extension needs page refresh\n- HashConnect SDK issues`);
                   }
                 }}
                 className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
