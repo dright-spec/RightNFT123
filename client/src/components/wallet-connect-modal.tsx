@@ -25,11 +25,19 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
   useEffect(() => {
     if (open) {
       // Add a small delay to ensure wallet extensions are loaded
-      setTimeout(async () => {
-        const detectedWallets = await detectAvailableWallets();
-        console.log('Detected wallets:', detectedWallets);
-        setWallets(detectedWallets);
-      }, 100);
+      const detectWallets = async () => {
+        try {
+          const detectedWallets = await detectAvailableWallets();
+          console.log('Detected wallets:', detectedWallets);
+          setWallets(detectedWallets);
+        } catch (error) {
+          console.error('Error detecting wallets:', error);
+          // Fallback to empty array or basic wallets if detection fails
+          setWallets([]);
+        }
+      };
+      
+      setTimeout(detectWallets, 100);
     }
   }, [open]);
 

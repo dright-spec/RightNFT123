@@ -20,17 +20,22 @@ export async function detectHashPack(): Promise<boolean> {
   
   if (syncResult) return true;
   
-  // Wait for potential async wallet loading
-  await waitForWalletExtensions(1000); // 1 second wait
-  
-  // Re-check after waiting
-  return checks.some(check => {
-    try {
-      return check();
-    } catch {
-      return false;
-    }
-  });
+  try {
+    // Wait for potential async wallet loading
+    await waitForWalletExtensions(1000); // 1 second wait
+    
+    // Re-check after waiting
+    return checks.some(check => {
+      try {
+        return check();
+      } catch {
+        return false;
+      }
+    });
+  } catch (error) {
+    console.warn('Error waiting for wallet extensions:', error);
+    return false;
+  }
 }
 
 export function detectMetaMask(): boolean {

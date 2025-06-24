@@ -22,61 +22,87 @@ export interface ConnectedWallet {
 
 // Detect available wallets in the browser
 export async function detectAvailableWallets(): Promise<WalletInfo[]> {
-  // Check if HashConnect is already connected
-  const isHashConnected = isHashConnectConnected();
-  
-  // Enhanced HashPack detection with async support
-  const hasHashPack = await detectHashPack();
-  
-  // Debug wallet detection
-  console.log('Wallet detection:', {
-    hashpack: hasHashPack,
-    hashConnected: isHashConnected,
-    metamask: detectMetaMask(),
-    blade: detectBlade(),
-    finalHashPackAvailable: hasHashPack || isHashConnected
-  });
-  
-  const wallets: WalletInfo[] = [
-    {
-      id: 'hashpack',
-      name: 'HashPack',
-      description: 'Official Hedera wallet with native HTS support',
-      icon: '🟡',
-      isAvailable: hasHashPack || isHashConnected,
-      isRecommended: true,
-      isHederaNative: true,
-      downloadUrl: 'https://www.hashpack.app/'
-    },
-    {
-      id: 'metamask',
-      name: 'MetaMask',
-      description: 'Popular Ethereum wallet',
-      icon: '🦊',
-      isAvailable: detectMetaMask(),
-      downloadUrl: 'https://metamask.io/'
-    },
-    {
-      id: 'walletconnect',
-      name: 'HashConnect',
-      description: 'Connect using HashConnect protocol',
-      icon: '🔗',
-      isAvailable: true,
-      isHederaNative: true,
-      downloadUrl: 'https://docs.hedera.com/hedera/sdks-and-apis/sdks/wallet-integrations/hashconnect'
-    },
-    {
-      id: 'blade',
-      name: 'Blade Wallet',
-      description: 'Multi-chain wallet with Hedera support',
-      icon: '⚔️',
-      isAvailable: detectBlade(),
-      isHederaNative: true,
-      downloadUrl: 'https://bladewallet.io/'
-    }
-  ];
+  try {
+    // Check if HashConnect is already connected
+    const isHashConnected = isHashConnectConnected();
+    
+    // Enhanced HashPack detection with async support
+    const hasHashPack = await detectHashPack();
+    
+    // Debug wallet detection
+    console.log('Wallet detection:', {
+      hashpack: hasHashPack,
+      hashConnected: isHashConnected,
+      metamask: detectMetaMask(),
+      blade: detectBlade(),
+      finalHashPackAvailable: hasHashPack || isHashConnected
+    });
+    
+    const wallets: WalletInfo[] = [
+      {
+        id: 'hashpack',
+        name: 'HashPack',
+        description: 'Official Hedera wallet with native HTS support',
+        icon: '🟡',
+        isAvailable: hasHashPack || isHashConnected,
+        isRecommended: true,
+        isHederaNative: true,
+        downloadUrl: 'https://www.hashpack.app/'
+      },
+      {
+        id: 'metamask',
+        name: 'MetaMask',
+        description: 'Popular Ethereum wallet',
+        icon: '🦊',
+        isAvailable: detectMetaMask(),
+        downloadUrl: 'https://metamask.io/'
+      },
+      {
+        id: 'walletconnect',
+        name: 'HashConnect',
+        description: 'Connect using HashConnect protocol',
+        icon: '🔗',
+        isAvailable: true,
+        isHederaNative: true,
+        downloadUrl: 'https://docs.hedera.com/hedera/sdks-and-apis/sdks/wallet-integrations/hashconnect'
+      },
+      {
+        id: 'blade',
+        name: 'Blade Wallet',
+        description: 'Multi-chain wallet with Hedera support',
+        icon: '⚔️',
+        isAvailable: detectBlade(),
+        isHederaNative: true,
+        downloadUrl: 'https://bladewallet.io/'
+      }
+    ];
 
-  return wallets;
+    return wallets;
+  } catch (error) {
+    console.error('Error in detectAvailableWallets:', error);
+    
+    // Return basic wallet list on error
+    return [
+      {
+        id: 'hashpack',
+        name: 'HashPack',
+        description: 'Official Hedera wallet with native HTS support',
+        icon: '🟡',
+        isAvailable: false,
+        isRecommended: true,
+        isHederaNative: true,
+        downloadUrl: 'https://www.hashpack.app/'
+      },
+      {
+        id: 'metamask',
+        name: 'MetaMask',
+        description: 'Popular Ethereum wallet',
+        icon: '🦊',
+        isAvailable: detectMetaMask(),
+        downloadUrl: 'https://metamask.io/'
+      }
+    ];
+  }
 }
 
 // Connect to a specific wallet

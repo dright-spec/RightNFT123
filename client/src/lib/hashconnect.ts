@@ -18,24 +18,33 @@ let pairingData: HashConnectTypes.SavedPairingData;
 export async function initializeHashConnect(): Promise<void> {
   if (hashconnect) return;
 
-  hashconnect = new HashConnect();
-  const initData = await hashconnect.init(APP_METADATA, NETWORK);
-  pairingData = initData.pairingData;
-  topic = initData.topic;
-  
-  // Log initialization success
-  console.log('HashConnect initialized successfully', { topic, pairingData });
+  try {
+    hashconnect = new HashConnect();
+    const initData = await hashconnect.init(APP_METADATA, NETWORK);
+    pairingData = initData.pairingData;
+    topic = initData.topic;
+    
+    // Log initialization success
+    console.log('HashConnect initialized successfully', { topic, pairingData });
 
-  // listen for when a wallet approves
-  hashconnect.foundExtension!.subscribe((ext) => {
-    console.info("Found wallet extension:", ext.metadata.name);
-  });
+    // listen for when a wallet approves
+    if (hashconnect.foundExtension) {
+      hashconnect.foundExtension.subscribe((ext) => {
+        console.info("Found wallet extension:", ext.metadata.name);
+      });
+    }
 
-  hashconnect.pairingEvent!.subscribe((pairing) => {
-    accountIds = pairing.accountIds;
-    topic = pairing.topic;
-    console.info("Paired to wallet:", pairing.metadata.name, accountIds);
-  });
+    if (hashconnect.pairingEvent) {
+      hashconnect.pairingEvent.subscribe((pairing) => {
+        accountIds = pairing.accountIds;
+        topic = pairing.topic;
+        console.info("Paired to wallet:", pairing.metadata.name, accountIds);
+      });
+    }
+  } catch (error) {
+    console.error('Failed to initialize HashConnect:', error);
+    throw error;
+  }
 }
 
 export function getAccountId(): AccountId | null {
