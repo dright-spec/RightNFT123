@@ -21,8 +21,52 @@ export class HashPackConnector {
       throw new Error('Connection already in progress');
     }
 
+    // First, try to detect if HashPack is available via alternative methods
+    console.log('🔍 Checking for HashPack via alternative detection...');
+    
+    // Check onhashchange object - might be HashPack related
+    const onhashchange = (window as any).onhashchange;
+    if (onhashchange && typeof onhashchange === 'object') {
+      console.log('🔍 Found onhashchange object, investigating...');
+      console.log('onhashchange properties:', Object.keys(onhashchange));
+    }
+    
+    // Check for HashPack under different possible names
+    const possibleHashPackObjects = [
+      'hashpack', 'HashPack', 'hashConnect', 'HashConnect', 
+      'hedera', 'Hedera', 'hederaWallet', 'HederaWallet'
+    ];
+    
+    for (const name of possibleHashPackObjects) {
+      const obj = (window as any)[name];
+      if (obj && typeof obj === 'object') {
+        console.log(`🔍 Found potential HashPack object: ${name}`, obj);
+        
+        // Check if it has HashPack-like methods
+        const methods = Object.keys(obj);
+        if (methods.some(m => m.includes('account') || m.includes('connect') || m.includes('request'))) {
+          console.log(`✅ ${name} has wallet-like methods:`, methods);
+          
+          // Try to use it directly
+          try {
+            if (obj.requestAccountInfo) {
+              console.log(`🔄 Attempting connection via ${name}.requestAccountInfo...`);
+              const result = await obj.requestAccountInfo();
+              if (result && result.accountId) {
+                console.log(`✅ Connected via ${name}:`, result.accountId);
+                return result.accountId;
+              }
+            }
+          } catch (error) {
+            console.log(`❌ ${name} connection failed:`, error);
+          }
+        }
+      }
+    }
+
+    // Fallback to official HashConnect SDK
     this.state = 'initializing';
-    console.log('🔄 Initializing HashConnect SDK...');
+    console.log('🔄 Falling back to official HashConnect SDK...');
     
     try {
       // Initialize HashConnect
@@ -35,20 +79,13 @@ export class HashPackConnector {
       // Set up event listeners for wallet discovery
       return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('HashPack connection timeout - no wallets found'));
-        }, 15000); // 15 second timeout
+          reject(new Error('HashPack connection timeout - no wallets found after 15 seconds'));
+        }, 15000);
 
-        // Listen for wallet discovery
+        // Listen for any wallet discovery
         this.hashConnect.foundExtensionEvent.once((walletMetadata) => {
           console.log('🔍 Found wallet extension:', walletMetadata);
-          
-          // Check if it's HashPack
-          if (walletMetadata.name.toLowerCase().includes('hashpack')) {
-            console.log('✅ HashPack wallet detected');
-            this.connectToWallet(walletMetadata, resolve, reject, timeout);
-          } else {
-            console.log('ℹ️ Non-HashPack wallet found, continuing search...');
-          }
+          this.connectToWallet(walletMetadata, resolve, reject, timeout);
         });
 
         // Listen for pairing events

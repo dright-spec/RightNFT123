@@ -105,41 +105,84 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing official HashConnect SDK integration...');
+                  console.log('🔍 Investigating onhashchange object...');
+                  
+                  // Check if onhashchange is related to HashPack
+                  const onhashchange = (window as any).onhashchange;
+                  console.log('onhashchange object:', onhashchange);
+                  console.log('onhashchange type:', typeof onhashchange);
+                  
+                  if (onhashchange && typeof onhashchange === 'object') {
+                    console.log('onhashchange keys:', Object.keys(onhashchange));
+                    console.log('onhashchange methods:', Object.getOwnPropertyNames(onhashchange));
+                  }
+                  
+                  // Check if there are any hashpack-related methods on window
+                  const windowKeys = Object.getOwnPropertyNames(window);
+                  const hashRelated = windowKeys.filter(key => 
+                    key.toLowerCase().includes('hash') || 
+                    key.toLowerCase().includes('hedera') ||
+                    key.toLowerCase().includes('pack')
+                  );
+                  
+                  console.log('Hash-related window properties:', hashRelated);
+                  
+                  // Try to access HashPack directly via different possible names
+                  const possibleNames = ['hashpack', 'HashPack', 'hashConnect', 'HashConnect', 'hedera', 'Hedera'];
+                  for (const name of possibleNames) {
+                    const obj = (window as any)[name];
+                    if (obj) {
+                      console.log(`Found ${name}:`, obj);
+                      console.log(`${name} methods:`, Object.keys(obj));
+                    }
+                  }
+                  
+                  // Also check if onhashchange has any wallet-like functionality
+                  if (onhashchange && typeof onhashchange === 'function') {
+                    console.log('onhashchange is a function, not HashPack related');
+                  } else if (onhashchange && typeof onhashchange === 'object') {
+                    // Check if it might be HashPack masquerading as onhashchange
+                    const methods = Object.keys(onhashchange);
+                    const walletMethods = methods.filter(m => 
+                      m.includes('account') || m.includes('connect') || 
+                      m.includes('request') || m.includes('sign')
+                    );
+                    
+                    if (walletMethods.length > 0) {
+                      console.log('⚠️ onhashchange might be HashPack!', walletMethods);
+                      alert(`Potential HashPack found in onhashchange!\nWallet methods: ${walletMethods.join(', ')}`);
+                      return;
+                    }
+                  }
+                  
+                  alert(`Debug complete. Check console for details.\n\nFound hash-related properties: ${hashRelated.join(', ')}`);
+                }}
+                className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+              >
+                Investigate Hash Objects
+              </button>
+              <button 
+                onClick={async () => {
+                  console.log('🚀 Testing enhanced HashConnect with alternative detection...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting HashPack connection via official SDK...');
+                    console.log('🔄 Starting enhanced HashPack connection...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ HashConnect SDK test successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount ID: ${accountId}\n\nOfficial HashConnect SDK is working perfectly with your HashPack wallet.`);
+                    console.log('✅ Enhanced connection successful:', accountId);
+                    alert(`🎉 HashPack Connected!\n\nAccount: ${accountId}\n\nConnection method worked with alternative detection.`);
                     
                   } catch (error) {
-                    console.error('❌ HashConnect SDK test failed:', error);
-                    
-                    const errorMsg = error.message || 'Unknown error';
-                    console.log('📋 Detailed error:', error);
-                    
-                    alert(`❌ HashConnect SDK Test Failed\n\n${errorMsg}\n\nPossible solutions:\n• Ensure HashPack is installed and unlocked\n• Refresh the page and try again\n• Check HashPack extension permissions`);
+                    console.error('❌ Enhanced connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${error.message}\n\nTried both alternative detection and official SDK.`);
                   }
                 }}
-                className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Official SDK
-              </button>
-              <button 
-                onClick={() => {
-                  // Manual override - force HashPack to be detected
-                  localStorage.setItem('hashpack-manual-override', 'true');
-                  alert('HashPack manually enabled. Refresh the wallet modal.');
-                  runDebug();
-                }}
-                className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-              >
-                Manual Override
+                Test Enhanced Connection
               </button>
             </div>
           </div>
