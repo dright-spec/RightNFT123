@@ -8,6 +8,12 @@ export function detectMetaMask(): boolean {
 import { HashPackDetector } from './hashpack-detector';
 
 export function detectHashPack(): boolean {
+  // Check for manual override first
+  if (localStorage.getItem('hashpack-manual-override') === 'true') {
+    console.log('✅ HashPack detection via manual override');
+    return true;
+  }
+  
   // Use the advanced detector for more reliable detection
   const detector = HashPackDetector.getInstance();
   const isDetected = detector.getDetectionStatus();

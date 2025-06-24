@@ -35,37 +35,77 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
     try {
       if (walletId === 'hashpack') {
         console.log('Attempting HashPack connection...');
-        console.log('window.hashpack available:', !!(window as any).hashpack);
         
-        // Try multiple HashPack connection methods
-        let hashpackApi = (window as any).hashpack;
-        
-        if (!hashpackApi && (window as any).hashconnect) {
-          hashpackApi = (window as any).hashconnect;
+        // Check manual override first
+        if (localStorage.getItem('hashpack-manual-override') === 'true') {
+          console.log('HashPack manual override enabled, attempting connection...');
         }
         
-        if (!hashpackApi && (window as any).ethereum?.providers) {
-          hashpackApi = (window as any).ethereum.providers.find((p: any) => p.isHashPack);
+        // Try to find HashPack API
+        let hashpackApi = null;
+        
+        // Method 1: Direct window.hashpack
+        if ((window as any).hashpack) {
+          hashpackApi = (window as any).hashpack;
+          console.log('Found HashPack via window.hashpack');
+        }
+        
+        // Method 2: Alternative naming
+        if (!hashpackApi && (window as any).hashconnect) {
+          hashpackApi = (window as any).hashconnect;
+          console.log('Found HashPack via window.hashconnect');
+        }
+        
+        // Method 3: Check if user manually overrode and try direct access
+        if (!hashpackApi && localStorage.getItem('hashpack-manual-override') === 'true') {
+          console.log('Manual override enabled - simulating HashPack connection');
+          
+          // Show instructions to user
+          const proceed = confirm(
+            'HashPack detection override is enabled.\n\n' +
+            'Please make sure HashPack extension is installed and unlocked.\n\n' +
+            'Click OK to continue with connection attempt.'
+          );
+          
+          if (proceed) {
+            try {
+              // Try to access HashPack directly
+              if ((window as any).hashpack?.requestAccountInfo) {
+                hashpackApi = (window as any).hashpack;
+                console.log('Found HashPack API after override');
+              } else {
+                throw new Error('HashPack API still not accessible');
+              }
+            } catch (error) {
+              toast({
+                title: "HashPack Override Failed",
+                description: "HashPack extension may not be properly installed or unlocked",
+                variant: "destructive",
+              });
+              return;
+            }
+          } else {
+            return;
+          }
         }
         
         if (hashpackApi) {
           try {
-            console.log('Found HashPack API, attempting connection...');
+            console.log('Attempting HashPack connection with API:', hashpackApi);
             
-            // Try different connection methods
             let response;
             if (hashpackApi.requestAccountInfo) {
               response = await hashpackApi.requestAccountInfo();
             } else if (hashpackApi.connectWallet) {
               response = await hashpackApi.connectWallet();
-            } else if (hashpackApi.request) {
-              response = await hashpackApi.request({ method: 'eth_requestAccounts' });
+            } else {
+              throw new Error('No valid HashPack connection method found');
             }
             
             console.log('HashPack response:', response);
             
-            if (response && (response.accountId || response.account || response[0])) {
-              const accountId = response.accountId || response.account || response[0];
+            if (response && (response.accountId || response.account)) {
+              const accountId = response.accountId || response.account;
               onConnect?.(accountId);
               onClose();
               toast({
@@ -73,12 +113,14 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
                 description: `Connected to account ${accountId}`,
               });
               return;
+            } else {
+              throw new Error('No account information received from HashPack');
             }
           } catch (error) {
             console.error('HashPack connection error:', error);
             toast({
               title: "HashPack Connection Failed",
-              description: "Failed to connect to HashPack. Please try again.",
+              description: `Connection error: ${error.message}`,
               variant: "destructive",
             });
             return;
@@ -86,8 +128,8 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
         }
         
         toast({
-          title: "HashPack Not Found",
-          description: "Please install HashPack wallet extension and refresh the page",
+          title: "HashPack Not Accessible",
+          description: "Cannot access HashPack extension. Please ensure it's installed and try the manual override in the debug panel.",
           variant: "destructive",
         });
         return;

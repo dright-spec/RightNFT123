@@ -85,12 +85,12 @@ export function WalletDebug() {
         <div>HashPack Detected: {debugInfo.detectHashPackResult ? '✅' : '❌'}</div>
         <div>MetaMask Detected: {debugInfo.detectMetaMaskResult ? '✅' : '❌'}</div>
         
-        {!debugInfo.detectHashPackResult && debugInfo.hashpackChecks && (
+        {!debugInfo.detectHashPackResult && debugInfo.hashpackChecks && !localStorage.getItem('hashpack-manual-override') && (
           <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded text-xs">
             <div>🔍 HashPack installed but not detected!</div>
             <div>Extension objects found: {debugInfo.hashpackChecks.extensionObjects?.join(', ') || 'none'}</div>
             <div>DOM elements: {debugInfo.hashpackChecks.documentElements || 0}</div>
-            <div className="flex gap-1 mt-2">
+            <div className="flex gap-1 mt-2 flex-wrap">
               <button 
                 onClick={() => {
                   console.log('Manual HashPack detection...');
@@ -104,16 +104,79 @@ export function WalletDebug() {
                 Force Check
               </button>
               <button 
+                onClick={async () => {
+                  console.log('Comprehensive HashPack test...');
+                  
+                  // First check if window.hashpack exists at all
+                  console.log('window.hashpack:', (window as any).hashpack);
+                  console.log('typeof window.hashpack:', typeof (window as any).hashpack);
+                  
+                  if ((window as any).hashpack) {
+                    console.log('HashPack object found!');
+                    console.log('HashPack methods:', Object.keys((window as any).hashpack));
+                    
+                    try {
+                      if ((window as any).hashpack.requestAccountInfo) {
+                        console.log('requestAccountInfo method exists, calling...');
+                        const result = await (window as any).hashpack.requestAccountInfo();
+                        console.log('HashPack connection successful:', result);
+                        alert(`HashPack connected! Account: ${result.accountId}`);
+                      } else {
+                        console.log('requestAccountInfo method not found');
+                        alert('HashPack object found but requestAccountInfo method missing');
+                      }
+                    } catch (error) {
+                      console.error('HashPack call failed:', error);
+                      alert(`HashPack call failed: ${error.message}`);
+                    }
+                  } else {
+                    console.log('window.hashpack not found');
+                    
+                    // Check if there are any HashPack-related objects
+                    const hashPackKeys = Object.keys(window).filter(key => 
+                      key.toLowerCase().includes('hash') || 
+                      key.toLowerCase().includes('hedera')
+                    );
+                    
+                    if (hashPackKeys.length > 0) {
+                      console.log('Found hash/hedera related keys:', hashPackKeys);
+                      alert(`HashPack not found, but found: ${hashPackKeys.join(', ')}`);
+                    } else {
+                      alert('HashPack extension not properly injected. Try:\n1. Unlock HashPack\n2. Refresh page\n3. Check if extension is enabled');
+                    }
+                  }
+                }}
+                className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+              >
+                Deep Test
+              </button>
+              <button 
                 onClick={() => {
-                  console.log('All window properties:', Object.keys(window));
-                  console.log('Chrome extension API:', (window as any).chrome);
+                  // Manual override - force HashPack to be detected
+                  localStorage.setItem('hashpack-manual-override', 'true');
+                  alert('HashPack manually enabled. Refresh the wallet modal.');
                   runDebug();
                 }}
-                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
               >
-                Debug All
+                Manual Override
               </button>
             </div>
+          </div>
+        )}
+        
+        {localStorage.getItem('hashpack-manual-override') && (
+          <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded text-xs">
+            <div>✅ HashPack manual override enabled</div>
+            <button 
+              onClick={() => {
+                localStorage.removeItem('hashpack-manual-override');
+                runDebug();
+              }}
+              className="mt-1 px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+            >
+              Remove Override
+            </button>
           </div>
         )}
         
