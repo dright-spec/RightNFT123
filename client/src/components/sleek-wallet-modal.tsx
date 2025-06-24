@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { getAvailableWallets, type WalletInfo } from "@/utils/detectWallets";
 
 interface SleekWalletModalProps {
   open: boolean;
@@ -10,22 +11,47 @@ interface SleekWalletModalProps {
 
 export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalProps) {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [wallets, setWallets] = useState<WalletInfo[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (open) {
+      // Refresh wallet detection when modal opens
+      setWallets(getAvailableWallets());
+    }
+  }, [open]);
 
   if (!open) return null;
 
-  const handleWalletConnect = async () => {
+  const handleWalletConnect = async (walletId: string) => {
     setIsConnecting(true);
     
     try {
-      // Trigger Web3Modal or WalletConnect
-      const modal = document.querySelector('w3m-modal');
-      if (modal) {
-        (modal as any).open();
-        onClose();
-      } else {
-        // Fallback to direct wallet connection
-        if (typeof window !== 'undefined' && (window as any).ethereum) {
+      if (walletId === 'hashpack') {
+        if ((window as any).hashpack) {
+          // Use HashPack directly
+          const response = await (window as any).hashpack.requestAccountInfo();
+          if (response && response.accountId) {
+            onConnect?.(response.accountId);
+            onClose();
+            toast({
+              title: "HashPack Connected",
+              description: `Connected to account ${response.accountId}`,
+            });
+            return;
+          }
+        } else {
+          toast({
+            title: "HashPack Not Found",
+            description: "Please install HashPack wallet extension",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      if (walletId === 'metamask') {
+        if ((window as any).ethereum?.isMetaMask) {
           const accounts = await (window as any).ethereum.request({
             method: 'eth_requestAccounts'
           });
@@ -34,13 +60,28 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
             onConnect?.(accounts[0]);
             onClose();
             toast({
-              title: "Wallet Connected",
-              description: "Successfully connected to your wallet",
+              title: "MetaMask Connected",
+              description: "Successfully connected to MetaMask",
             });
+            return;
           }
         } else {
-          throw new Error('No wallet detected');
+          toast({
+            title: "MetaMask Not Found",
+            description: "Please install MetaMask wallet extension",
+            variant: "destructive",
+          });
+          return;
         }
+      }
+
+      // Fallback to Web3Modal for WalletConnect and other wallets
+      const modal = document.querySelector('w3m-modal');
+      if (modal) {
+        (modal as any).open();
+        onClose();
+      } else {
+        throw new Error('No wallet connection method available');
       }
     } catch (error) {
       console.error('Connection failed:', error);
@@ -54,36 +95,15 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
     }
   };
 
-  const walletOptions = [
-    {
-      name: "HashPack",
-      description: "Official Hedera wallet",
-      icon: "🟡",
-      gradient: "from-yellow-500 to-orange-500",
-      available: !!(window as any).hashpack
-    },
-    {
-      name: "MetaMask",
-      description: "Popular Web3 wallet",
-      icon: "🦊",
-      gradient: "from-orange-500 to-red-500",
-      available: !!(window as any).ethereum?.isMetaMask
-    },
-    {
-      name: "WalletConnect",
-      description: "Connect any wallet",
-      icon: "🔗",
-      gradient: "from-blue-500 to-purple-500",
-      available: true
-    },
-    {
-      name: "Blade Wallet",
-      description: "Multi-chain wallet",
-      icon: "⚔️",
-      gradient: "from-purple-500 to-pink-500",
-      available: !!(window as any).blade
-    }
-  ];
+  const getWalletGradient = (walletId: string) => {
+    const gradients: Record<string, string> = {
+      hashpack: "from-yellow-500 to-orange-500",
+      metamask: "from-orange-500 to-red-500", 
+      walletconnect: "from-blue-500 to-purple-500",
+      blade: "from-purple-500 to-pink-500"
+    };
+    return gradients[walletId] || "from-gray-500 to-gray-600";
+  };
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-300">
@@ -105,32 +125,44 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
 
         {/* Wallet Options */}
         <div className="space-y-4 mb-8">
-          {walletOptions.map((wallet, index) => (
+          {wallets.map((wallet, index) => (
             <button
-              key={wallet.name}
-              onClick={handleWalletConnect}
-              disabled={!wallet.available || isConnecting}
+              key={wallet.id}
+              onClick={() => handleWalletConnect(wallet.id)}
+              disabled={!wallet.isAvailable || isConnecting}
               className={`w-full p-4 rounded-2xl border-2 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] ${
-                wallet.available
+                wallet.isAvailable
                   ? 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 shadow-md hover:shadow-xl'
                   : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 opacity-60 cursor-not-allowed'
               }`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${wallet.gradient} flex items-center justify-center text-2xl shadow-lg`}>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${getWalletGradient(wallet.id)} flex items-center justify-center text-2xl shadow-lg`}>
                   {wallet.icon}
                 </div>
                 <div className="flex-1 text-left">
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-                    {wallet.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                      {wallet.name}
+                    </h3>
+                    {wallet.isRecommended && (
+                      <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs rounded-full font-medium">
+                        Recommended
+                      </span>
+                    )}
+                    {wallet.isHederaNative && (
+                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full font-medium">
+                        Hedera
+                      </span>
+                    )}
+                  </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm">
                     {wallet.description}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {wallet.available ? (
+                  {wallet.isAvailable ? (
                     <>
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                       <span className="text-sm font-medium text-green-600 dark:text-green-400">
@@ -138,9 +170,20 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
                       </span>
                     </>
                   ) : (
-                    <span className="text-sm text-gray-400">
-                      Not Installed
-                    </span>
+                    <div className="text-right">
+                      <span className="text-sm text-gray-400 block">
+                        Not Installed
+                      </span>
+                      <a 
+                        href={wallet.downloadUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:text-blue-600"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Install
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>
