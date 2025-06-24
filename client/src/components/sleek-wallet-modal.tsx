@@ -16,7 +16,13 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
 
   useEffect(() => {
     if (open) {
-      // Refresh wallet detection when modal opens
+      // Wait a bit for wallets to inject, then refresh detection
+      setTimeout(() => {
+        console.log('Refreshing wallet detection...');
+        setWallets(getAvailableWallets());
+      }, 500);
+      
+      // Also refresh immediately
       setWallets(getAvailableWallets());
     }
   }, [open]);
@@ -28,26 +34,63 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
     
     try {
       if (walletId === 'hashpack') {
-        if ((window as any).hashpack) {
-          // Use HashPack directly
-          const response = await (window as any).hashpack.requestAccountInfo();
-          if (response && response.accountId) {
-            onConnect?.(response.accountId);
-            onClose();
+        console.log('Attempting HashPack connection...');
+        console.log('window.hashpack available:', !!(window as any).hashpack);
+        
+        // Try multiple HashPack connection methods
+        let hashpackApi = (window as any).hashpack;
+        
+        if (!hashpackApi && (window as any).hashconnect) {
+          hashpackApi = (window as any).hashconnect;
+        }
+        
+        if (!hashpackApi && (window as any).ethereum?.providers) {
+          hashpackApi = (window as any).ethereum.providers.find((p: any) => p.isHashPack);
+        }
+        
+        if (hashpackApi) {
+          try {
+            console.log('Found HashPack API, attempting connection...');
+            
+            // Try different connection methods
+            let response;
+            if (hashpackApi.requestAccountInfo) {
+              response = await hashpackApi.requestAccountInfo();
+            } else if (hashpackApi.connectWallet) {
+              response = await hashpackApi.connectWallet();
+            } else if (hashpackApi.request) {
+              response = await hashpackApi.request({ method: 'eth_requestAccounts' });
+            }
+            
+            console.log('HashPack response:', response);
+            
+            if (response && (response.accountId || response.account || response[0])) {
+              const accountId = response.accountId || response.account || response[0];
+              onConnect?.(accountId);
+              onClose();
+              toast({
+                title: "HashPack Connected",
+                description: `Connected to account ${accountId}`,
+              });
+              return;
+            }
+          } catch (error) {
+            console.error('HashPack connection error:', error);
             toast({
-              title: "HashPack Connected",
-              description: `Connected to account ${response.accountId}`,
+              title: "HashPack Connection Failed",
+              description: "Failed to connect to HashPack. Please try again.",
+              variant: "destructive",
             });
             return;
           }
-        } else {
-          toast({
-            title: "HashPack Not Found",
-            description: "Please install HashPack wallet extension",
-            variant: "destructive",
-          });
-          return;
         }
+        
+        toast({
+          title: "HashPack Not Found",
+          description: "Please install HashPack wallet extension and refresh the page",
+          variant: "destructive",
+        });
+        return;
       }
       
       if (walletId === 'metamask') {
