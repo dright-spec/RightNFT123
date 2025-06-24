@@ -1,5 +1,6 @@
 // Import the proper HashConnect integration
 import { connectWallet as connectHashConnect, isConnected as isHashConnectConnected, getConnectedAccountIds } from './hashconnect';
+import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
 import { config } from './env';
 
 export interface WalletInfo {
@@ -24,19 +25,16 @@ export function detectAvailableWallets(): WalletInfo[] {
   // Check if HashConnect is already connected
   const isHashConnected = isHashConnectConnected();
   
-  // HashPack detection via HashConnect
-  const hasHashPack = !!(
-    (window as any).hashpack || 
-    (window as any).HashPack || 
-    isHashConnected
-  );
+  // Enhanced HashPack detection
+  const hasHashPack = detectHashPack() || isHashConnected;
   
-  // Debug HashPack detection
-  console.log('HashPack detection:', {
-    hashpack: !!(window as any).hashpack,
-    HashPack: !!(window as any).HashPack,
+  // Debug wallet detection
+  console.log('Wallet detection:', {
+    hashpack: detectHashPack(),
     hashConnected: isHashConnected,
-    detected: hasHashPack
+    metamask: detectMetaMask(),
+    blade: detectBlade(),
+    hasHashPack
   });
   
   const wallets: WalletInfo[] = [
@@ -55,23 +53,24 @@ export function detectAvailableWallets(): WalletInfo[] {
       name: 'MetaMask',
       description: 'Popular Ethereum wallet',
       icon: '🦊',
-      isAvailable: !!(window as any).ethereum?.isMetaMask,
+      isAvailable: detectMetaMask(),
       downloadUrl: 'https://metamask.io/'
     },
     {
       id: 'walletconnect',
-      name: 'WalletConnect',
-      description: 'Connect manually with wallet address',
+      name: 'HashConnect',
+      description: 'Connect using HashConnect protocol',
       icon: '🔗',
-      isAvailable: true, // Always available as manual entry
-      downloadUrl: 'https://walletconnect.com/'
+      isAvailable: true,
+      isHederaNative: true,
+      downloadUrl: 'https://docs.hedera.com/hedera/sdks-and-apis/sdks/wallet-integrations/hashconnect'
     },
     {
       id: 'blade',
       name: 'Blade Wallet',
       description: 'Multi-chain wallet with Hedera support',
       icon: '⚔️',
-      isAvailable: !!(window as any).bladeWallet || !!(window as any).blade,
+      isAvailable: detectBlade(),
       isHederaNative: true,
       downloadUrl: 'https://bladewallet.io/'
     }
@@ -146,20 +145,36 @@ async function connectMetaMask(): Promise<string> {
   }
 }
 
-// Simplified WalletConnect that opens a prompt for manual entry
+// WalletConnect that tries HashConnect first, then manual entry
 async function connectWalletConnect(): Promise<string> {
-  const address = prompt('Enter your wallet address (0x... for Ethereum or 0.0.xxx for Hedera):');
+  // First try to use HashConnect if available
+  try {
+    if (isHashConnectConnected()) {
+      const accounts = getConnectedAccountIds();
+      if (accounts.length > 0) {
+        return accounts[0];
+      }
+    }
+    
+    // Try to initialize HashConnect
+    const accountId = await connectHashConnect();
+    if (accountId) {
+      return accountId;
+    }
+  } catch (error) {
+    console.log('HashConnect not available, falling back to manual entry');
+  }
+  
+  // Fallback to manual entry only if HashConnect fails
+  const address = prompt('Enter your Hedera account ID (format: 0.0.xxxxx):');
   
   if (!address) {
     throw new Error('Connection cancelled by user');
   }
   
-  // Basic validation
-  const isEthAddress = /^0x[a-fA-F0-9]{40}$/.test(address);
-  const isHederaAccount = /^0\.0\.\d+$/.test(address);
-  
-  if (!isEthAddress && !isHederaAccount) {
-    throw new Error('Invalid address format. Use 0x... for Ethereum or 0.0.xxx for Hedera');
+  // Validate Hedera account format
+  if (!/^0\.0\.\d+$/.test(address)) {
+    throw new Error('Invalid Hedera account ID format. Use 0.0.xxxxx format');
   }
   
   return address;
@@ -185,17 +200,34 @@ async function connectBlade(): Promise<string> {
   }
 }
 
-// Check if a wallet is connected by looking at localStorage
+// Check if a wallet is connected by looking at HashConnect first, then localStorage
 export function getStoredWalletConnection(): ConnectedWallet | null {
-  const walletId = localStorage.getItem('connected_wallet');
-  const address = localStorage.getItem('wallet_address');
-  
-  if (walletId && address) {
-    return {
-      walletId,
-      address,
-      isConnected: true
-    };
+  try {
+    // Check if HashConnect is connected first
+    if (isHashConnectConnected()) {
+      const connectedAccounts = getConnectedAccountIds();
+      if (connectedAccounts.length > 0) {
+        return {
+          walletId: 'hashpack',
+          address: connectedAccounts[0],
+          isConnected: true
+        };
+      }
+    }
+    
+    // Fallback to localStorage for other wallets
+    const walletId = localStorage.getItem('connected_wallet');
+    const address = localStorage.getItem('wallet_address');
+    
+    if (walletId && address) {
+      return {
+        walletId,
+        address,
+        isConnected: true
+      };
+    }
+  } catch (error) {
+    console.error('Error getting stored wallet connection:', error);
   }
   
   return null;
