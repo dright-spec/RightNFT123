@@ -1,18 +1,33 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { detectHashPack, detectMetaMask } from "@/utils/detectWallets";
+import { HashPackDetector } from "@/utils/hashpack-detector";
 
 export function WalletDebug() {
   const [debugInfo, setDebugInfo] = useState<any>({});
 
   const runDebug = () => {
-    // Check for HashPack in multiple ways
+    // Comprehensive HashPack detection checks
     const hashpackChecks = {
       windowHashpack: (window as any).hashpack,
-      windowHashConnect: (window as any).hashconnect,
-      windowHederaHashpack: (window as any).hedera?.hashpack,
+      windowHashConnect: (window as any).hashConnect || (window as any).hashconnect,
+      windowHedera: (window as any).hedera,
+      windowHederaWallet: (window as any).hederaWallet,
       ethereumHashpack: (window as any).ethereum?.isHashPack,
-      documentHashpack: document.querySelector('[data-hashpack]'),
+      ethereumProviders: (window as any).ethereum?.providers?.length || 0,
+      hashpackInProviders: (window as any).ethereum?.providers?.some((p: any) => 
+        p.isHashPack || p.constructor?.name?.toLowerCase().includes('hashpack')
+      ),
+      documentElements: [
+        document.querySelector('[data-hashpack]'),
+        document.querySelector('[data-hedera]'),
+        document.querySelector('script[src*="hashpack"]'),
+        document.querySelector('meta[name*="hashpack"]')
+      ].filter(Boolean).length,
+      extensionObjects: Object.keys(window).filter(key => 
+        key.toLowerCase().includes('hashpack') || 
+        key.toLowerCase().includes('hedera')
+      ),
     };
 
     const info = {
@@ -45,9 +60,18 @@ export function WalletDebug() {
   };
 
   useEffect(() => {
-    // Auto-run debug on mount and periodically refresh
+    // Auto-run debug on mount
     runDebug();
-    const interval = setInterval(runDebug, 3000); // Check every 3 seconds
+    
+    // Subscribe to HashPack detection changes
+    const detector = HashPackDetector.getInstance();
+    detector.onDetectionChange((detected) => {
+      console.log(`HashPack detection changed: ${detected}`);
+      runDebug();
+    });
+    
+    // Periodic refresh
+    const interval = setInterval(runDebug, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -61,16 +85,45 @@ export function WalletDebug() {
         <div>HashPack Detected: {debugInfo.detectHashPackResult ? '✅' : '❌'}</div>
         <div>MetaMask Detected: {debugInfo.detectMetaMaskResult ? '✅' : '❌'}</div>
         
-        {!debugInfo.detectHashPackResult && (
-          <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded text-xs">
-            💡 HashPack not found. Install from <a href="https://www.hashpack.app/" target="_blank" className="text-blue-600 underline">hashpack.app</a> and refresh.
+        {!debugInfo.detectHashPackResult && debugInfo.hashpackChecks && (
+          <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded text-xs">
+            <div>🔍 HashPack installed but not detected!</div>
+            <div>Extension objects found: {debugInfo.hashpackChecks.extensionObjects?.join(', ') || 'none'}</div>
+            <div>DOM elements: {debugInfo.hashpackChecks.documentElements || 0}</div>
+            <div className="flex gap-1 mt-2">
+              <button 
+                onClick={() => {
+                  console.log('Manual HashPack detection...');
+                  const detector = HashPackDetector.getInstance();
+                  const result = detector.forceRecheck();
+                  console.log('Manual detection result:', result);
+                  runDebug();
+                }}
+                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+              >
+                Force Check
+              </button>
+              <button 
+                onClick={() => {
+                  console.log('All window properties:', Object.keys(window));
+                  console.log('Chrome extension API:', (window as any).chrome);
+                  runDebug();
+                }}
+                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+              >
+                Debug All
+              </button>
+            </div>
           </div>
         )}
         
         <div className="border-t pt-2 mt-2">
           <div className="font-semibold">HashPack Checks:</div>
           {debugInfo.hashpackChecks && Object.entries(debugInfo.hashpackChecks).map(([key, value]) => (
-            <div key={key}>{key}: {value ? '✅' : '❌'}</div>
+            <div key={key} className="flex justify-between">
+              <span>{key}:</span>
+              <span>{Array.isArray(value) ? `[${value.length}]` : value ? '✅' : '❌'}</span>
+            </div>
           ))}
         </div>
         

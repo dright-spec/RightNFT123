@@ -5,37 +5,17 @@ export function detectMetaMask(): boolean {
   ); // standard MetaMask flag
 }
 
+import { HashPackDetector } from './hashpack-detector';
+
 export function detectHashPack(): boolean {
-  if (typeof window === 'undefined') return false;
+  // Use the advanced detector for more reliable detection
+  const detector = HashPackDetector.getInstance();
+  const isDetected = detector.getDetectionStatus();
   
-  // Primary detection method - HashPack injects window.hashpack
-  if ((window as any).hashpack) {
-    console.log('✅ HashPack detected via window.hashpack');
-    return true;
-  }
+  // Also force a recheck
+  detector.forceRecheck();
   
-  // Alternative detection methods
-  const alternativeChecks = [
-    () => (window as any).hashconnect,
-    () => (window as any).hedera?.hashpack,
-    () => (window as any).ethereum?.isHashPack,
-    () => (window as any).ethereum?.providers?.some((p: any) => p.isHashPack || p._state?.isHashPack),
-    () => document.querySelector('[data-hashpack]'),
-  ];
-  
-  for (let i = 0; i < alternativeChecks.length; i++) {
-    try {
-      if (alternativeChecks[i]()) {
-        console.log(`✅ HashPack detected via alternative method ${i + 1}`);
-        return true;
-      }
-    } catch (error) {
-      // Ignore errors from detection methods
-    }
-  }
-  
-  console.log('❌ HashPack not detected - extension may not be installed');
-  return false;
+  return isDetected;
 }
 
 export function detectBlade(): boolean {
