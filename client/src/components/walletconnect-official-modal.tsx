@@ -180,15 +180,17 @@ export function WalletConnectButton({ onConnect, onDisconnect }: WalletConnectBu
   return (
     <button
       onClick={connectWallet}
-      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium"
+      className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
     >
-      <span className="text-lg">🔗</span>
-      Connect Wallet
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 3C13.55 3 14 3.45 14 4V10C14 10.55 13.55 11 13 11H11C10.45 11 10 10.55 10 10V4C10 3.45 10.45 3 11 3H13ZM15.5 6.5C15.78 6.5 16 6.72 16 7V17C16 17.28 15.78 17.5 15.5 17.5S15 17.28 15 17V7C15 6.72 15.22 6.5 15.5 6.5ZM8.5 6.5C8.78 6.5 9 6.72 9 7V17C17 17.28 8.78 17.5 8.5 17.5S8 17.28 8 17V7C8 6.72 8.22 6.5 8.5 6.5ZM6 10C6.55 10 7 10.45 7 11V13C7 13.55 6.55 14 6 14H4C3.45 14 3 13.55 3 13V11C3 10.45 3.45 10 4 10H6ZM20 10C20.55 10 21 10.45 21 11V13C21 13.55 20.55 14 20 14H18C17.45 14 17 13.55 17 13V11C17 10.45 17.45 10 18 10H20Z" fill="currentColor"/>
+      </svg>
+      <span>Connect Wallet</span>
     </button>
   );
 }
 
-// Alternative simple modal component that matches the design
+// Sleek WalletConnect Modal with Official Branding
 export function SimpleWalletModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
 
@@ -202,27 +204,69 @@ export function SimpleWalletModal({ open, onClose }: { open: boolean; onClose: (
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-2xl p-8 max-w-sm w-full mx-4 text-center text-white">
-        <h2 className="text-xl font-bold mb-2">Hedera dapp</h2>
-        <p className="text-gray-400 mb-6 text-sm">
-          Connect any Hedera wallet using WalletConnect to continue
-        </p>
-        
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-200 dark:border-gray-700 animate-in zoom-in-95 duration-300">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L19 7L17.91 13.26L23 12L21.91 18.26L18 17L16.91 23.26L12 22L7.09 23.26L6 17L2.09 18.26L1 12L5.09 13.26L4 7L10.91 8.26L12 2Z" fill="white"/>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Connect Wallet</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Connect your wallet to access the Hedera ecosystem and start trading rights
+          </p>
+        </div>
+
+        {/* Connect Button */}
         <button
           onClick={connectWallet}
-          className="w-full bg-white text-black font-medium py-3 px-6 rounded-lg hover:bg-gray-100 transition-colors mb-4"
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] mb-6 shadow-lg hover:shadow-xl"
         >
-          ⭐ CONNECT WALLET
+          <div className="flex items-center justify-center gap-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 3C13.55 3 14 3.45 14 4V10C14 10.55 13.55 11 13 11H11C10.45 11 10 10.55 10 10V4C10 3.45 10.45 3 11 3H13ZM15.5 6.5C15.78 6.5 16 6.72 16 7V17C16 17.28 15.78 17.5 15.5 17.5S15 17.28 15 17V7C15 6.72 15.22 6.5 15.5 6.5ZM8.5 6.5C8.78 6.5 9 6.72 9 7V17C9 17.28 8.78 17.5 8.5 17.5S8 17.28 8 17V7C8 6.72 8.22 6.5 8.5 6.5ZM6 10C6.55 10 7 10.45 7 11V13C7 13.55 6.55 14 6 14H4C3.45 14 3 13.55 3 13V11C3 10.45 3.45 10 4 10H6ZM20 10C20.55 10 21 10.45 21 11V13C21 13.55 20.55 14 20 14H18C17.45 14 17 13.55 17 13V11C17 10.45 17.45 10 18 10H20Z" fill="currentColor"/>
+            </svg>
+            <span>CONNECT WALLET</span>
+          </div>
         </button>
-        
-        <p className="text-xs text-gray-500">All Hedera wallets supported.</p>
-        
+
+        {/* Features */}
+        <div className="space-y-3 mb-6">
+          <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span>Secure connection via WalletConnect protocol</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            <span>Support for all major Hedera wallets</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+            <span>Native HTS token support</span>
+          </div>
+        </div>
+
+        {/* Powered by */}
+        <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <span>Powered by</span>
+            <div className="flex items-center gap-1 font-medium">
+              <div className="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded"></div>
+              <span>WalletConnect</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          ✕
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
       </div>
     </div>

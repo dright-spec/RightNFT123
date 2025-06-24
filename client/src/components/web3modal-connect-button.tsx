@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet, LogOut } from "lucide-react";
-import { WalletConnectModal } from "./wallet-connect-modal";
+import { SleekWalletModal } from "./sleek-wallet-modal";
 import { storeWalletConnection, clearWalletConnection, getStoredWalletConnection } from "@/lib/wallet-manager";
 import { useToast } from "@/hooks/use-toast";
 
@@ -121,10 +121,10 @@ export function Web3ModalConnectButton() {
         {connecting ? 'Connecting...' : 'Connect Wallet'}
       </Button>
 
-      <WalletConnectModal
+      <SleekWalletModal
         open={isOpen}
-        onOpenChange={setIsOpen}
-        onConnect={handleWalletConnect}
+        onClose={() => setIsOpen(false)}
+        onConnect={(address) => handleWalletConnect('web3modal', address)}
       />
     </>
   );
