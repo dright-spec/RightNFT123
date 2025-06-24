@@ -61,6 +61,12 @@ export function WalletDebug() {
         <div>HashPack Detected: {debugInfo.detectHashPackResult ? '✅' : '❌'}</div>
         <div>MetaMask Detected: {debugInfo.detectMetaMaskResult ? '✅' : '❌'}</div>
         
+        {!debugInfo.detectHashPackResult && (
+          <div className="bg-yellow-100 dark:bg-yellow-900/30 p-2 rounded text-xs">
+            💡 HashPack not found. Install from <a href="https://www.hashpack.app/" target="_blank" className="text-blue-600 underline">hashpack.app</a> and refresh.
+          </div>
+        )}
+        
         <div className="border-t pt-2 mt-2">
           <div className="font-semibold">HashPack Checks:</div>
           {debugInfo.hashpackChecks && Object.entries(debugInfo.hashpackChecks).map(([key, value]) => (
