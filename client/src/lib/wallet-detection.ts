@@ -1,49 +1,54 @@
-// Enhanced wallet detection with retry logic
-export async function detectHashPack(): Promise<boolean> {
-  // Check multiple possible HashPack globals - more comprehensive
-  const checks = [
-    () => !!(window as any).hashpack,
-    () => !!(window as any).HashPack,
-    () => !!(window as any).hashconnect,
-    () => !!(window as any).hcSdk,
-    () => !!document.querySelector('[data-hashpack]'),
-    () => !!document.querySelector('meta[name="hashpack"]'),
-    () => !!document.querySelector('[data-extension="hashpack"]'),
-    () => !!window.localStorage.getItem('hashpack-connected')
-  ];
-  
-  // Initial synchronous check
-  const syncResult = checks.some(check => {
-    try {
-      return check();
-    } catch {
-      return false;
-    }
-  });
-  
-  if (syncResult) {
-    console.log('HashPack detected immediately');
+import { HashConnect, HashConnectTypes } from "@hashgraph/hashconnect";
+
+let hashconnect: HashConnect | null = null;
+
+/**
+ * Returns true if HashPack is available (direct inject OR via HashConnect).
+ * Uses the community-recommended "kitchen sink" approach.
+ */
+export async function detectHashPack(timeout = 1000): Promise<boolean> {
+  // 1) Quick direct check
+  if (typeof (window as any).hashpack !== "undefined") {
+    console.log('HashPack detected via direct window.hashpack');
     return true;
   }
-  
+
   try {
-    // Wait for potential async wallet loading
-    console.log('Waiting for HashPack extension to load...');
-    await waitForWalletExtensions(1000); // 1 second wait
+    // 2) Init HashConnect once
+    if (!hashconnect) {
+      hashconnect = new HashConnect();
+      await hashconnect.init(
+        { 
+          name: "Dright Detection", 
+          description: "HashPack detection for Dright marketplace", 
+          icon: window.location.origin + "/favicon.ico", 
+          url: window.location.origin 
+        } as HashConnectTypes.AppMetadata,
+        "testnet"
+      );
+    }
+
+    // 3) Listen for foundExtension
+    let found = false;
+    if (hashconnect.foundExtension) {
+      const sub = hashconnect.foundExtension.subscribe((ext) => {
+        const id = ext.metadata.id.toLowerCase();
+        const name = ext.metadata.name.toLowerCase();
+        if (id.includes("hashpack") || name.includes("hashpack")) {
+          console.log('HashPack detected via HashConnect foundExtension:', ext.metadata);
+          found = true;
+          sub.unsubscribe();
+        }
+      });
+
+      // 4) Wait up to `timeout` ms
+      await new Promise((r) => setTimeout(r, timeout));
+      sub.unsubscribe();
+    }
     
-    // Re-check after waiting
-    const result = checks.some(check => {
-      try {
-        return check();
-      } catch {
-        return false;
-      }
-    });
-    
-    console.log('HashPack detection after waiting:', result);
-    return result;
+    return found;
   } catch (error) {
-    console.warn('Error waiting for wallet extensions:', error);
+    console.warn('Error in HashConnect detection:', error);
     return false;
   }
 }
@@ -64,33 +69,9 @@ export function detectBlade(): boolean {
   }
 }
 
-// Wait for wallet extensions to load
-export async function waitForWalletExtensions(timeout = 3000): Promise<void> {
+// Wait for wallet extensions to load - simplified version
+export async function waitForWalletExtensions(timeout = 1000): Promise<void> {
   return new Promise((resolve) => {
-    let elapsed = 0;
-    const interval = 100;
-    
-    const check = async () => {
-      try {
-        // Use synchronous detection to avoid recursion
-        const hasHashPack = !!(
-          (window as any).hashpack || 
-          (window as any).HashPack || 
-          (window as any).hashconnect
-        );
-        
-        if (hasHashPack || elapsed >= timeout) {
-          resolve();
-        } else {
-          elapsed += interval;
-          setTimeout(check, interval);
-        }
-      } catch (error) {
-        // If there's an error, resolve to prevent hanging
-        resolve();
-      }
-    };
-    
-    check();
+    setTimeout(resolve, timeout);
   });
 }

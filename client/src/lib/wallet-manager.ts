@@ -32,20 +32,16 @@ export async function detectAvailableWallets(): Promise<WalletInfo[]> {
       console.warn('Error checking HashConnect status:', error);
     }
     
-    // Enhanced HashPack detection with async support
+    // Enhanced HashPack detection using community-recommended approach
     let hasHashPack = false;
     try {
-      hasHashPack = await detectHashPack();
+      hasHashPack = await detectHashPack(1500); // Give more time for detection
     } catch (error) {
       console.warn('Error detecting HashPack:', error);
     }
     
     // Additional manual HashPack check for debugging
-    const manualHashPackCheck = !!(
-      (window as any).hashpack || 
-      (window as any).HashPack ||
-      (window as any).hashconnect
-    );
+    const manualHashPackCheck = !!(window as any).hashpack;
     
     // Run comprehensive wallet debugging
     debugWalletEnvironment();

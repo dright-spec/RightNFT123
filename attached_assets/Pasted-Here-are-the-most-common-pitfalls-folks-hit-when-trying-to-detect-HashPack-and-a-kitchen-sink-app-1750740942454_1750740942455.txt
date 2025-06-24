@@ -1,0 +1,93 @@
+Here are the most common pitfalls folks hit when trying to detect HashPack, and a “kitchen-sink” approach that usually just works:
+
+Timing
+
+Run after the extension injects (usually on window.load or in a useEffect(() => {…}, [])). If you check too early in your bundle, window.hashpack will be undefined.
+
+Multiple detection channels
+
+Don’t rely on just one: combine
+
+window.hashpack (direct inject)
+
+HashConnect foundExtension
+
+Case-insensitive ID/name
+
+Some builds report metadata.id === "HashPack" instead of "hashpack".
+
+Short polling window
+
+Give the browser a few hundred ms to fire the event.
+
+ts
+Copy
+Edit
+// wallet-detection.ts
+import { HashConnect, HashConnectTypes } from "@hashgraph/hashconnect";
+
+let hashconnect: HashConnect | null = null;
+
+/**
+ * Returns true if HashPack is available (direct inject OR via HashConnect).
+ */
+export async function detectHashPack(timeout = 1000): Promise<boolean> {
+  // 1) quick direct check
+  if (typeof (window as any).hashpack !== "undefined") {
+    return true;
+  }
+
+  // 2) init HashConnect once
+  if (!hashconnect) {
+    hashconnect = new HashConnect();
+    await hashconnect.init(
+      { name: "detect-only", description: "", icon: "", url: "" } as HashConnectTypes.AppMetadata,
+      "testnet"
+    );
+  }
+
+  // 3) listen for foundExtension
+  let found = false;
+  const sub = hashconnect.foundExtension!.subscribe((ext) => {
+    const id = ext.metadata.id.toLowerCase();
+    const name = ext.metadata.name.toLowerCase();
+    if (id.includes("hashpack") || name.includes("hashpack")) {
+      found = true;
+      sub.unsubscribe();
+    }
+  });
+
+  // 4) wait up to `timeout` ms
+  await new Promise((r) => setTimeout(r, timeout));
+  sub.unsubscribe();
+  return found;
+}
+And then in your React:
+
+ts
+Copy
+Edit
+useEffect(() => {
+  (async () => {
+    const hasHP = await detectHashPack();
+    console.log("HashPack available?", hasHP);
+    setAvailableWallets((w) =>
+      w.map((info) =>
+        info.id === "hashpack" ? { ...info, isAvailable: hasHP } : info
+      )
+    );
+  })();
+}, []);
+––
+
+Why this works
+
+Direct check first so you catch the immediate window.hashpack.
+
+HashConnect fallback spins up the pipe that the extension uses to announce itself.
+
+Case-insensitive ID/name matching covers metadata quirks.
+
+Timeout/poll gives the browser a moment to inject.
+
+Give that a shot and you should reliably see HashPack whenever it’s installed.

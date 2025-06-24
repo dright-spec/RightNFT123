@@ -24,9 +24,10 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
   // Detect available wallets on component mount and when modal opens
   useEffect(() => {
     if (open) {
-      // Add a small delay to ensure wallet extensions are loaded
+      // Use the community-recommended approach
       const detectWallets = async () => {
         try {
+          console.log('Starting wallet detection...');
           const detectedWallets = await detectAvailableWallets();
           console.log('Detected wallets:', detectedWallets);
           setWallets(detectedWallets);
@@ -39,7 +40,7 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
               name: 'HashPack',
               description: 'Official Hedera wallet with native HTS support',
               icon: '🟡',
-              isAvailable: !!(window as any).hashpack || !!(window as any).HashPack,
+              isAvailable: !!(window as any).hashpack,
               isRecommended: true,
               isHederaNative: true,
               downloadUrl: 'https://www.hashpack.app/'
@@ -56,7 +57,8 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
         }
       };
       
-      setTimeout(detectWallets, 100);
+      // Run detection after window load and extension injection
+      setTimeout(detectWallets, 300);
     }
   }, [open]);
 
