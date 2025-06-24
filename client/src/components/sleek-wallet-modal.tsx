@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvailableWallets, type WalletInfo } from "@/utils/detectWallets";
+import { HashPackConnector } from "@/utils/hashpack-connector";
 
 interface SleekWalletModalProps {
   open: boolean;
@@ -34,105 +35,30 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
     
     try {
       if (walletId === 'hashpack') {
-        console.log('Attempting HashPack connection...');
+        console.log('Starting HashPack connection process...');
         
-        // Check manual override first
-        if (localStorage.getItem('hashpack-manual-override') === 'true') {
-          console.log('HashPack manual override enabled, attempting connection...');
-        }
-        
-        // Try to find HashPack API
-        let hashpackApi = null;
-        
-        // Method 1: Direct window.hashpack
-        if ((window as any).hashpack) {
-          hashpackApi = (window as any).hashpack;
-          console.log('Found HashPack via window.hashpack');
-        }
-        
-        // Method 2: Alternative naming
-        if (!hashpackApi && (window as any).hashconnect) {
-          hashpackApi = (window as any).hashconnect;
-          console.log('Found HashPack via window.hashconnect');
-        }
-        
-        // Method 3: Check if user manually overrode and try direct access
-        if (!hashpackApi && localStorage.getItem('hashpack-manual-override') === 'true') {
-          console.log('Manual override enabled - simulating HashPack connection');
+        try {
+          const connector = new HashPackConnector();
+          const accountId = await connector.connect();
           
-          // Show instructions to user
-          const proceed = confirm(
-            'HashPack detection override is enabled.\n\n' +
-            'Please make sure HashPack extension is installed and unlocked.\n\n' +
-            'Click OK to continue with connection attempt.'
-          );
+          console.log('HashPack connection successful:', accountId);
+          onConnect?.(accountId);
+          onClose();
+          toast({
+            title: "HashPack Connected",
+            description: `Successfully connected to account ${accountId}`,
+          });
+          return;
           
-          if (proceed) {
-            try {
-              // Try to access HashPack directly
-              if ((window as any).hashpack?.requestAccountInfo) {
-                hashpackApi = (window as any).hashpack;
-                console.log('Found HashPack API after override');
-              } else {
-                throw new Error('HashPack API still not accessible');
-              }
-            } catch (error) {
-              toast({
-                title: "HashPack Override Failed",
-                description: "HashPack extension may not be properly installed or unlocked",
-                variant: "destructive",
-              });
-              return;
-            }
-          } else {
-            return;
-          }
+        } catch (error) {
+          console.error('HashPack connection failed:', error);
+          toast({
+            title: "HashPack Connection Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
         }
-        
-        if (hashpackApi) {
-          try {
-            console.log('Attempting HashPack connection with API:', hashpackApi);
-            
-            let response;
-            if (hashpackApi.requestAccountInfo) {
-              response = await hashpackApi.requestAccountInfo();
-            } else if (hashpackApi.connectWallet) {
-              response = await hashpackApi.connectWallet();
-            } else {
-              throw new Error('No valid HashPack connection method found');
-            }
-            
-            console.log('HashPack response:', response);
-            
-            if (response && (response.accountId || response.account)) {
-              const accountId = response.accountId || response.account;
-              onConnect?.(accountId);
-              onClose();
-              toast({
-                title: "HashPack Connected",
-                description: `Connected to account ${accountId}`,
-              });
-              return;
-            } else {
-              throw new Error('No account information received from HashPack');
-            }
-          } catch (error) {
-            console.error('HashPack connection error:', error);
-            toast({
-              title: "HashPack Connection Failed",
-              description: `Connection error: ${error.message}`,
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-        
-        toast({
-          title: "HashPack Not Accessible",
-          description: "Cannot access HashPack extension. Please ensure it's installed and try the manual override in the debug panel.",
-          variant: "destructive",
-        });
-        return;
       }
       
       if (walletId === 'metamask') {

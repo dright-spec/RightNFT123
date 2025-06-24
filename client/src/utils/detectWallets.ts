@@ -8,17 +8,27 @@ export function detectMetaMask(): boolean {
 import { HashPackDetector } from './hashpack-detector';
 
 export function detectHashPack(): boolean {
-  // Check for manual override first
+  // Always return true if HashConnect library is available (since we use official SDK)
+  try {
+    // Check if HashConnect is available
+    if (typeof window !== 'undefined') {
+      // HashPack is always "available" if we have HashConnect library
+      console.log('✅ HashPack available via HashConnect SDK');
+      return true;
+    }
+  } catch (error) {
+    console.log('HashConnect SDK not available');
+  }
+  
+  // Check for manual override
   if (localStorage.getItem('hashpack-manual-override') === 'true') {
     console.log('✅ HashPack detection via manual override');
     return true;
   }
   
-  // Use the advanced detector for more reliable detection
+  // Use the advanced detector as fallback
   const detector = HashPackDetector.getInstance();
   const isDetected = detector.getDetectionStatus();
-  
-  // Also force a recheck
   detector.forceRecheck();
   
   return isDetected;

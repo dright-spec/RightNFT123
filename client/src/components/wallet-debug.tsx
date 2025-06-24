@@ -105,50 +105,24 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('Comprehensive HashPack test...');
+                  console.log('Testing HashPack connection with HashConnect...');
                   
-                  // First check if window.hashpack exists at all
-                  console.log('window.hashpack:', (window as any).hashpack);
-                  console.log('typeof window.hashpack:', typeof (window as any).hashpack);
-                  
-                  if ((window as any).hashpack) {
-                    console.log('HashPack object found!');
-                    console.log('HashPack methods:', Object.keys((window as any).hashpack));
+                  try {
+                    const { HashPackConnector } = await import('@/utils/hashpack-connector');
+                    const connector = new HashPackConnector();
+                    const accountId = await connector.connect();
                     
-                    try {
-                      if ((window as any).hashpack.requestAccountInfo) {
-                        console.log('requestAccountInfo method exists, calling...');
-                        const result = await (window as any).hashpack.requestAccountInfo();
-                        console.log('HashPack connection successful:', result);
-                        alert(`HashPack connected! Account: ${result.accountId}`);
-                      } else {
-                        console.log('requestAccountInfo method not found');
-                        alert('HashPack object found but requestAccountInfo method missing');
-                      }
-                    } catch (error) {
-                      console.error('HashPack call failed:', error);
-                      alert(`HashPack call failed: ${error.message}`);
-                    }
-                  } else {
-                    console.log('window.hashpack not found');
+                    console.log('HashConnect test successful:', accountId);
+                    alert(`HashPack connection successful!\nAccount: ${accountId}`);
                     
-                    // Check if there are any HashPack-related objects
-                    const hashPackKeys = Object.keys(window).filter(key => 
-                      key.toLowerCase().includes('hash') || 
-                      key.toLowerCase().includes('hedera')
-                    );
-                    
-                    if (hashPackKeys.length > 0) {
-                      console.log('Found hash/hedera related keys:', hashPackKeys);
-                      alert(`HashPack not found, but found: ${hashPackKeys.join(', ')}`);
-                    } else {
-                      alert('HashPack extension not properly injected. Try:\n1. Unlock HashPack\n2. Refresh page\n3. Check if extension is enabled');
-                    }
+                  } catch (error) {
+                    console.error('HashConnect test failed:', error);
+                    alert(`HashConnect test failed:\n${error.message}`);
                   }
                 }}
                 className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
               >
-                Deep Test
+                Test HashConnect
               </button>
               <button 
                 onClick={() => {
