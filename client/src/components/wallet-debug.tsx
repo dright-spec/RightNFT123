@@ -144,17 +144,17 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing HashConnect with aggressive error suppression...');
+                  console.log('🚀 Testing HashConnect with proper message handling...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting connection with comprehensive error blocking...');
+                    console.log('🔄 Starting connection with correct decrypt pattern...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Connection successful with error suppression:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing aggressive error suppression!`);
+                    console.log('✅ Connection successful with proper message flow:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing proper HashConnect message handling!`);
                     
                   } catch (error) {
                     console.error('❌ Connection failed:', error);
@@ -163,7 +163,7 @@ export function WalletDebug() {
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Error Block
+                Test Message Flow
               </button>
             </div>
           </div>

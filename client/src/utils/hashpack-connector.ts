@@ -133,18 +133,35 @@ export class HashPackConnector {
         };
         window.addEventListener('error', connectionErrorHandler, true);
         
-        // Handle pairing event with aggressive error suppression
-        this.hashConnect.pairingEvent.once(async (pairingData) => {
-          console.log('🔗 Pairing successful with HashPack, processing safely...');
+        // Handle pairing event properly - only extract account, don't decrypt
+        this.hashConnect.pairingEvent.once((pairingData) => {
+          console.log('🔗 Pairing successful with HashPack');
           clearTimeout(timeout);
           
-          // Keep connection error handler active for longer
-          setTimeout(() => {
-            window.removeEventListener('error', connectionErrorHandler, true);
-          }, 10000);
+          // Remove connection error handler
+          window.removeEventListener('error', connectionErrorHandler, true);
           
-          // Process pairing with enhanced error protection
-          await this.processHashConnectPairingSafe(pairingData, resolve, reject);
+          // Extract account directly from pairing data (no decryption needed)
+          this.extractAccountFromPairing(pairingData, resolve, reject);
+        });
+
+        // Set up proper message handler for actual wallet messages (not pairing)
+        this.hashConnect.on("message", async (messageData) => {
+          console.log('📨 Received message from HashPack wallet:', messageData);
+          
+          try {
+            // Only decrypt actual wallet messages, not pairing data
+            if (messageData.encrypted && messageData.topic) {
+              const decrypted = await this.hashConnect.decrypt({
+                message: messageData.encrypted,
+                topic: messageData.topic
+              });
+              const plaintext = new TextDecoder().decode(decrypted);
+              console.log('✅ Decrypted wallet message:', plaintext);
+            }
+          } catch (decryptError) {
+            console.log('🛡️ Suppressed message decryption error:', decryptError.message);
+          }
         });
 
         // Start wallet discovery (this was working)
@@ -179,106 +196,58 @@ export class HashPackConnector {
     }
   }
 
-  private async processHashConnectPairingSafe(
+  private extractAccountFromPairing(
     pairingData: any,
     resolve: (value: string) => void,
     reject: (reason: any) => void
   ) {
-    // Wrap everything in multiple layers of error protection
-    const safeProcess = async () => {
-      try {
-        console.log('🔍 Processing HashConnect pairing with maximum safety...');
-        
-        // Log structure but don't access potentially problematic fields
-        const safeKeys = Object.keys(pairingData || {}).filter(key => !key.includes('encrypt'));
-        console.log('Safe pairing data keys:', safeKeys);
-        
-        // Method 1: Direct account extraction (most common)
-        if (pairingData?.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds[0]) {
-          const accountId = pairingData.accountIds[0];
-          console.log('✅ Found direct account:', accountId);
-          this.state = 'connected';
-          resolve(accountId);
-          return;
-        }
-        
-        // Method 2: Alternative account property
-        if (pairingData?.account && typeof pairingData.account === 'string') {
-          console.log('✅ Found account property:', pairingData.account);
-          this.state = 'connected';
-          resolve(pairingData.account);
-          return;
-        }
-        
-        // Method 3: Search through safe keys only
-        for (const key of safeKeys) {
-          const value = pairingData[key];
-          if (typeof value === 'string' && value.match(/^0\.0\.\d+$/)) {
-            console.log('✅ Found account via safe key search:', value);
-            this.state = 'connected';
-            resolve(value);
-            return;
-          } else if (Array.isArray(value) && value[0] && typeof value[0] === 'string' && value[0].match(/^0\.0\.\d+$/)) {
-            console.log('✅ Found account via safe array search:', value[0]);
-            this.state = 'connected';
-            resolve(value[0]);
-            return;
-          }
-        }
-        
-        // Method 4: Try common HashConnect structures
-        const commonPaths = [
-          'metadata.accountIds[0]',
-          'payload.accountIds[0]', 
-          'data.accountIds[0]',
-          'response.accountIds[0]'
-        ];
-        
-        for (const path of commonPaths) {
-          try {
-            const pathParts = path.split('.');
-            let current = pairingData;
-            for (const part of pathParts) {
-              if (part.includes('[0]')) {
-                const prop = part.replace('[0]', '');
-                current = current?.[prop]?.[0];
-              } else {
-                current = current?.[part];
-              }
-            }
-            if (current && typeof current === 'string' && current.match(/^0\.0\.\d+$/)) {
-              console.log('✅ Found account via path search:', current);
-              this.state = 'connected';
-              resolve(current);
-              return;
-            }
-          } catch (pathError) {
-            // Silently continue to next path
-          }
-        }
-        
-        // If we get here, no account was found
-        this.state = 'disconnected';
-        console.error('❌ No account information found in any safe location');
-        reject(new Error('No account information found in pairing response'));
-        
-      } catch (error) {
-        this.state = 'disconnected';
-        console.error('❌ Error in safe pairing processing:', error);
-        reject(new Error('Failed to safely process pairing data'));
+    try {
+      console.log('🔍 Extracting account from pairing data (no decryption)...');
+      
+      // Direct account extraction from pairing response
+      if (pairingData?.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds[0]) {
+        const accountId = pairingData.accountIds[0];
+        console.log('✅ Found account in pairing:', accountId);
+        this.state = 'connected';
+        resolve(accountId);
+        return;
       }
-    };
-    
-    // Execute with additional timeout protection
-    Promise.race([
-      safeProcess(),
-      new Promise((_, timeoutReject) => {
-        setTimeout(() => timeoutReject(new Error('Pairing processing timeout')), 10000);
-      })
-    ]).catch(error => {
+      
+      // Alternative account property
+      if (pairingData?.account && typeof pairingData.account === 'string') {
+        console.log('✅ Found account property:', pairingData.account);
+        this.state = 'connected';
+        resolve(pairingData.account);
+        return;
+      }
+      
+      // Search through data structure for Hedera account ID
+      const keys = Object.keys(pairingData || {});
+      for (const key of keys) {
+        const value = pairingData[key];
+        if (typeof value === 'string' && value.match(/^0\.0\.\d+$/)) {
+          console.log('✅ Found account via key search:', value);
+          this.state = 'connected';
+          resolve(value);
+          return;
+        } else if (Array.isArray(value) && value[0] && typeof value[0] === 'string' && value[0].match(/^0\.0\.\d+$/)) {
+          console.log('✅ Found account via array search:', value[0]);
+          this.state = 'connected';
+          resolve(value[0]);
+          return;
+        }
+      }
+      
+      // No account found
       this.state = 'disconnected';
-      reject(error);
-    });
+      console.error('❌ No account information found in pairing data');
+      reject(new Error('No account information found in pairing response'));
+      
+    } catch (error) {
+      this.state = 'disconnected';
+      console.error('❌ Error extracting account from pairing:', error);
+      reject(new Error('Failed to extract account from pairing data'));
+    }
   }
 
 
