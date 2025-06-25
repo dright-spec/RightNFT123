@@ -144,26 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing Fresh HashPack Connection (clean state)...');
+                  console.log('🚀 Testing Native Browser HashPack (zero dependencies)...');
                   
                   try {
-                    const { FreshHashPackConnector } = await import('@/utils/fresh-hashpack-connector');
-                    const connector = new FreshHashPackConnector();
+                    const { NativeHashPackConnector } = await import('@/utils/native-hashpack-connector');
+                    const connector = new NativeHashPackConnector();
                     
-                    console.log('🔄 Starting fresh connection with clean state...');
+                    console.log('🔄 Starting native browser connection...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Fresh connection successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing fresh state management!`);
+                    console.log('✅ Native connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing native browser API only!`);
                     
                   } catch (error) {
-                    console.error('❌ Fresh connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${error.message}\n\nTry refreshing the page.`);
+                    console.error('❌ Native connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${(error as Error).message}\n\nEnsure HashPack is installed and unlocked.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Fresh Connection
+                Test Native Browser
               </button>
             </div>
           </div>
