@@ -144,26 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing simplified HashPack connection (no encryption)...');
+                  console.log('🚀 Testing HashPack with proper post-confirmation handling...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting simplified connection...');
+                    console.log('🔄 Starting connection with post-confirmation support...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Simplified connection successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsed simplified method bypassing encryption issues.`);
+                    console.log('✅ Connection successful:', accountId);
+                    alert(`🎉 HashPack Connected!\n\nAccount: ${accountId}\n\nPost-confirmation communication working properly.`);
                     
                   } catch (error) {
-                    console.error('❌ Simplified connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${error.message}\n\nTried multiple simplified methods.`);
+                    console.error('❌ Connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${error.message}\n\nCheck console for details.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Simplified Connection
+                Test Fixed Connection
               </button>
             </div>
           </div>

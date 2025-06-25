@@ -1,184 +1,173 @@
-// Simplified HashPack connector that bypasses encryption issues
+// Direct HashPack connector that handles post-confirmation communication properly
 export class HashPackConnector {
   private state: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+  private connectionPromise: Promise<string> | null = null;
   
   constructor() {
-    // No complex initialization needed
+    // Set up message listeners for HashPack responses
+    this.setupMessageListeners();
+  }
+
+  private setupMessageListeners() {
+    // Listen for HashPack messages that might come after user confirmation
+    window.addEventListener('message', (event) => {
+      if (event.data && typeof event.data === 'object') {
+        const data = event.data;
+        
+        // Handle HashPack connection success
+        if (data.type === 'hashpack' && data.action === 'connect' && data.accountId) {
+          console.log('✅ HashPack connected via message:', data.accountId);
+          this.state = 'connected';
+          return;
+        }
+        
+        // Handle other HashPack events
+        if (data.origin === 'hashpack' || data.source === 'hashpack') {
+          console.log('📨 HashPack message received:', data);
+        }
+      }
+    });
   }
 
   async connect(): Promise<string> {
-    if (this.state === 'connecting') {
-      throw new Error('Connection already in progress');
+    if (this.connectionPromise) {
+      console.log('🔄 Using existing connection promise...');
+      return this.connectionPromise;
     }
 
+    this.connectionPromise = this.performConnection();
+    return this.connectionPromise;
+  }
+
+  private async performConnection(): Promise<string> {
     this.state = 'connecting';
     console.log('🔄 Starting HashPack connection...');
 
     try {
-      // Method 1: Try HashPack extension direct communication
-      const result = await this.tryExtensionMethod();
-      if (result) return result;
+      // Method 1: Direct extension method with proper error handling
+      const result = await this.tryDirectConnection();
+      if (result) {
+        this.connectionPromise = null;
+        return result;
+      }
 
-      // Method 2: Try postMessage communication
-      const result2 = await this.tryPostMessageMethod();
-      if (result2) return result2;
+      // Method 2: Try event-based connection
+      const result2 = await this.tryEventBasedConnection();
+      if (result2) {
+        this.connectionPromise = null;
+        return result2;
+      }
 
-      // Method 3: Try delayed injection detection
-      const result3 = await this.tryDelayedDetection();
-      if (result3) return result3;
-
-      throw new Error('HashPack not accessible via any method');
+      throw new Error('HashPack connection failed - wallet may need to be unlocked or refreshed');
 
     } catch (error) {
       this.state = 'disconnected';
+      this.connectionPromise = null;
       throw error;
     }
   }
 
-  private async tryExtensionMethod(): Promise<string | null> {
-    console.log('🔍 Method 1: Trying extension detection...');
+  private async tryDirectConnection(): Promise<string | null> {
+    console.log('🔍 Method 1: Trying direct HashPack connection...');
     
-    const possibleNames = [
-      'hashpack', 'HashPack', 'hashConnect', 'HashConnect', 
-      'hedera', 'Hedera', 'hederaWallet', 'HederaWallet'
-    ];
-    
-    for (const name of possibleNames) {
-      const obj = (window as any)[name];
-      if (obj && typeof obj === 'object') {
-        console.log(`🔍 Found ${name}:`, obj);
-        console.log(`${name} properties:`, Object.keys(obj));
-        
-        // Check if wallet is already connected
-        if (obj.isConnected && obj.isConnected()) {
-          console.log(`${name} is already connected, getting account info...`);
-          try {
-            const account = obj.getAccountId ? obj.getAccountId() : obj.accountId;
-            if (account) {
-              console.log(`✅ Already connected to ${name}:`, account);
-              this.state = 'connected';
-              return account;
-            }
-          } catch (error) {
-            console.log(`Failed to get account from connected ${name}:`, error.message);
-          }
-        }
-        
-        // Try to request connection
-        if (obj.requestAccountInfo) {
-          try {
-            console.log(`🔄 Calling ${name}.requestAccountInfo()...`);
-            const result = await obj.requestAccountInfo();
-            if (result?.accountId) {
-              console.log(`✅ Connected via ${name}:`, result.accountId);
-              this.state = 'connected';
-              return result.accountId;
-            }
-          } catch (error) {
-            console.log(`❌ ${name} requestAccountInfo failed:`, error.message);
-          }
-        }
-        
-        // Try alternative connection methods
-        const connectionMethods = ['connect', 'connectWallet', 'enable', 'request'];
-        for (const method of connectionMethods) {
-          if (obj[method] && typeof obj[method] === 'function') {
-            try {
-              console.log(`🔄 Trying ${name}.${method}()...`);
-              const result = await obj[method]();
-              if (result?.accountId || result?.account || result?.[0]) {
-                const accountId = result.accountId || result.account || result[0];
-                console.log(`✅ Connected via ${name}.${method}:`, accountId);
-                this.state = 'connected';
-                return accountId;
-              }
-            } catch (error) {
-              console.log(`❌ ${name}.${method} failed:`, error.message);
-            }
-          }
-        }
-      }
+    // Check for HashPack object
+    const hashpack = (window as any).hashpack;
+    if (!hashpack) {
+      console.log('❌ HashPack object not found');
+      return null;
     }
-    
-    return null;
+
+    console.log('✅ HashPack object found:', Object.keys(hashpack));
+
+    try {
+      // Use a promise wrapper to handle the async response properly
+      const accountId = await new Promise<string>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('HashPack connection timeout'));
+        }, 30000); // 30 second timeout
+
+        // Set up one-time listener for HashPack response
+        const messageHandler = (event: MessageEvent) => {
+          if (event.data?.accountId || (event.data?.type === 'hashpack' && event.data?.account)) {
+            clearTimeout(timeout);
+            window.removeEventListener('message', messageHandler);
+            const account = event.data.accountId || event.data.account;
+            console.log('✅ Received account from HashPack:', account);
+            resolve(account);
+          }
+        };
+
+        window.addEventListener('message', messageHandler);
+
+        // Call HashPack requestAccountInfo
+        hashpack.requestAccountInfo()
+          .then((result: any) => {
+            clearTimeout(timeout);
+            window.removeEventListener('message', messageHandler);
+            
+            if (result?.accountId) {
+              console.log('✅ Direct response from HashPack:', result.accountId);
+              resolve(result.accountId);
+            } else {
+              // Wait for message response
+              console.log('🔄 Waiting for HashPack message response...');
+            }
+          })
+          .catch((error: any) => {
+            // Don't reject immediately, wait for message response
+            console.log('⚠️ Direct call failed, waiting for message response:', error.message);
+          });
+      });
+
+      this.state = 'connected';
+      return accountId;
+
+    } catch (error) {
+      console.log('❌ Direct connection failed:', error.message);
+      return null;
+    }
   }
 
-  private async tryPostMessageMethod(): Promise<string | null> {
-    console.log('🔍 Method 2: Trying postMessage communication...');
+  private async tryEventBasedConnection(): Promise<string | null> {
+    console.log('🔍 Method 2: Trying event-based connection...');
     
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => resolve(null), 3000);
+      const timeout = setTimeout(() => resolve(null), 10000);
       
       const messageHandler = (event: MessageEvent) => {
-        if (event.data?.type === 'hashpack-response' && event.data?.accountId) {
-          clearTimeout(timeout);
-          window.removeEventListener('message', messageHandler);
-          console.log('✅ Connected via postMessage:', event.data.accountId);
-          this.state = 'connected';
-          resolve(event.data.accountId);
+        if (event.data && typeof event.data === 'object') {
+          const data = event.data;
+          
+          // Check for various HashPack response formats
+          if (data.accountId || (data.type === 'hashpack' && data.account)) {
+            clearTimeout(timeout);
+            window.removeEventListener('message', messageHandler);
+            const accountId = data.accountId || data.account;
+            console.log('✅ Connected via event:', accountId);
+            this.state = 'connected';
+            resolve(accountId);
+          }
         }
       };
       
       window.addEventListener('message', messageHandler);
       
-      // Send message to HashPack
-      window.postMessage({
-        type: 'hashpack-request',
-        method: 'requestAccountInfo'
-      }, '*');
+      // Try to trigger HashPack if it exists
+      const hashpack = (window as any).hashpack;
+      if (hashpack) {
+        // Send a custom event to trigger HashPack
+        window.dispatchEvent(new CustomEvent('hashpack-connect-request'));
+        
+        // Also try postMessage
+        window.postMessage({
+          type: 'hashpack-request',
+          method: 'connect'
+        }, '*');
+      }
     });
   }
 
-  private async tryDelayedDetection(): Promise<string | null> {
-    console.log('🔍 Method 3: Trying delayed detection and forced refresh...');
-    
-    // Check if HashPack exists but needs refresh
-    if ((window as any).hashpack) {
-      console.log('HashPack object exists, checking connection state...');
-      const hashpack = (window as any).hashpack;
-      
-      // Try to refresh the connection
-      try {
-        if (hashpack.refresh) {
-          await hashpack.refresh();
-          console.log('HashPack refreshed');
-        }
-        
-        if (hashpack.requestAccountInfo) {
-          const result = await hashpack.requestAccountInfo();
-          if (result?.accountId) {
-            console.log('✅ Connected after refresh:', result.accountId);
-            this.state = 'connected';
-            return result.accountId;
-          }
-        }
-      } catch (error) {
-        console.log('❌ Refresh failed:', error.message);
-      }
-    }
-    
-    // Wait for HashPack to inject if not found
-    for (let i = 0; i < 10; i++) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const hashpack = (window as any).hashpack;
-      if (hashpack?.requestAccountInfo) {
-        try {
-          console.log(`🔄 HashPack found after ${(i + 1) * 500}ms, connecting...`);
-          const result = await hashpack.requestAccountInfo();
-          if (result?.accountId) {
-            console.log('✅ Connected after delay:', result.accountId);
-            this.state = 'connected';
-            return result.accountId;
-          }
-        } catch (error) {
-          console.log(`❌ Delayed connection attempt ${i + 1} failed:`, error.message);
-        }
-      }
-    }
-    
-    return null;
-  }
+
 
   disconnect() {
     this.state = 'disconnected';
