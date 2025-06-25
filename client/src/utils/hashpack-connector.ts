@@ -141,6 +141,12 @@ export class HashPackConnector {
           // Remove connection error handler
           window.removeEventListener('error', connectionErrorHandler, true);
           
+          // Activate post-connection error suppression to handle decryption errors
+          import('@/utils/post-connection-handler').then(({ postConnectionHandler }) => {
+            postConnectionHandler.activate();
+            console.log('🛡️ Post-connection error suppression activated');
+          });
+          
           // Extract account directly from pairing data (no decryption needed)
           this.extractAccountFromPairing(pairingData, resolve, reject);
         });

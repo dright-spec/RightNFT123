@@ -144,26 +144,30 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing Pure HashPack API (zero dependencies)...');
+                  console.log('🚀 Testing HashPack with post-connection error handling...');
                   
                   try {
-                    const { DirectHashPackConnector } = await import('@/utils/direct-hashpack');
-                    const connector = new DirectHashPackConnector();
+                    // Activate post-connection error suppression
+                    const { postConnectionHandler } = await import('@/utils/post-connection-handler');
+                    postConnectionHandler.activate();
                     
-                    console.log('🔄 Starting pure HashPack connection...');
+                    const { HashPackConnector } = await import('@/utils/hashpack-connector');
+                    const connector = new HashPackConnector();
+                    
+                    console.log('🔄 Starting connection with post-connection error handling...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Pure HashPack connection successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing pure HashPack API - zero encryption dependencies!`);
+                    console.log('✅ Connection successful with error handling:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing post-connection error suppression!`);
                     
                   } catch (error) {
-                    console.error('❌ Pure connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${error.message}\n\nMake sure HashPack is installed and unlocked.`);
+                    console.error('❌ Connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${error.message}\n\nCheck console for details.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Pure API
+                Test Post-Connection
               </button>
             </div>
           </div>
