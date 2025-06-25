@@ -1,19 +1,9 @@
-// Official HashConnect SDK integration for HashPack wallet
-import { HashConnect, HashConnectTypes } from '@hashgraph/hashconnect';
-
+// Simplified HashPack connector that bypasses encryption issues
 export class HashPackConnector {
-  private hashConnect: HashConnect;
-  private appMetadata: HashConnectTypes.AppMetadata;
-  private state: 'disconnected' | 'initializing' | 'connecting' | 'connected' = 'disconnected';
+  private state: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
   
   constructor() {
-    this.hashConnect = new HashConnect(true); // Enable debug mode
-    this.appMetadata = {
-      name: "Dright Marketplace",
-      description: "Decentralized Rights Trading Platform",
-      icon: window.location.origin + "/favicon.ico",
-      url: window.location.origin
-    };
+    // No complex initialization needed
   }
 
   async connect(): Promise<string> {
@@ -21,132 +11,116 @@ export class HashPackConnector {
       throw new Error('Connection already in progress');
     }
 
-    // First, try to detect if HashPack is available via alternative methods
-    console.log('🔍 Checking for HashPack via alternative detection...');
-    
-    // Check onhashchange object - might be HashPack related
-    const onhashchange = (window as any).onhashchange;
-    if (onhashchange && typeof onhashchange === 'object') {
-      console.log('🔍 Found onhashchange object, investigating...');
-      console.log('onhashchange properties:', Object.keys(onhashchange));
+    this.state = 'connecting';
+    console.log('🔄 Starting HashPack connection...');
+
+    try {
+      // Method 1: Try HashPack extension direct communication
+      const result = await this.tryExtensionMethod();
+      if (result) return result;
+
+      // Method 2: Try postMessage communication
+      const result2 = await this.tryPostMessageMethod();
+      if (result2) return result2;
+
+      // Method 3: Try delayed injection detection
+      const result3 = await this.tryDelayedDetection();
+      if (result3) return result3;
+
+      throw new Error('HashPack not accessible via any method');
+
+    } catch (error) {
+      this.state = 'disconnected';
+      throw error;
     }
+  }
+
+  private async tryExtensionMethod(): Promise<string | null> {
+    console.log('🔍 Method 1: Trying extension detection...');
     
-    // Check for HashPack under different possible names
-    const possibleHashPackObjects = [
+    const possibleNames = [
       'hashpack', 'HashPack', 'hashConnect', 'HashConnect', 
       'hedera', 'Hedera', 'hederaWallet', 'HederaWallet'
     ];
     
-    for (const name of possibleHashPackObjects) {
+    for (const name of possibleNames) {
       const obj = (window as any)[name];
       if (obj && typeof obj === 'object') {
-        console.log(`🔍 Found potential HashPack object: ${name}`, obj);
+        console.log(`🔍 Found ${name}:`, obj);
         
-        // Check if it has HashPack-like methods
-        const methods = Object.keys(obj);
-        if (methods.some(m => m.includes('account') || m.includes('connect') || m.includes('request'))) {
-          console.log(`✅ ${name} has wallet-like methods:`, methods);
-          
-          // Try to use it directly
+        if (obj.requestAccountInfo) {
           try {
-            if (obj.requestAccountInfo) {
-              console.log(`🔄 Attempting connection via ${name}.requestAccountInfo...`);
-              const result = await obj.requestAccountInfo();
-              if (result && result.accountId) {
-                console.log(`✅ Connected via ${name}:`, result.accountId);
-                return result.accountId;
-              }
+            console.log(`🔄 Calling ${name}.requestAccountInfo()...`);
+            const result = await obj.requestAccountInfo();
+            if (result?.accountId) {
+              console.log(`✅ Connected via ${name}:`, result.accountId);
+              this.state = 'connected';
+              return result.accountId;
             }
           } catch (error) {
-            console.log(`❌ ${name} connection failed:`, error);
+            console.log(`❌ ${name} failed:`, error.message);
           }
         }
       }
     }
-
-    // Fallback to official HashConnect SDK
-    this.state = 'initializing';
-    console.log('🔄 Falling back to official HashConnect SDK...');
     
-    try {
-      // Initialize HashConnect
-      await this.hashConnect.init(this.appMetadata);
-      console.log('✅ HashConnect SDK initialized');
-
-      this.state = 'connecting';
-      console.log('🔄 Scanning for available wallets...');
-
-      // Set up event listeners for wallet discovery
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('HashPack connection timeout - no wallets found after 15 seconds'));
-        }, 15000);
-
-        // Listen for any wallet discovery
-        this.hashConnect.foundExtensionEvent.once((walletMetadata) => {
-          console.log('🔍 Found wallet extension:', walletMetadata);
-          this.connectToWallet(walletMetadata, resolve, reject, timeout);
-        });
-
-        // Listen for pairing events
-        this.hashConnect.pairingEvent.once((pairingData) => {
-          console.log('🔗 Wallet pairing successful:', pairingData);
-          clearTimeout(timeout);
-          
-          if (pairingData.accountIds && pairingData.accountIds.length > 0) {
-            const accountId = pairingData.accountIds[0];
-            this.state = 'connected';
-            console.log('✅ Connected to account:', accountId);
-            resolve(accountId);
-          } else {
-            this.state = 'disconnected';
-            reject(new Error('No account IDs received from wallet'));
-          }
-        });
-
-        // Start looking for wallets
-        console.log('🔄 Starting wallet discovery...');
-        this.hashConnect.findLocalWallets();
-      });
-
-    } catch (error) {
-      this.state = 'disconnected';
-      console.error('❌ HashConnect initialization failed:', error);
-      throw new Error(`HashConnect initialization failed: ${error.message || 'Unknown error'}`);
-    }
+    return null;
   }
 
-  private async connectToWallet(
-    walletMetadata: any, 
-    resolve: (value: string) => void, 
-    reject: (reason: any) => void,
-    timeout: NodeJS.Timeout
-  ) {
-    try {
-      console.log('🔄 Attempting to connect to HashPack...');
+  private async tryPostMessageMethod(): Promise<string | null> {
+    console.log('🔍 Method 2: Trying postMessage communication...');
+    
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => resolve(null), 3000);
       
-      // Connect to the specific wallet
-      await this.hashConnect.connectToLocalWallet(walletMetadata);
-      console.log('🔗 Connection request sent to HashPack');
+      const messageHandler = (event: MessageEvent) => {
+        if (event.data?.type === 'hashpack-response' && event.data?.accountId) {
+          clearTimeout(timeout);
+          window.removeEventListener('message', messageHandler);
+          console.log('✅ Connected via postMessage:', event.data.accountId);
+          this.state = 'connected';
+          resolve(event.data.accountId);
+        }
+      };
       
-      // The pairing event listener will handle the response
+      window.addEventListener('message', messageHandler);
       
-    } catch (error) {
-      clearTimeout(timeout);
-      this.state = 'disconnected';
-      console.error('❌ Failed to connect to HashPack:', error);
-      reject(new Error(`Failed to connect to HashPack: ${error.message || 'Unknown error'}`));
+      // Send message to HashPack
+      window.postMessage({
+        type: 'hashpack-request',
+        method: 'requestAccountInfo'
+      }, '*');
+    });
+  }
+
+  private async tryDelayedDetection(): Promise<string | null> {
+    console.log('🔍 Method 3: Trying delayed detection...');
+    
+    // Wait for HashPack to inject
+    for (let i = 0; i < 10; i++) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if ((window as any).hashpack?.requestAccountInfo) {
+        try {
+          console.log('🔄 HashPack found after delay, connecting...');
+          const result = await (window as any).hashpack.requestAccountInfo();
+          if (result?.accountId) {
+            console.log('✅ Connected after delay:', result.accountId);
+            this.state = 'connected';
+            return result.accountId;
+          }
+        } catch (error) {
+          console.log('❌ Delayed connection failed:', error.message);
+        }
+      }
     }
+    
+    return null;
   }
 
   disconnect() {
-    try {
-      this.hashConnect.disconnect();
-      this.state = 'disconnected';
-      console.log('✅ HashConnect disconnected');
-    } catch (error) {
-      console.error('❌ Error during disconnect:', error);
-    }
+    this.state = 'disconnected';
+    console.log('✅ HashPack disconnected');
   }
 
   getState() {

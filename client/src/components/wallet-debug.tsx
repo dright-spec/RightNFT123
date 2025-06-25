@@ -163,26 +163,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing enhanced HashConnect with alternative detection...');
+                  console.log('🚀 Testing simplified HashPack connection (no encryption)...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting enhanced HashPack connection...');
+                    console.log('🔄 Starting simplified connection...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Enhanced connection successful:', accountId);
-                    alert(`🎉 HashPack Connected!\n\nAccount: ${accountId}\n\nConnection method worked with alternative detection.`);
+                    console.log('✅ Simplified connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsed simplified method bypassing encryption issues.`);
                     
                   } catch (error) {
-                    console.error('❌ Enhanced connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${error.message}\n\nTried both alternative detection and official SDK.`);
+                    console.error('❌ Simplified connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${error.message}\n\nTried multiple simplified methods.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Enhanced Connection
+                Test Simplified Connection
               </button>
             </div>
           </div>
