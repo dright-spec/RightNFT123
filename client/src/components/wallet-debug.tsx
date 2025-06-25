@@ -144,23 +144,35 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing HashPack Reality Check...');
+                  console.log('🚀 Testing Direct HashPack Connection...');
                   
                   try {
-                    const { HashPackRealityCheck } = await import('@/utils/hashpack-reality-check');
-                    const accountId = await HashPackRealityCheck.connectToHashPack();
+                    // Check if HashPack is installed
+                    if (!(window as any).hashpack) {
+                      alert('❌ HashPack not installed\n\nPlease install from Chrome Web Store');
+                      window.open('https://chrome.google.com/webstore/detail/hashpack/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
+                      return;
+                    }
+
+                    // Direct API call
+                    const hashpack = (window as any).hashpack;
+                    const result = await hashpack.requestAccountInfo();
                     
-                    console.log('✅ HashPack Reality Check successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nConnection verified!`);
+                    if (result && result.accountId) {
+                      console.log('✅ Direct HashPack connection successful:', result.accountId);
+                      alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${result.accountId}`);
+                    } else {
+                      alert('❌ No account received from HashPack\n\nEnsure wallet is unlocked');
+                    }
                     
                   } catch (error) {
-                    console.error('❌ HashPack Reality Check failed:', error);
+                    console.error('❌ Direct HashPack connection failed:', error);
                     alert(`❌ Connection Failed\n\n${(error as Error).message}`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Reality Check
+                Test Direct Connection
               </button>
             </div>
           </div>
