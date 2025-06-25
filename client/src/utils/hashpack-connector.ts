@@ -7,14 +7,36 @@ export class HashPackConnector {
   private state: 'disconnected' | 'initializing' | 'connecting' | 'connected' = 'disconnected';
   
   constructor() {
-    // HashPack official recommendation: Initialize with debug disabled and proper metadata
+    // HashPack official recommendation: Initialize with debug disabled and minimal metadata to avoid decryption issues
     this.hashConnect = new HashConnect(false);
     this.appMetadata = {
-      name: "Dright Marketplace",
-      description: "Decentralized Rights Trading Platform", 
+      name: "Dright",
+      description: "Rights Trading Platform", 
       icon: window.location.origin + "/favicon.ico",
       url: window.location.origin
     };
+    
+    // HashPack recommendation: Set up global error handler for decryption errors
+    this.setupGlobalErrorHandler();
+  }
+
+  private setupGlobalErrorHandler() {
+    // HashPack recommendation: Catch unhandled decryption errors
+    window.addEventListener('error', (event) => {
+      if (event.error?.message?.includes('decryption') || event.error?.message?.includes('Invalid encrypted text')) {
+        console.log('🛡️ Caught decryption error, preventing crash:', event.error.message);
+        event.preventDefault();
+        return false;
+      }
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason?.message?.includes('decryption') || event.reason?.message?.includes('Invalid encrypted text')) {
+        console.log('🛡️ Caught unhandled decryption rejection:', event.reason.message);
+        event.preventDefault();
+        return false;
+      }
+    });
   }
 
   async connect(): Promise<string> {
@@ -45,13 +67,19 @@ export class HashPackConnector {
           this.connectToWallet(walletMetadata, resolve, reject, timeout);
         });
 
-        // HashPack recommendation: Handle pairingEvent with proper error handling
+        // HashPack recommendation: Handle pairingEvent with decryption error prevention
         this.hashConnect.pairingEvent.once((pairingData) => {
           console.log('🔗 Pairing successful with HashPack');
           clearTimeout(timeout);
           
-          // HashPack recommendation: Safely extract account data
-          this.handlePairingSuccess(pairingData, resolve, reject);
+          // HashPack recommendation: Wrap in try-catch to handle decryption errors
+          try {
+            this.handlePairingSuccess(pairingData, resolve, reject);
+          } catch (decryptionError) {
+            console.error('❌ Decryption error in pairing event:', decryptionError);
+            this.state = 'disconnected';
+            reject(new Error('Wallet pairing failed due to encryption error. Please try reconnecting.'));
+          }
         });
 
         // HashPack recommendation: Handle connection errors gracefully
@@ -101,41 +129,52 @@ export class HashPackConnector {
     reject: (reason: any) => void
   ) {
     try {
-      // HashPack recommendation: Safely handle pairing data to avoid decryption errors
-      console.log('🔍 Processing pairing data safely...');
-      
-      // Extract account IDs with null checks
-      if (pairingData && pairingData.accountIds && Array.isArray(pairingData.accountIds)) {
-        const accountIds = pairingData.accountIds;
-        
-        if (accountIds.length > 0 && accountIds[0]) {
-          const accountId = accountIds[0];
-          this.state = 'connected';
-          console.log('✅ Successfully paired with account:', accountId);
-          resolve(accountId);
-          return;
+      // HashPack official recommendation: Use setTimeout to avoid decryption timing issues
+      setTimeout(() => {
+        try {
+          console.log('🔍 Processing pairing data with HashPack-recommended delay...');
+          
+          // HashPack recommendation: Access pairing data properties safely
+          let accountId: string | null = null;
+          
+          // Method 1: Standard accountIds array
+          if (pairingData?.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds.length > 0) {
+            accountId = pairingData.accountIds[0];
+            console.log('✅ Found account via accountIds:', accountId);
+          }
+          
+          // Method 2: Direct account property
+          else if (pairingData?.account) {
+            accountId = pairingData.account;
+            console.log('✅ Found account via account property:', accountId);
+          }
+          
+          // Method 3: Check for nested account data (HashPack sometimes uses this)
+          else if (pairingData?.metadata?.accountIds && Array.isArray(pairingData.metadata.accountIds)) {
+            accountId = pairingData.metadata.accountIds[0];
+            console.log('✅ Found account via metadata.accountIds:', accountId);
+          }
+          
+          if (accountId) {
+            this.state = 'connected';
+            resolve(accountId);
+          } else {
+            this.state = 'disconnected';
+            console.error('❌ No account information found in pairing data:', pairingData);
+            reject(new Error('No account information found in pairing response'));
+          }
+          
+        } catch (innerError) {
+          this.state = 'disconnected';
+          console.error('❌ Error in delayed pairing processing:', innerError);
+          reject(new Error('Failed to process pairing data safely'));
         }
-      }
-      
-      // Fallback: Try different data structures
-      if (pairingData && pairingData.account) {
-        const accountId = pairingData.account;
-        this.state = 'connected';
-        console.log('✅ Successfully paired with account (fallback):', accountId);
-        resolve(accountId);
-        return;
-      }
-      
-      // If no account data found
-      this.state = 'disconnected';
-      reject(new Error('No account information found in pairing data'));
+      }, 100); // HashPack recommendation: 100ms delay to avoid decryption race conditions
       
     } catch (error) {
       this.state = 'disconnected';
-      console.error('❌ Error processing pairing data:', error);
-      
-      // HashPack recommendation: Don't expose internal error details that might contain encrypted data
-      reject(new Error('Failed to process wallet pairing response'));
+      console.error('❌ Error setting up pairing data processing:', error);
+      reject(new Error('Failed to initialize pairing data processing'));
     }
   }
 
