@@ -38,35 +38,83 @@ export class DirectHashPackConnector {
   }
 
   private async waitForHashPack(): Promise<any> {
-    // Check if already available
-    if ((window as any).hashpack) {
-      console.log('✅ HashPack already available');
-      return (window as any).hashpack;
-    }
-
-    // Wait for injection
-    console.log('🔄 Waiting for HashPack injection...');
-    return new Promise((resolve) => {
-      let attempts = 0;
-      const maxAttempts = 20;
+    // First, try to detect HashPack via official HashConnect foundExtension
+    try {
+      const { HashConnect } = await import('@hashgraph/hashconnect');
+      const hashConnect = new HashConnect(false);
       
-      const checkInterval = setInterval(() => {
-        attempts++;
+      console.log('🔄 Using HashConnect for HashPack discovery...');
+      
+      return new Promise((resolve) => {
+        let attempts = 0;
+        const maxAttempts = 40;
         
-        if ((window as any).hashpack) {
-          clearInterval(checkInterval);
-          console.log('✅ HashPack detected after waiting');
-          resolve((window as any).hashpack);
-          return;
-        }
+        const checkInterval = setInterval(() => {
+          attempts++;
+          
+          // Check direct window.hashpack first
+          if ((window as any).hashpack) {
+            clearInterval(checkInterval);
+            console.log('✅ HashPack found via window.hashpack');
+            resolve((window as any).hashpack);
+            return;
+          }
+          
+          // Check via HashConnect discovery
+          try {
+            hashConnect.foundExtensions.forEach((extension) => {
+              if (extension.name.toLowerCase().includes('hashpack')) {
+                clearInterval(checkInterval);
+                console.log('✅ HashPack found via HashConnect discovery');
+                resolve((window as any).hashpack || extension);
+                return;
+              }
+            });
+          } catch (discoveryError) {
+            // Ignore discovery errors, continue checking
+          }
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            console.log('❌ HashPack not found after 20 seconds');
+            resolve(null);
+          }
+        }, 500);
         
-        if (attempts >= maxAttempts) {
-          clearInterval(checkInterval);
-          console.log('❌ HashPack not found after 10 seconds');
-          resolve(null);
+        // Try to initialize extension discovery
+        try {
+          hashConnect.init();
+        } catch (initError) {
+          console.log('⚠️ HashConnect init failed, using fallback detection');
         }
-      }, 500);
-    });
+      });
+      
+    } catch (hashConnectError) {
+      console.log('⚠️ HashConnect import failed, using direct detection');
+      
+      // Fallback to direct detection
+      return new Promise((resolve) => {
+        let attempts = 0;
+        const maxAttempts = 20;
+        
+        const checkInterval = setInterval(() => {
+          attempts++;
+          
+          if ((window as any).hashpack) {
+            clearInterval(checkInterval);
+            console.log('✅ HashPack detected via fallback');
+            resolve((window as any).hashpack);
+            return;
+          }
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(checkInterval);
+            console.log('❌ HashPack not found via fallback');
+            resolve(null);
+          }
+        }, 500);
+      });
+    }
   }
 
   private async callHashPackAPI(hashpack: any): Promise<string> {
