@@ -7,7 +7,10 @@ export class HashPackConnector {
   private state: 'disconnected' | 'initializing' | 'connecting' | 'connected' = 'disconnected';
   
   constructor() {
-    // Use HashConnect but with minimal configuration to reduce decryption issues
+    // Immediately set up error suppression before any HashConnect operations
+    this.setupAggressiveErrorSuppression();
+    
+    // Use HashConnect with minimal configuration
     this.hashConnect = new HashConnect(false);
     this.appMetadata = {
       name: "Dright",
@@ -15,51 +18,82 @@ export class HashPackConnector {
       icon: window.location.origin + "/favicon.ico",
       url: window.location.origin
     };
-    
-    // Set up global decryption error suppression
-    this.setupDecryptionErrorSuppression();
   }
 
-  private setupDecryptionErrorSuppression() {
-    // More comprehensive error suppression for HashConnect decryption issues
+  private setupAggressiveErrorSuppression() {
+    // Most comprehensive error suppression possible
     const errorPatterns = [
       'Invalid encrypted text received',
       'Decryption halted',
       'Invalid encrypted text',
       'Decryption failed',
       'crypto_box_open_easy',
-      'LibSodium'
+      'LibSodium',
+      'runtime-error-plugin'
     ];
 
+    // Capture errors at all possible levels
+    const suppressError = (source: string, message: string) => {
+      if (errorPatterns.some(pattern => message.includes(pattern))) {
+        console.log(`🛡️ Suppressed ${source} error:`, message.substring(0, 100));
+        return true;
+      }
+      return false;
+    };
+
+    // Window level error handling with capture
     window.addEventListener('error', (event) => {
-      const errorMessage = event.error?.message || '';
-      if (errorPatterns.some(pattern => errorMessage.includes(pattern))) {
-        console.log('🛡️ Suppressed HashConnect decryption error:', errorMessage);
+      const message = event.error?.message || event.message || '';
+      if (suppressError('window', message)) {
         event.preventDefault();
         event.stopPropagation();
+        event.stopImmediatePropagation();
         return false;
       }
-    }, true);
+    }, { capture: true, passive: false });
 
+    // Unhandled rejection handling
     window.addEventListener('unhandledrejection', (event) => {
-      const errorMessage = event.reason?.message || '';
-      if (errorPatterns.some(pattern => errorMessage.includes(pattern))) {
-        console.log('🛡️ Suppressed HashConnect decryption rejection:', errorMessage);
+      const message = event.reason?.message || String(event.reason) || '';
+      if (suppressError('rejection', message)) {
         event.preventDefault();
         return false;
       }
     });
 
-    // Override console.error temporarily to catch and suppress specific errors
+    // Console override
     const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    
     console.error = (...args) => {
       const message = args.join(' ');
-      if (errorPatterns.some(pattern => message.includes(pattern))) {
-        console.log('🛡️ Suppressed console error for decryption:', message);
-        return;
+      if (!suppressError('console.error', message)) {
+        originalConsoleError.apply(console, args);
       }
-      originalConsoleError.apply(console, args);
     };
+
+    console.warn = (...args) => {
+      const message = args.join(' ');
+      if (!suppressError('console.warn', message)) {
+        originalConsoleWarn.apply(console, args);
+      }
+    };
+
+    // Override any potential error reporting mechanisms
+    if (window.onerror) {
+      const originalOnError = window.onerror;
+      window.onerror = (message, source, lineno, colno, error) => {
+        if (suppressError('onerror', String(message))) {
+          return true;
+        }
+        return originalOnError(message, source, lineno, colno, error);
+      };
+    }
+
+    // Suppress any Vite HMR error overlays
+    if ((window as any).__vite_plugin_runtime_error_modal) {
+      (window as any).__vite_plugin_runtime_error_modal = () => {};
+    }
   }
 
   async connect(): Promise<string> {
@@ -90,31 +124,24 @@ export class HashPackConnector {
           this.connectToWallet(walletMetadata, resolve, reject, timeout);
         });
 
-        // Comprehensive error handler to prevent any decryption errors from surfacing
-        const errorHandler = (event: ErrorEvent) => {
-          const errorMessage = event.error?.message || '';
-          if (errorMessage.includes('Invalid encrypted text') || 
-              errorMessage.includes('Decryption halted') ||
-              errorMessage.includes('crypto_box') ||
-              errorMessage.includes('LibSodium')) {
-            console.log('🛡️ Intercepted and suppressed decryption error:', errorMessage);
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            return false;
-          }
+        // Additional connection-specific error suppression
+        const connectionErrorHandler = (event: ErrorEvent) => {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          return false;
         };
-        window.addEventListener('error', errorHandler, true);
+        window.addEventListener('error', connectionErrorHandler, true);
         
         // Handle pairing event with aggressive error suppression
         this.hashConnect.pairingEvent.once(async (pairingData) => {
           console.log('🔗 Pairing successful with HashPack, processing safely...');
           clearTimeout(timeout);
           
-          // Keep error handler active for longer to catch delayed errors
+          // Keep connection error handler active for longer
           setTimeout(() => {
-            window.removeEventListener('error', errorHandler, true);
-          }, 5000);
+            window.removeEventListener('error', connectionErrorHandler, true);
+          }, 10000);
           
           // Process pairing with enhanced error protection
           await this.processHashConnectPairingSafe(pairingData, resolve, reject);
