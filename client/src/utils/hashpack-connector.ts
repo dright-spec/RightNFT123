@@ -1,177 +1,154 @@
-// Direct HashPack connector that handles post-confirmation communication properly
+// HashConnect SDK integration with decryption error fix
+import { HashConnect, HashConnectTypes } from '@hashgraph/hashconnect';
+
 export class HashPackConnector {
-  private state: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
-  private connectionPromise: Promise<string> | null = null;
+  private hashConnect: HashConnect;
+  private appMetadata: HashConnectTypes.AppMetadata;
+  private state: 'disconnected' | 'initializing' | 'connecting' | 'connected' = 'disconnected';
   
   constructor() {
-    // Set up message listeners for HashPack responses
-    this.setupMessageListeners();
-  }
-
-  private setupMessageListeners() {
-    // Listen for HashPack messages that might come after user confirmation
-    window.addEventListener('message', (event) => {
-      if (event.data && typeof event.data === 'object') {
-        const data = event.data;
-        
-        // Handle HashPack connection success
-        if (data.type === 'hashpack' && data.action === 'connect' && data.accountId) {
-          console.log('✅ HashPack connected via message:', data.accountId);
-          this.state = 'connected';
-          return;
-        }
-        
-        // Handle other HashPack events
-        if (data.origin === 'hashpack' || data.source === 'hashpack') {
-          console.log('📨 HashPack message received:', data);
-        }
-      }
-    });
+    // Initialize with debug mode disabled to prevent decryption errors
+    this.hashConnect = new HashConnect(false);
+    this.appMetadata = {
+      name: "Dright Marketplace",
+      description: "Decentralized Rights Trading Platform",
+      icon: window.location.origin + "/favicon.ico",
+      url: window.location.origin
+    };
   }
 
   async connect(): Promise<string> {
-    if (this.connectionPromise) {
-      console.log('🔄 Using existing connection promise...');
-      return this.connectionPromise;
+    if (this.state === 'connecting') {
+      throw new Error('Connection already in progress');
     }
 
-    this.connectionPromise = this.performConnection();
-    return this.connectionPromise;
-  }
-
-  private async performConnection(): Promise<string> {
-    this.state = 'connecting';
-    console.log('🔄 Starting HashPack connection...');
-
+    this.state = 'initializing';
+    console.log('🔄 Initializing HashConnect SDK (decryption fix)...');
+    
     try {
-      // Method 1: Direct extension method with proper error handling
-      const result = await this.tryDirectConnection();
-      if (result) {
-        this.connectionPromise = null;
-        return result;
-      }
+      // Initialize HashConnect with error handling for decryption issues
+      await this.hashConnect.init(this.appMetadata);
+      console.log('✅ HashConnect SDK initialized successfully');
 
-      // Method 2: Try event-based connection
-      const result2 = await this.tryEventBasedConnection();
-      if (result2) {
-        this.connectionPromise = null;
-        return result2;
-      }
+      this.state = 'connecting';
+      console.log('🔄 Starting wallet discovery...');
 
-      throw new Error('HashPack connection failed - wallet may need to be unlocked or refreshed');
+      // Set up event listeners with proper error handling
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('HashPack connection timeout - no wallets found'));
+        }, 30000); // 30 second timeout for user confirmation
+
+        let walletFound = false;
+
+        // Listen for wallet discovery with improved error handling
+        this.hashConnect.foundExtensionEvent.once((walletMetadata) => {
+          console.log('🔍 Found wallet extension:', walletMetadata);
+          walletFound = true;
+          
+          // Improved wallet connection with decryption error prevention
+          this.connectToWalletSafely(walletMetadata, resolve, reject, timeout);
+        });
+
+        // Listen for pairing events with decryption error handling
+        this.hashConnect.pairingEvent.once((pairingData) => {
+          console.log('🔗 Wallet pairing successful:', pairingData);
+          clearTimeout(timeout);
+          
+          try {
+            if (pairingData.accountIds && pairingData.accountIds.length > 0) {
+              const accountId = pairingData.accountIds[0];
+              this.state = 'connected';
+              console.log('✅ Successfully connected to account:', accountId);
+              resolve(accountId);
+            } else {
+              this.state = 'disconnected';
+              reject(new Error('No account IDs received from wallet'));
+            }
+          } catch (error) {
+            this.state = 'disconnected';
+            reject(new Error(`Pairing data processing failed: ${error.message}`));
+          }
+        });
+
+        // Start wallet discovery
+        console.log('🔄 Initiating wallet discovery...');
+        this.hashConnect.findLocalWallets();
+
+        // Fallback timeout check
+        setTimeout(() => {
+          if (!walletFound) {
+            console.log('⚠️ No wallets found after 5 seconds, continuing search...');
+          }
+        }, 5000);
+      });
 
     } catch (error) {
       this.state = 'disconnected';
-      this.connectionPromise = null;
-      throw error;
+      console.error('❌ HashConnect initialization failed:', error);
+      throw new Error(`HashConnect initialization failed: ${error.message || 'Unknown error'}`);
     }
   }
 
-  private async tryDirectConnection(): Promise<string | null> {
-    console.log('🔍 Method 1: Trying direct HashPack connection...');
-    
-    // Check for HashPack object
-    const hashpack = (window as any).hashpack;
-    if (!hashpack) {
-      console.log('❌ HashPack object not found');
-      return null;
-    }
-
-    console.log('✅ HashPack object found:', Object.keys(hashpack));
-
+  private async connectToWalletSafely(
+    walletMetadata: any, 
+    resolve: (value: string) => void, 
+    reject: (reason: any) => void,
+    timeout: NodeJS.Timeout
+  ) {
     try {
-      // Use a promise wrapper to handle the async response properly
-      const accountId = await new Promise<string>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('HashPack connection timeout'));
-        }, 30000); // 30 second timeout
-
-        // Set up one-time listener for HashPack response
-        const messageHandler = (event: MessageEvent) => {
-          if (event.data?.accountId || (event.data?.type === 'hashpack' && event.data?.account)) {
-            clearTimeout(timeout);
-            window.removeEventListener('message', messageHandler);
-            const account = event.data.accountId || event.data.account;
-            console.log('✅ Received account from HashPack:', account);
-            resolve(account);
-          }
-        };
-
-        window.addEventListener('message', messageHandler);
-
-        // Call HashPack requestAccountInfo
-        hashpack.requestAccountInfo()
-          .then((result: any) => {
-            clearTimeout(timeout);
-            window.removeEventListener('message', messageHandler);
-            
-            if (result?.accountId) {
-              console.log('✅ Direct response from HashPack:', result.accountId);
-              resolve(result.accountId);
-            } else {
-              // Wait for message response
-              console.log('🔄 Waiting for HashPack message response...');
-            }
-          })
-          .catch((error: any) => {
-            // Don't reject immediately, wait for message response
-            console.log('⚠️ Direct call failed, waiting for message response:', error.message);
-          });
-      });
-
-      this.state = 'connected';
-      return accountId;
-
-    } catch (error) {
-      console.log('❌ Direct connection failed:', error.message);
-      return null;
-    }
-  }
-
-  private async tryEventBasedConnection(): Promise<string | null> {
-    console.log('🔍 Method 2: Trying event-based connection...');
-    
-    return new Promise((resolve) => {
-      const timeout = setTimeout(() => resolve(null), 10000);
+      console.log('🔄 Attempting safe connection to HashPack...');
       
-      const messageHandler = (event: MessageEvent) => {
-        if (event.data && typeof event.data === 'object') {
-          const data = event.data;
-          
-          // Check for various HashPack response formats
-          if (data.accountId || (data.type === 'hashpack' && data.account)) {
-            clearTimeout(timeout);
-            window.removeEventListener('message', messageHandler);
-            const accountId = data.accountId || data.account;
-            console.log('✅ Connected via event:', accountId);
-            this.state = 'connected';
-            resolve(accountId);
-          }
-        }
-      };
-      
-      window.addEventListener('message', messageHandler);
-      
-      // Try to trigger HashPack if it exists
-      const hashpack = (window as any).hashpack;
-      if (hashpack) {
-        // Send a custom event to trigger HashPack
-        window.dispatchEvent(new CustomEvent('hashpack-connect-request'));
+      // Add error handling wrapper to prevent decryption errors
+      try {
+        await this.hashConnect.connectToLocalWallet(walletMetadata);
+        console.log('🔗 Connection request sent successfully to HashPack');
         
-        // Also try postMessage
-        window.postMessage({
-          type: 'hashpack-request',
-          method: 'connect'
-        }, '*');
+        // The pairing event listener will handle the response
+        
+      } catch (connectionError) {
+        // Handle specific decryption errors
+        if (connectionError.message && connectionError.message.includes('decryption')) {
+          console.log('⚠️ Decryption error detected, attempting recovery...');
+          
+          // Try to reinitialize HashConnect to clear any corrupted state
+          try {
+            this.hashConnect = new HashConnect(false);
+            await this.hashConnect.init(this.appMetadata);
+            await this.hashConnect.connectToLocalWallet(walletMetadata);
+            console.log('✅ Connection recovered after decryption error');
+          } catch (recoveryError) {
+            clearTimeout(timeout);
+            this.state = 'disconnected';
+            reject(new Error('Failed to recover from decryption error'));
+            return;
+          }
+        } else {
+          throw connectionError;
+        }
       }
-    });
+      
+    } catch (error) {
+      clearTimeout(timeout);
+      this.state = 'disconnected';
+      console.error('❌ Failed to connect to HashPack:', error);
+      reject(new Error(`Failed to connect to HashPack: ${error.message || 'Unknown error'}`));
+    }
   }
 
 
 
   disconnect() {
-    this.state = 'disconnected';
-    console.log('✅ HashPack disconnected');
+    try {
+      if (this.hashConnect) {
+        this.hashConnect.disconnect();
+      }
+      this.state = 'disconnected';
+      console.log('✅ HashConnect disconnected');
+    } catch (error) {
+      console.error('❌ Error during disconnect:', error);
+      this.state = 'disconnected';
+    }
   }
 
   getState() {

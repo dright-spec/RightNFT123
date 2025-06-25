@@ -144,26 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing HashPack with proper post-confirmation handling...');
+                  console.log('🚀 Testing HashConnect SDK with decryption fix...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting connection with post-confirmation support...');
+                    console.log('🔄 Starting HashConnect with decryption error prevention...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Connection successful:', accountId);
-                    alert(`🎉 HashPack Connected!\n\nAccount: ${accountId}\n\nPost-confirmation communication working properly.`);
+                    console.log('✅ HashConnect connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nDecryption error has been fixed!`);
                     
                   } catch (error) {
-                    console.error('❌ Connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${error.message}\n\nCheck console for details.`);
+                    console.error('❌ HashConnect connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${error.message}\n\nCheck console for detailed error information.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Fixed Connection
+                Test Decryption Fix
               </button>
             </div>
           </div>
