@@ -38,42 +38,26 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
         console.log('🚀 Starting HashPack connection via official HashConnect SDK...');
         
         try {
-          // First check if HashPack is actually installed
-          if (!(window as any).hashpack) {
-            toast({
-              title: "HashPack Not Installed",
-              description: "Please install HashPack wallet extension from Chrome Web Store",
-              variant: "destructive",
-            });
-            // Open installation page
-            window.open('https://chrome.google.com/webstore/detail/hashpack/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
-            return;
-          }
-
-          console.log('🔄 Connecting to HashPack wallet...');
+          const { HashPackConnector } = await import('@/utils/hashpack-connector');
+          const connector = new HashPackConnector();
+          console.log('🔄 Initializing connection to HashPack wallet...');
           
-          // Direct HashPack API call
-          const hashpack = (window as any).hashpack;
-          const result = await hashpack.requestAccountInfo();
+          const accountId = await connector.connect();
           
-          if (result && result.accountId) {
-            console.log('✅ HashPack connected successfully:', result.accountId);
-            onConnect?.(result.accountId);
-            onClose();
-            toast({
-              title: "HashPack Connected",
-              description: `Connected to Hedera account ${result.accountId}`,
-            });
-            return;
-          } else {
-            throw new Error('No account received from HashPack');
-          }
+          console.log('✅ HashPack connected successfully:', accountId);
+          onConnect?.(accountId);
+          onClose();
+          toast({
+            title: "HashPack Connected",
+            description: `Connected to Hedera account ${accountId}`,
+          });
+          return;
           
         } catch (error) {
           console.error('❌ HashPack connection failed:', error);
           toast({
             title: "HashPack Connection Failed",
-            description: `${(error as Error).message || 'Connection failed - ensure HashPack is unlocked'}`,
+            description: `${(error as Error).message || 'Unknown error occurred'}`,
             variant: "destructive",
           });
           return;

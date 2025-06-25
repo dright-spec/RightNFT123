@@ -144,35 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing Direct HashPack Connection...');
+                  console.log('🚀 Testing HashPack Connection (Original Method)...');
                   
                   try {
-                    // Check if HashPack is installed
-                    if (!(window as any).hashpack) {
-                      alert('❌ HashPack not installed\n\nPlease install from Chrome Web Store');
-                      window.open('https://chrome.google.com/webstore/detail/hashpack/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
-                      return;
-                    }
-
-                    // Direct API call
-                    const hashpack = (window as any).hashpack;
-                    const result = await hashpack.requestAccountInfo();
+                    const { HashPackConnector } = await import('@/utils/hashpack-connector');
+                    const connector = new HashPackConnector();
                     
-                    if (result && result.accountId) {
-                      console.log('✅ Direct HashPack connection successful:', result.accountId);
-                      alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${result.accountId}`);
-                    } else {
-                      alert('❌ No account received from HashPack\n\nEnsure wallet is unlocked');
-                    }
+                    console.log('🔄 Starting original connection method...');
+                    const accountId = await connector.connect();
+                    
+                    console.log('✅ Original connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing original working method!`);
                     
                   } catch (error) {
-                    console.error('❌ Direct HashPack connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${(error as Error).message}`);
+                    console.error('❌ Original connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${(error as Error).message}\n\nTry refreshing the page.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Direct Connection
+                Test Original Method
               </button>
             </div>
           </div>
