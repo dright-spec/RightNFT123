@@ -144,26 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing direct HashPack API (no encryption)...');
+                  console.log('🚀 Testing HashConnect with HashPack-recommended settings...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting direct API connection...');
+                    console.log('🔄 Starting HashPack-recommended connection...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Direct API connection successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing direct API bypassing encryption completely!`);
+                    console.log('✅ HashPack-recommended connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing HashPack-recommended approach with safe pairing!`);
                     
                   } catch (error) {
-                    console.error('❌ Direct API connection failed:', error);
+                    console.error('❌ HashPack-recommended connection failed:', error);
                     alert(`❌ Connection Failed\n\n${error.message}\n\nCheck console for detailed error information.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Direct API
+                Test HashPack Safe
               </button>
             </div>
           </div>
