@@ -144,30 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing HashPack with post-connection error handling...');
+                  console.log('🚀 Testing Fresh HashPack Connection (clean state)...');
                   
                   try {
-                    // Activate post-connection error suppression
-                    const { postConnectionHandler } = await import('@/utils/post-connection-handler');
-                    postConnectionHandler.activate();
+                    const { FreshHashPackConnector } = await import('@/utils/fresh-hashpack-connector');
+                    const connector = new FreshHashPackConnector();
                     
-                    const { HashPackConnector } = await import('@/utils/hashpack-connector');
-                    const connector = new HashPackConnector();
-                    
-                    console.log('🔄 Starting connection with post-connection error handling...');
+                    console.log('🔄 Starting fresh connection with clean state...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Connection successful with error handling:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing post-connection error suppression!`);
+                    console.log('✅ Fresh connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing fresh state management!`);
                     
                   } catch (error) {
-                    console.error('❌ Connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${error.message}\n\nCheck console for details.`);
+                    console.error('❌ Fresh connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${error.message}\n\nTry refreshing the page.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Post-Connection
+                Test Fresh Connection
               </button>
             </div>
           </div>
