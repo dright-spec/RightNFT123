@@ -105,61 +105,42 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🔍 Investigating onhashchange object...');
+                  console.log('🔄 Resetting HashPack connection state...');
                   
-                  // Check if onhashchange is related to HashPack
-                  const onhashchange = (window as any).onhashchange;
-                  console.log('onhashchange object:', onhashchange);
-                  console.log('onhashchange type:', typeof onhashchange);
+                  // Clear any stored connection state
+                  localStorage.removeItem('hashpack-paired');
+                  localStorage.removeItem('hashpack-topic');
+                  localStorage.removeItem('hashpack-account');
+                  sessionStorage.clear();
                   
-                  if (onhashchange && typeof onhashchange === 'object') {
-                    console.log('onhashchange keys:', Object.keys(onhashchange));
-                    console.log('onhashchange methods:', Object.getOwnPropertyNames(onhashchange));
-                  }
+                  // Check for HashPack in various states
+                  console.log('Current window.hashpack:', (window as any).hashpack);
                   
-                  // Check if there are any hashpack-related methods on window
-                  const windowKeys = Object.getOwnPropertyNames(window);
-                  const hashRelated = windowKeys.filter(key => 
-                    key.toLowerCase().includes('hash') || 
-                    key.toLowerCase().includes('hedera') ||
-                    key.toLowerCase().includes('pack')
-                  );
-                  
-                  console.log('Hash-related window properties:', hashRelated);
-                  
-                  // Try to access HashPack directly via different possible names
-                  const possibleNames = ['hashpack', 'HashPack', 'hashConnect', 'HashConnect', 'hedera', 'Hedera'];
-                  for (const name of possibleNames) {
-                    const obj = (window as any)[name];
-                    if (obj) {
-                      console.log(`Found ${name}:`, obj);
-                      console.log(`${name} methods:`, Object.keys(obj));
-                    }
-                  }
-                  
-                  // Also check if onhashchange has any wallet-like functionality
-                  if (onhashchange && typeof onhashchange === 'function') {
-                    console.log('onhashchange is a function, not HashPack related');
-                  } else if (onhashchange && typeof onhashchange === 'object') {
-                    // Check if it might be HashPack masquerading as onhashchange
-                    const methods = Object.keys(onhashchange);
-                    const walletMethods = methods.filter(m => 
-                      m.includes('account') || m.includes('connect') || 
-                      m.includes('request') || m.includes('sign')
-                    );
+                  if ((window as any).hashpack) {
+                    console.log('HashPack object exists');
+                    console.log('HashPack state:', (window as any).hashpack.isConnected?.());
+                    console.log('HashPack methods:', Object.keys((window as any).hashpack));
                     
-                    if (walletMethods.length > 0) {
-                      console.log('⚠️ onhashchange might be HashPack!', walletMethods);
-                      alert(`Potential HashPack found in onhashchange!\nWallet methods: ${walletMethods.join(', ')}`);
-                      return;
+                    // Try to disconnect first
+                    try {
+                      if ((window as any).hashpack.disconnect) {
+                        await (window as any).hashpack.disconnect();
+                        console.log('HashPack disconnected');
+                      }
+                    } catch (e) {
+                      console.log('Disconnect failed or not needed');
                     }
                   }
                   
-                  alert(`Debug complete. Check console for details.\n\nFound hash-related properties: ${hashRelated.join(', ')}`);
+                  // Force page refresh to reset everything
+                  const shouldRefresh = confirm('HashPack state reset. Refresh page to complete reset?');
+                  if (shouldRefresh) {
+                    window.location.reload();
+                  }
                 }}
-                className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600"
+                className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
               >
-                Investigate Hash Objects
+                Reset HashPack
               </button>
               <button 
                 onClick={async () => {
