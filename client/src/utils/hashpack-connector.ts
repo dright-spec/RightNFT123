@@ -1,9 +1,20 @@
-// Direct HashPack API without HashConnect encryption layer
+// HashConnect SDK with minimal decryption error fix
+import { HashConnect, HashConnectTypes } from '@hashgraph/hashconnect';
+
 export class HashPackConnector {
-  private state: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+  private hashConnect: HashConnect;
+  private appMetadata: HashConnectTypes.AppMetadata;
+  private state: 'disconnected' | 'initializing' | 'connecting' | 'connected' = 'disconnected';
   
   constructor() {
-    // Direct HashPack API - no HashConnect initialization needed
+    // Use HashConnect but with minimal configuration to reduce decryption issues
+    this.hashConnect = new HashConnect(false);
+    this.appMetadata = {
+      name: "Dright",
+      description: "Rights Trading",
+      icon: window.location.origin + "/favicon.ico",
+      url: window.location.origin
+    };
   }
 
   async connect(): Promise<string> {
@@ -11,113 +22,103 @@ export class HashPackConnector {
       throw new Error('Connection already in progress');
     }
 
-    this.state = 'connecting';
-    console.log('🔄 Connecting directly to HashPack (no encryption)...');
+    this.state = 'initializing';
+    console.log('🔄 Initializing HashConnect SDK...');
 
     try {
-      // Step 1: Ensure HashPack is available
-      const hashpack = await this.waitForHashPack();
-      if (!hashpack) {
-        throw new Error('HashPack extension not found');
-      }
+      // Initialize HashConnect (this was working)
+      await this.hashConnect.init(this.appMetadata);
+      console.log('✅ HashConnect SDK initialized');
 
-      console.log('✅ HashPack detected, requesting account access...');
+      this.state = 'connecting';
+      console.log('🔄 Finding HashPack wallet...');
 
-      // Step 2: Direct API call to HashPack
-      const accountId = await this.requestAccountDirect(hashpack);
-      
-      this.state = 'connected';
-      console.log('✅ Successfully connected to HashPack:', accountId);
-      return accountId;
+      // Use the working discovery and pairing flow
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('HashPack connection timeout'));
+        }, 30000);
+
+        // This was working - keep it exactly the same
+        this.hashConnect.foundExtensionEvent.once((walletMetadata) => {
+          console.log('🔍 Found HashPack extension:', walletMetadata);
+          this.connectToWallet(walletMetadata, resolve, reject, timeout);
+        });
+
+        // Only fix the pairing event to handle decryption safely
+        this.hashConnect.pairingEvent.once((pairingData) => {
+          console.log('🔗 Pairing successful with HashPack');
+          clearTimeout(timeout);
+          
+          // Minimal fix: just extract account safely without touching encrypted data
+          this.extractAccountSafely(pairingData, resolve, reject);
+        });
+
+        // Start wallet discovery (this was working)
+        this.hashConnect.findLocalWallets();
+      });
 
     } catch (error) {
       this.state = 'disconnected';
-      console.error('❌ HashPack connection failed:', error);
-      throw new Error(`HashPack connection failed: ${error.message}`);
+      console.error('❌ HashConnect initialization failed:', error);
+      throw new Error(`HashConnect initialization failed: ${error.message}`);
     }
   }
 
-  private async waitForHashPack(): Promise<any> {
-    // Check if HashPack is already available
-    if ((window as any).hashpack) {
-      console.log('✅ HashPack already available');
-      return (window as any).hashpack;
-    }
-
-    // Wait for HashPack to inject (up to 10 seconds)
-    console.log('🔄 Waiting for HashPack injection...');
-    return new Promise((resolve) => {
-      let attempts = 0;
-      const maxAttempts = 20;
+  private async connectToWallet(
+    walletMetadata: any,
+    resolve: (value: string) => void, 
+    reject: (reason: any) => void,
+    timeout: NodeJS.Timeout
+  ) {
+    try {
+      console.log('🔄 Connecting to HashPack...');
       
-      const checkInterval = setInterval(() => {
-        attempts++;
-        
-        if ((window as any).hashpack) {
-          clearInterval(checkInterval);
-          console.log('✅ HashPack detected after waiting');
-          resolve((window as any).hashpack);
-          return;
-        }
-        
-        if (attempts >= maxAttempts) {
-          clearInterval(checkInterval);
-          console.log('❌ HashPack not found after 10 seconds');
-          resolve(null);
-        }
-      }, 500);
-    });
+      // This was working - keep it the same
+      await this.hashConnect.connectToLocalWallet(walletMetadata);
+      console.log('🔗 Connection request sent to HashPack');
+      
+    } catch (error) {
+      clearTimeout(timeout);
+      this.state = 'disconnected';
+      console.error('❌ Failed to connect to HashPack:', error);
+      reject(new Error(`Failed to connect to HashPack: ${error.message}`));
+    }
   }
 
-  private async requestAccountDirect(hashpack: any): Promise<string> {
-    console.log('🔄 Calling HashPack.requestAccountInfo() directly...');
-    
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('HashPack account request timeout'));
-      }, 20000); // 20 second timeout for user interaction
-
-      // Set up message listener for HashPack response
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data && (event.data.accountId || event.data.account)) {
-          clearTimeout(timeout);
-          window.removeEventListener('message', handleMessage);
-          const account = event.data.accountId || event.data.account;
-          console.log('✅ Received account via message:', account);
-          resolve(account);
-        }
-      };
-
-      window.addEventListener('message', handleMessage);
-
-      // Call HashPack API
-      hashpack.requestAccountInfo()
-        .then((result: any) => {
-          clearTimeout(timeout);
-          window.removeEventListener('message', handleMessage);
-          
-          if (result?.accountId) {
-            console.log('✅ Direct response from HashPack:', result.accountId);
-            resolve(result.accountId);
-          } else if (result?.account) {
-            console.log('✅ Direct response from HashPack:', result.account);
-            resolve(result.account);
-          } else {
-            console.log('⚠️ No direct response, waiting for message...');
-            // Re-add message listener and wait
-            window.addEventListener('message', handleMessage);
-            setTimeout(() => {
-              clearTimeout(timeout);
-              window.removeEventListener('message', handleMessage);
-              reject(new Error('No account information received from HashPack'));
-            }, 15000);
-          }
-        })
-        .catch((error: any) => {
-          console.log('⚠️ HashPack API call failed, waiting for message response:', error.message);
-          // Keep message listener active for potential delayed response
-        });
-    });
+  private extractAccountSafely(
+    pairingData: any,
+    resolve: (value: string) => void,
+    reject: (reason: any) => void
+  ) {
+    // Minimal fix: don't process any encrypted data, just extract account directly
+    try {
+      console.log('🔍 Extracting account information...');
+      
+      let accountId: string | null = null;
+      
+      // Try to get account ID without accessing potentially encrypted fields
+      if (pairingData?.accountIds?.[0]) {
+        accountId = pairingData.accountIds[0];
+      } else if (pairingData?.account) {
+        accountId = pairingData.account;
+      }
+      
+      if (accountId) {
+        this.state = 'connected';
+        console.log('✅ Successfully extracted account:', accountId);
+        resolve(accountId);
+      } else {
+        this.state = 'disconnected';
+        console.error('❌ No account information found');
+        reject(new Error('No account information found in pairing response'));
+      }
+      
+    } catch (error) {
+      this.state = 'disconnected';
+      console.error('❌ Error extracting account:', error);
+      reject(new Error('Failed to extract account information'));
+    }
   }
 
 
@@ -127,8 +128,16 @@ export class HashPackConnector {
 
 
   disconnect() {
-    this.state = 'disconnected';
-    console.log('✅ HashPack disconnected');
+    try {
+      if (this.hashConnect) {
+        this.hashConnect.disconnect();
+      }
+      this.state = 'disconnected';
+      console.log('✅ HashConnect disconnected');
+    } catch (error) {
+      console.error('❌ Error during disconnect:', error);
+      this.state = 'disconnected';
+    }
   }
 
   getState() {
