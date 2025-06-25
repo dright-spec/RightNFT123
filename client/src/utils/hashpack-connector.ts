@@ -81,16 +81,16 @@ export class HashPackConnector {
         };
         window.addEventListener('error', errorHandler);
         
-        // Handle pairing event with decryption error protection
-        this.hashConnect.pairingEvent.once((pairingData) => {
-          console.log('🔗 Pairing successful with HashPack');
+        // Handle pairing event with proper HashConnect decryption
+        this.hashConnect.pairingEvent.once(async (pairingData) => {
+          console.log('🔗 Pairing successful with HashPack, processing with correct decryption...');
           clearTimeout(timeout);
           
           // Remove error handler after successful pairing
           window.removeEventListener('error', errorHandler);
           
-          // Extract account safely
-          this.extractAccountSafely(pairingData, resolve, reject);
+          // Use HashConnect's built-in decrypt method for proper LibSodium handling
+          await this.processHashConnectPairing(pairingData, resolve, reject);
         });
 
         // Start wallet discovery (this was working)
@@ -125,83 +125,87 @@ export class HashPackConnector {
     }
   }
 
-  private extractAccountSafely(
+  private async processHashConnectPairing(
     pairingData: any,
     resolve: (value: string) => void,
     reject: (reason: any) => void
   ) {
-    // Wrap in try-catch with decryption error suppression
     try {
-      console.log('🔍 Extracting account information with error protection...');
+      console.log('🔍 Processing HashConnect pairing with proper LibSodium decryption...');
+      console.log('Pairing data structure:', Object.keys(pairingData || {}));
       
-      // Add temporary error suppression for this operation
-      const suppressErrors = (event: ErrorEvent) => {
-        if (event.error?.message?.includes('Invalid encrypted text') || 
-            event.error?.message?.includes('Decryption')) {
-          console.log('🛡️ Suppressed decryption error during account extraction');
-          event.preventDefault();
-          return false;
-        }
-      };
+      // First try to extract account directly if not encrypted
+      if (pairingData?.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds[0]) {
+        const accountId = pairingData.accountIds[0];
+        console.log('✅ Found unencrypted account:', accountId);
+        this.state = 'connected';
+        resolve(accountId);
+        return;
+      }
       
-      window.addEventListener('error', suppressErrors);
-      
-      // Use setTimeout to allow any decryption errors to be caught
-      setTimeout(() => {
+      // If data appears encrypted, use HashConnect's decrypt method
+      if (pairingData?.encrypted && pairingData?.topic) {
+        console.log('🔓 Data appears encrypted, using HashConnect decrypt...');
+        
         try {
-          let accountId: string | null = null;
+          const decrypted = await this.hashConnect.decrypt({
+            message: pairingData.encrypted,
+            topic: pairingData.topic
+          });
           
-          // Try multiple ways to extract account without triggering decryption
-          if (pairingData?.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds[0]) {
-            accountId = pairingData.accountIds[0];
-            console.log('✅ Found account via accountIds array:', accountId);
-          } else if (pairingData?.account) {
-            accountId = pairingData.account;
-            console.log('✅ Found account via account property:', accountId);
-          } else {
-            // Try to access the data structure differently
-            const keys = Object.keys(pairingData || {});
-            console.log('Available pairing data keys:', keys);
-            
-            for (const key of keys) {
-              const value = pairingData[key];
-              if (typeof value === 'string' && value.includes('0.0.')) {
-                accountId = value;
-                console.log('✅ Found account via key search:', accountId);
-                break;
-              } else if (Array.isArray(value) && value[0] && value[0].includes('0.0.')) {
-                accountId = value[0];
-                console.log('✅ Found account via array search:', accountId);
-                break;
-              }
-            }
-          }
+          // Convert decrypted Uint8Array to string and parse
+          const plaintext = new TextDecoder().decode(decrypted);
+          console.log('✅ Successfully decrypted with HashConnect:', plaintext);
           
-          // Remove error suppression
-          window.removeEventListener('error', suppressErrors);
+          // Parse the decrypted data to find account ID
+          const decryptedData = JSON.parse(plaintext);
+          const accountId = decryptedData?.accountIds?.[0] || decryptedData?.account;
           
           if (accountId) {
             this.state = 'connected';
-            console.log('✅ Successfully extracted account:', accountId);
+            console.log('✅ Extracted account from decrypted data:', accountId);
             resolve(accountId);
           } else {
             this.state = 'disconnected';
-            console.error('❌ No account information found in pairing data');
-            reject(new Error('No account information found in pairing response'));
+            reject(new Error('No account ID found in decrypted pairing data'));
           }
           
-        } catch (innerError) {
-          window.removeEventListener('error', suppressErrors);
+        } catch (decryptError) {
+          console.error('❌ HashConnect decrypt failed:', decryptError);
           this.state = 'disconnected';
-          console.error('❌ Error in delayed account extraction:', innerError);
-          reject(new Error('Failed to extract account information safely'));
+          reject(new Error('Failed to decrypt pairing data with HashConnect'));
         }
-      }, 50); // Short delay to let any errors surface and be caught
+      } else {
+        // Try to find account in any other structure
+        const keys = Object.keys(pairingData || {});
+        let accountId: string | null = null;
+        
+        for (const key of keys) {
+          const value = pairingData[key];
+          if (typeof value === 'string' && value.includes('0.0.')) {
+            accountId = value;
+            break;
+          } else if (Array.isArray(value) && value[0] && typeof value[0] === 'string' && value[0].includes('0.0.')) {
+            accountId = value[0];
+            break;
+          }
+        }
+        
+        if (accountId) {
+          this.state = 'connected';
+          console.log('✅ Found account via structure search:', accountId);
+          resolve(accountId);
+        } else {
+          this.state = 'disconnected';
+          console.error('❌ No account information found in pairing data');
+          reject(new Error('No account information found in pairing response'));
+        }
+      }
       
     } catch (error) {
       this.state = 'disconnected';
-      console.error('❌ Error setting up account extraction:', error);
-      reject(new Error('Failed to initialize account extraction'));
+      console.error('❌ Error processing HashConnect pairing:', error);
+      reject(new Error('Failed to process HashConnect pairing data'));
     }
   }
 

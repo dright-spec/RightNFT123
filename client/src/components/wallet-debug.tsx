@@ -144,17 +144,17 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing working HashConnect with minimal decryption fix...');
+                  console.log('🚀 Testing HashConnect with proper LibSodium decryption...');
                   
                   try {
                     const { HashPackConnector } = await import('@/utils/hashpack-connector');
                     const connector = new HashPackConnector();
                     
-                    console.log('🔄 Starting connection with working discovery + minimal fix...');
+                    console.log('🔄 Starting connection with HashConnect decrypt method...');
                     const accountId = await connector.connect();
                     
-                    console.log('✅ Connection successful with minimal fix:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing working HashConnect with minimal decryption fix!`);
+                    console.log('✅ Connection successful with proper decryption:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing HashConnect's built-in LibSodium decryption!`);
                     
                   } catch (error) {
                     console.error('❌ Connection failed:', error);
@@ -163,7 +163,7 @@ export function WalletDebug() {
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Minimal Fix
+                Test LibSodium Fix
               </button>
             </div>
           </div>
