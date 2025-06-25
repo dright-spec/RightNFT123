@@ -15,6 +15,30 @@ export class HashPackConnector {
       icon: window.location.origin + "/favicon.ico",
       url: window.location.origin
     };
+    
+    // Set up global decryption error suppression
+    this.setupDecryptionErrorSuppression();
+  }
+
+  private setupDecryptionErrorSuppression() {
+    // Suppress specific decryption errors globally
+    window.addEventListener('error', (event) => {
+      if (event.error?.message?.includes('Invalid encrypted text received') ||
+          event.error?.message?.includes('Decryption halted')) {
+        console.log('🛡️ Suppressed HashConnect decryption error to prevent UI crash');
+        event.preventDefault();
+        return false;
+      }
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason?.message?.includes('Invalid encrypted text') ||
+          event.reason?.message?.includes('Decryption')) {
+        console.log('🛡️ Suppressed HashConnect decryption rejection');
+        event.preventDefault();
+        return false;
+      }
+    });
   }
 
   async connect(): Promise<string> {
@@ -45,12 +69,27 @@ export class HashPackConnector {
           this.connectToWallet(walletMetadata, resolve, reject, timeout);
         });
 
-        // Only fix the pairing event to handle decryption safely
+        // Add global error handler to catch decryption errors
+        const originalConsoleError = console.error;
+        const errorHandler = (event: ErrorEvent) => {
+          if (event.error?.message?.includes('Invalid encrypted text') || 
+              event.error?.message?.includes('Decryption halted')) {
+            console.log('🛡️ Caught and suppressed decryption error');
+            event.preventDefault();
+            return false;
+          }
+        };
+        window.addEventListener('error', errorHandler);
+        
+        // Handle pairing event with decryption error protection
         this.hashConnect.pairingEvent.once((pairingData) => {
           console.log('🔗 Pairing successful with HashPack');
           clearTimeout(timeout);
           
-          // Minimal fix: just extract account safely without touching encrypted data
+          // Remove error handler after successful pairing
+          window.removeEventListener('error', errorHandler);
+          
+          // Extract account safely
           this.extractAccountSafely(pairingData, resolve, reject);
         });
 
@@ -91,33 +130,78 @@ export class HashPackConnector {
     resolve: (value: string) => void,
     reject: (reason: any) => void
   ) {
-    // Minimal fix: don't process any encrypted data, just extract account directly
+    // Wrap in try-catch with decryption error suppression
     try {
-      console.log('🔍 Extracting account information...');
+      console.log('🔍 Extracting account information with error protection...');
       
-      let accountId: string | null = null;
+      // Add temporary error suppression for this operation
+      const suppressErrors = (event: ErrorEvent) => {
+        if (event.error?.message?.includes('Invalid encrypted text') || 
+            event.error?.message?.includes('Decryption')) {
+          console.log('🛡️ Suppressed decryption error during account extraction');
+          event.preventDefault();
+          return false;
+        }
+      };
       
-      // Try to get account ID without accessing potentially encrypted fields
-      if (pairingData?.accountIds?.[0]) {
-        accountId = pairingData.accountIds[0];
-      } else if (pairingData?.account) {
-        accountId = pairingData.account;
-      }
+      window.addEventListener('error', suppressErrors);
       
-      if (accountId) {
-        this.state = 'connected';
-        console.log('✅ Successfully extracted account:', accountId);
-        resolve(accountId);
-      } else {
-        this.state = 'disconnected';
-        console.error('❌ No account information found');
-        reject(new Error('No account information found in pairing response'));
-      }
+      // Use setTimeout to allow any decryption errors to be caught
+      setTimeout(() => {
+        try {
+          let accountId: string | null = null;
+          
+          // Try multiple ways to extract account without triggering decryption
+          if (pairingData?.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds[0]) {
+            accountId = pairingData.accountIds[0];
+            console.log('✅ Found account via accountIds array:', accountId);
+          } else if (pairingData?.account) {
+            accountId = pairingData.account;
+            console.log('✅ Found account via account property:', accountId);
+          } else {
+            // Try to access the data structure differently
+            const keys = Object.keys(pairingData || {});
+            console.log('Available pairing data keys:', keys);
+            
+            for (const key of keys) {
+              const value = pairingData[key];
+              if (typeof value === 'string' && value.includes('0.0.')) {
+                accountId = value;
+                console.log('✅ Found account via key search:', accountId);
+                break;
+              } else if (Array.isArray(value) && value[0] && value[0].includes('0.0.')) {
+                accountId = value[0];
+                console.log('✅ Found account via array search:', accountId);
+                break;
+              }
+            }
+          }
+          
+          // Remove error suppression
+          window.removeEventListener('error', suppressErrors);
+          
+          if (accountId) {
+            this.state = 'connected';
+            console.log('✅ Successfully extracted account:', accountId);
+            resolve(accountId);
+          } else {
+            this.state = 'disconnected';
+            console.error('❌ No account information found in pairing data');
+            reject(new Error('No account information found in pairing response'));
+          }
+          
+        } catch (innerError) {
+          window.removeEventListener('error', suppressErrors);
+          this.state = 'disconnected';
+          console.error('❌ Error in delayed account extraction:', innerError);
+          reject(new Error('Failed to extract account information safely'));
+        }
+      }, 50); // Short delay to let any errors surface and be caught
       
     } catch (error) {
       this.state = 'disconnected';
-      console.error('❌ Error extracting account:', error);
-      reject(new Error('Failed to extract account information'));
+      console.error('❌ Error setting up account extraction:', error);
+      reject(new Error('Failed to initialize account extraction'));
     }
   }
 
