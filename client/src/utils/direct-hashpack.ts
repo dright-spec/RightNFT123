@@ -77,102 +77,117 @@ export class DirectHashPackConnector {
         reject(new Error('HashPack API call timeout'));
       }, 30000);
 
-      // Multiple response handling strategies
       let responseReceived = false;
 
-      // Strategy 1: Direct promise response
-      try {
-        const directCall = hashpack.requestAccountInfo();
-        
-        if (directCall && typeof directCall.then === 'function') {
-          directCall
-            .then((response: any) => {
-              if (responseReceived) return;
-              responseReceived = true;
-              clearTimeout(timeout);
-              
-              const accountId = response?.accountId || response?.account;
-              if (accountId) {
-                console.log('✅ Direct promise response:', accountId);
-                resolve(accountId);
-              } else {
-                console.log('⚠️ Direct response but no account:', response);
-                // Don't reject yet, wait for other strategies
-              }
-            })
-            .catch((error: any) => {
-              console.log('⚠️ Direct promise failed:', error.message);
-              // Don't reject yet, wait for other strategies
-            });
-        }
-      } catch (directError) {
-        console.log('⚠️ Direct call failed:', directError.message);
-      }
-
-      // Strategy 2: Event listener for responses
+      // Set up event listener for HashPack responses
       const messageHandler = (event: MessageEvent) => {
         if (responseReceived) return;
 
+        // Check for HashPack response patterns
         const data = event.data;
-        if (data && (data.accountId || data.account)) {
-          responseReceived = true;
-          clearTimeout(timeout);
-          window.removeEventListener('message', messageHandler);
-          
-          const accountId = data.accountId || data.account;
-          console.log('✅ Event response:', accountId);
-          resolve(accountId);
+        if (data && typeof data === 'object') {
+          // Look for account ID in various possible response formats
+          const accountId = data.accountId || 
+                           data.account || 
+                           data.result?.accountId || 
+                           data.result?.account ||
+                           data.response?.accountId ||
+                           data.response?.account;
+
+          if (accountId && typeof accountId === 'string' && accountId.match(/^0\.0\.\d+$/)) {
+            responseReceived = true;
+            clearTimeout(timeout);
+            window.removeEventListener('message', messageHandler);
+            
+            console.log('✅ HashPack response received:', accountId);
+            resolve(accountId);
+            return;
+          }
         }
       };
 
       window.addEventListener('message', messageHandler);
 
-      // Strategy 3: Polling for hashpack state changes
-      let pollAttempts = 0;
-      const maxPollAttempts = 60; // 30 seconds
-      
-      const pollInterval = setInterval(() => {
-        pollAttempts++;
+      // Try different HashPack API call patterns
+      try {
+        console.log('🔄 Attempting HashPack API call...');
         
-        if (responseReceived) {
-          clearInterval(pollInterval);
+        // Method 1: Direct call
+        if (typeof hashpack.requestAccountInfo === 'function') {
+          const result = hashpack.requestAccountInfo();
+          
+          // Check if it returns a promise
+          if (result && typeof result.then === 'function') {
+            result
+              .then((response: any) => {
+                if (responseReceived) return;
+                
+                const accountId = response?.accountId || response?.account;
+                if (accountId && typeof accountId === 'string' && accountId.match(/^0\.0\.\d+$/)) {
+                  responseReceived = true;
+                  clearTimeout(timeout);
+                  window.removeEventListener('message', messageHandler);
+                  console.log('✅ Direct promise response:', accountId);
+                  resolve(accountId);
+                }
+              })
+              .catch((error: any) => {
+                console.log('⚠️ Direct promise failed, waiting for message response:', error.message);
+              });
+          }
+          
+          // Check if it returns data immediately
+          if (result && typeof result === 'object') {
+            const accountId = result.accountId || result.account;
+            if (accountId && typeof accountId === 'string' && accountId.match(/^0\.0\.\d+$/)) {
+              responseReceived = true;
+              clearTimeout(timeout);
+              window.removeEventListener('message', messageHandler);
+              console.log('✅ Immediate response:', accountId);
+              resolve(accountId);
+              return;
+            }
+          }
+        }
+
+        // Method 2: Try legacy API patterns
+        if (hashpack.getAccount && typeof hashpack.getAccount === 'function') {
+          const account = hashpack.getAccount();
+          if (account && typeof account === 'string' && account.match(/^0\.0\.\d+$/)) {
+            responseReceived = true;
+            clearTimeout(timeout);
+            window.removeEventListener('message', messageHandler);
+            console.log('✅ Legacy getAccount response:', account);
+            resolve(account);
+            return;
+          }
+        }
+
+        // Method 3: Check for existing account in state
+        if (hashpack.account && typeof hashpack.account === 'string' && hashpack.account.match(/^0\.0\.\d+$/)) {
+          responseReceived = true;
+          clearTimeout(timeout);
+          window.removeEventListener('message', messageHandler);
+          console.log('✅ Existing account found:', hashpack.account);
+          resolve(hashpack.account);
           return;
         }
 
-        // Check if HashPack has account info available
-        try {
-          if (hashpack.state && hashpack.state.accountId) {
-            responseReceived = true;
-            clearTimeout(timeout);
-            clearInterval(pollInterval);
-            window.removeEventListener('message', messageHandler);
-            
-            console.log('✅ Polling response:', hashpack.state.accountId);
-            resolve(hashpack.state.accountId);
-            return;
-          }
-        } catch (pollError) {
-          // Ignore polling errors
-        }
+        console.log('⚠️ No immediate response, waiting for message events...');
 
-        if (pollAttempts >= maxPollAttempts) {
-          clearInterval(pollInterval);
-          
-          if (!responseReceived) {
-            responseReceived = true;
-            clearTimeout(timeout);
-            window.removeEventListener('message', messageHandler);
-            reject(new Error('No response from HashPack after 30 seconds'));
-          }
-        }
-      }, 500);
-
-      // Trigger the actual API call
-      try {
-        hashpack.requestAccountInfo();
       } catch (apiError) {
-        console.log('⚠️ API call trigger failed:', apiError.message);
+        console.log('⚠️ API call failed, waiting for message events:', apiError.message);
       }
+
+      // Fallback timeout
+      setTimeout(() => {
+        if (!responseReceived) {
+          responseReceived = true;
+          clearTimeout(timeout);
+          window.removeEventListener('message', messageHandler);
+          reject(new Error('No response from HashPack wallet - please ensure it is unlocked and try again'));
+        }
+      }, 25000);
     });
   }
 
