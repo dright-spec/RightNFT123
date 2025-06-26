@@ -32,18 +32,14 @@ class HashConnectV3Service {
     try {
       console.log('🔄 Initializing HashConnect v3...');
       
-      // Create HashConnect instance - check if v3 constructor accepts parameters
-      try {
-        // Try v3 constructor with parameters
-        this.hashConnect = new HashConnect(LedgerId.TESTNET, projectId, appMetadata, true);
-      } catch (error) {
-        // Fallback to basic constructor if parameters not supported
-        console.log('Using basic HashConnect constructor');
-        this.hashConnect = new HashConnect();
-      }
+      // Create HashConnect instance with latest 1.24.0 version
+      this.hashConnect = new HashConnect();
 
       // Set up event listeners
       this.setupEventListeners();
+
+      // Initialize HashConnect with correct parameters for v1.24.0
+      await this.hashConnect.init(appMetadata, network, false);
       
       console.log('✅ HashConnect v3 initialized successfully');
       
