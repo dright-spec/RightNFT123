@@ -1,5 +1,5 @@
-// Direct HashPack API without encryption issues
-import { directHashPack } from './direct-hashpack-api';
+// Simple HashPack API without encryption issues
+import { simpleHashPack } from './simple-hashpack';
 import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
 import { debugWalletEnvironment } from './debug-wallet';
 import { config } from './env';
@@ -24,18 +24,18 @@ export interface ConnectedWallet {
 // Detect available wallets in the browser
 export async function detectAvailableWallets(): Promise<WalletInfo[]> {
   try {
-    // Check if HashPack is connected using direct API
+    // Check if HashPack is connected using simple API
     let isHashConnected = false;
     try {
-      isHashConnected = directHashPack.isConnected();
+      isHashConnected = simpleHashPack.isConnected();
     } catch (error) {
       console.warn('Error checking HashPack status:', error);
     }
     
-    // Direct HashPack detection without encryption issues
+    // Simple HashPack detection without encryption issues
     let hasHashPack = false;
     try {
-      hasHashPack = await directHashPack.detectHashPack();
+      hasHashPack = simpleHashPack.isAvailable();
     } catch (error) {
       console.warn('Error detecting HashPack:', error);
     }
@@ -144,18 +144,13 @@ export async function connectToWallet(walletId: string): Promise<string> {
   }
 }
 
-// HashPack connection using direct API (no encryption)
+// HashPack connection using simple API (no encryption)
 async function connectHashPack(): Promise<string> {
   try {
-    console.log('🚀 Starting HashPack connection via direct API...');
+    console.log('🚀 Starting HashPack connection via simple API...');
     
-    // Use direct HashPack API to avoid encryption issues
-    const accountId = await directHashPack.connectWallet();
-    
-    // Validate Hedera account format
-    if (!/^0\.0\.\d+$/.test(accountId)) {
-      throw new Error('Invalid Hedera account ID format received');
-    }
+    // Use simple HashPack API to avoid encryption issues
+    const accountId = await simpleHashPack.connectWallet();
     
     console.log('✅ HashPack connected successfully:', accountId);
     return accountId;
@@ -247,8 +242,8 @@ async function connectBlade(): Promise<string> {
 export function getStoredWalletConnection(): ConnectedWallet | null {
   try {
     // Check if HashConnect is connected first
-    if (directHashPack.isConnected()) {
-      const account = directHashPack.getStoredAccount();
+    if (simpleHashPack.isConnected()) {
+      const account = simpleHashPack.getStoredAccount();
       if (account) {
         return {
           walletId: 'hashpack',
