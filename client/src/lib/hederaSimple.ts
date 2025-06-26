@@ -94,30 +94,19 @@ class HederaService {
       window.addEventListener('hashpack:initialized', walletInjectionHandler);
       window.addEventListener('blade:initialized', walletInjectionHandler);
 
-      // Polling fallback with exponential backoff
-      let attempts = 0;
-      const maxAttempts = 20;
-      const pollForWallet = () => {
-        attempts++;
-        console.log(`Wallet detection attempt ${attempts}/${maxAttempts}`);
-        
-        const result = this.performWalletCheck();
-        if (result) {
-          resolved = true;
-          resolve(true);
-          return;
+      // Single timeout check instead of continuous polling
+      setTimeout(() => {
+        if (!resolved) {
+          const result = this.performWalletCheck();
+          if (result) {
+            resolved = true;
+            resolve(true);
+          } else {
+            resolved = true;
+            resolve(false);
+          }
         }
-
-        if (attempts < maxAttempts) {
-          setTimeout(pollForWallet, Math.min(attempts * 200, 2000));
-        } else {
-          resolved = true;
-          resolve(false);
-        }
-      };
-
-      // Start polling after a short delay
-      setTimeout(pollForWallet, 100);
+      }, 1000);
     });
   }
 
@@ -182,23 +171,8 @@ class HederaService {
   }
 
   private async checkHashPackAvailability(): Promise<boolean> {
-    console.log('Starting advanced wallet detection...');
-    
-    // Use the new detection system
-    const detected = await this.setupWalletListener();
-    
-    if (!detected) {
-      console.log('No wallets detected after comprehensive search');
-      // Log final state for debugging
-      console.log('Final window state:', {
-        ethereum: !!(window as any).ethereum,
-        hashpack: !!(window as any).hashpack,
-        blade: !!(window as any).blade,
-        allKeys: Object.keys(window).slice(0, 100)
-      });
-    }
-    
-    return detected;
+    // Simple check without excessive logging
+    return Boolean((window as any).hashpack || (window as any).ethereum?.isHashPack);
   }
 
   private async mockWalletConnection(): Promise<string> {

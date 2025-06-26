@@ -32,36 +32,15 @@ class WalletDetector {
   ];
 
   async detectWallets(): Promise<WalletDetectionResult> {
-    console.log('Starting comprehensive wallet detection...');
-    
     const results: WalletInfo[] = [];
     
-    // Multiple detection rounds with increasing delays
-    for (let attempt = 0; attempt < this.maxAttempts; attempt++) {
-      if (attempt > 0) {
-        await this.delay(this.detectionDelay * attempt);
-      }
-      
-      console.log(`Wallet detection attempt ${attempt + 1}/${this.maxAttempts}`);
-      
-      // Check each wallet type
-      for (const walletType of this.walletChecks) {
-        const detected = this.checkWalletType(walletType);
-        if (detected && !results.find(r => r.name === walletType.name)) {
-          results.push(detected);
-          console.log(`✓ Detected: ${detected.name} at ${detected.injectionPoint}`);
-        }
-      }
-      
-      // Stop early if we found wallets
-      if (results.length > 0) {
-        console.log(`Found ${results.length} wallet(s) on attempt ${attempt + 1}`);
-        break;
+    // Single detection round to prevent performance issues
+    for (const walletType of this.walletChecks) {
+      const detected = this.checkWalletType(walletType);
+      if (detected && !results.find(r => r.name === walletType.name)) {
+        results.push(detected);
       }
     }
-    
-    // Log comprehensive detection results
-    this.logDetectionResults();
     
     const preferredWallet = this.selectPreferredWallet(results);
     
@@ -117,33 +96,7 @@ class WalletDetector {
   }
 
   private logDetectionResults() {
-    console.log('=== Wallet Detection Debug Info ===');
-    console.log('Window object properties:', Object.keys(window).filter(key => 
-      key.toLowerCase().includes('hash') || 
-      key.toLowerCase().includes('blade') || 
-      key.toLowerCase().includes('hedera') ||
-      key.toLowerCase().includes('ethereum') ||
-      key.toLowerCase().includes('wallet')
-    ));
-    
-    // Check ethereum provider details
-    const ethereum = (window as any).ethereum;
-    if (ethereum) {
-      console.log('Ethereum provider found:', {
-        isHashPack: ethereum.isHashPack,
-        isBlade: ethereum.isBlade,
-        isBraveWallet: ethereum.isBraveWallet,
-        isMetaMask: ethereum.isMetaMask,
-        providers: ethereum.providers
-      });
-    }
-    
-    // Check for Brave-specific wallet APIs
-    if ((window as any).navigator?.brave) {
-      console.log('Brave browser detected');
-    }
-    
-    console.log('===================================');
+    // Silent detection to prevent performance issues
   }
 
   private delay(ms: number): Promise<void> {
