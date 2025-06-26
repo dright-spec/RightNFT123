@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { hashPackOnHashChangeConnector } from '@/lib/hashpack-onhashchange-connector';
 import { workingHashPackExtensionConnector } from '@/lib/working-hashpack-extension-connector';
+import { authenticHashPackConnector } from '@/lib/authentic-hashpack-connector';
 
 export function HashPackDebugComponent() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
@@ -140,6 +141,36 @@ export function HashPackDebugComponent() {
     }
   };
 
+  const testAuthenticConnector = async () => {
+    setIsConnecting(true);
+    
+    try {
+      console.log('🔗 Testing authentic HashPack connector (proven working method)...');
+      
+      // Debug HashConnect availability first
+      authenticHashPackConnector.debugHashConnectAvailability();
+      
+      // Attempt connection using the exact same method from simple-wallet-button.tsx
+      const walletConnection = await authenticHashPackConnector.connectWallet();
+      setConnection(walletConnection);
+      
+      toast({
+        title: "Authentic Connector Success",
+        description: `Connected to account: ${walletConnection.accountId}`,
+      });
+      
+    } catch (error) {
+      console.error('Authentic connector failed:', error);
+      toast({
+        title: "Authentic Connector Failed", 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   const testOnHashChange = () => {
     const onHashChange = (window as any).onhashchange;
     
@@ -201,9 +232,16 @@ export function HashPackDebugComponent() {
           <Button 
             onClick={testWorkingExtensionConnector} 
             disabled={isConnecting}
-            className="bg-primary"
+            variant="outline"
           >
             {isConnecting ? 'Testing...' : 'Test Working Extension Connector'}
+          </Button>
+          <Button 
+            onClick={testAuthenticConnector} 
+            disabled={isConnecting}
+            className="bg-primary"
+          >
+            {isConnecting ? 'Testing...' : 'Test Authentic Connector (Proven)'}
           </Button>
         </div>
 
