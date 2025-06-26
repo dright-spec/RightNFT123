@@ -1,8 +1,7 @@
-// Import the proper HashConnect integration
-import { connectWallet as connectHashConnect, isConnected as isHashConnectConnected, getConnectedAccountIds } from './hashconnect';
+// Direct HashPack API without encryption issues
+import { directHashPack } from './direct-hashpack-api';
 import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
 import { debugWalletEnvironment } from './debug-wallet';
-import { hashPackWallet } from './hashpack-direct';
 import { config } from './env';
 
 export interface WalletInfo {
@@ -150,23 +149,23 @@ export async function connectToWallet(walletId: string): Promise<string> {
   }
 }
 
-// HashPack connection using proper HashConnect SDK
+// HashPack connection using direct API (no encryption)
 async function connectHashPack(): Promise<string> {
   try {
-    console.log('Attempting HashPack connection via HashConnect...');
+    console.log('🚀 Starting HashPack connection via direct API...');
     
-    // Use the official HashConnect integration
-    const accountId = await connectHashConnect();
+    // Use direct HashPack API to avoid encryption issues
+    const accountId = await directHashPack.connectWallet();
     
     // Validate Hedera account format
     if (!/^0\.0\.\d+$/.test(accountId)) {
       throw new Error('Invalid Hedera account ID format received');
     }
     
-    console.log('HashPack connected successfully via HashConnect:', accountId);
+    console.log('✅ HashPack connected successfully:', accountId);
     return accountId;
-  } catch (error) {
-    console.error('HashPack connection error:', error);
+  } catch (error: any) {
+    console.error('❌ HashPack connection failed:', error);
     
     if (error.message?.includes('User rejected') || error.code === 4001) {
       throw new Error('Connection cancelled by user');
@@ -200,24 +199,18 @@ async function connectMetaMask(): Promise<string> {
   }
 }
 
-// WalletConnect that tries HashConnect first, then manual entry
+// WalletConnect that prompts for manual Hedera account entry
 async function connectWalletConnect(): Promise<string> {
-  // First try to use HashConnect if available
-  try {
-    if (isHashConnectConnected()) {
-      const accounts = getConnectedAccountIds();
-      if (accounts.length > 0) {
-        return accounts[0];
-      }
-    }
-    
-    // Try to initialize HashConnect
-    const accountId = await connectHashConnect();
-    if (accountId) {
-      return accountId;
-    }
-  } catch (error) {
-    console.log('HashConnect not available, falling back to manual entry');
+  // Prompt user for manual Hedera account ID entry
+  const accountId = prompt('Please enter your Hedera account ID (format: 0.0.xxxxx):');
+  
+  if (!accountId) {
+    throw new Error('Account ID entry cancelled by user');
+  }
+  
+  // Validate Hedera account format
+  if (!/^0\.0\.\d+$/.test(accountId.trim())) {
+    throw new Error('Invalid Hedera account ID format. Please use format: 0.0.xxxxx');
   }
   
   // Fallback to manual entry only if HashConnect fails
