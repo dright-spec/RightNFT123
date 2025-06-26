@@ -30,8 +30,11 @@ class HashConnectService {
     console.log('=== Initializing HashConnect ===');
     
     try {
-      // Initialize HashConnect without requiring extension detection
-      // HashConnect can work with both extension and dApp connections
+      // Clear any potentially corrupted data first
+      if (this.state.error?.includes('unencrypt') || this.state.error?.includes('decrypt')) {
+        console.log('Previous encryption error detected, clearing all data');
+        this.clearAllHashConnectData();
+      }
 
       // Create HashConnect instance
       this.hashconnect = new HashConnect(
@@ -41,7 +44,7 @@ class HashConnectService {
       // Set up event listeners before initialization
       this.setupEventListeners();
 
-      // Initialize HashConnect
+      // Initialize HashConnect with error handling for encryption issues
       console.log('Calling hashconnect.init()...');
       const initData = await this.hashconnect.init(
         {
@@ -71,7 +74,16 @@ class HashConnectService {
 
     } catch (error) {
       console.error('HashConnect initialization failed:', error);
-      this.state.error = error instanceof Error ? error.message : 'Initialization failed';
+      
+      // Handle encryption/decryption errors specifically
+      if (error instanceof Error && (error.message.includes('unencrypt') || error.message.includes('decrypt') || error.message.includes('crypto'))) {
+        console.log('Encryption error detected, clearing storage and retrying...');
+        this.clearAllHashConnectData();
+        this.state.error = 'Storage cleared due to encryption error. Please try connecting again.';
+      } else {
+        this.state.error = error instanceof Error ? error.message : 'Initialization failed';
+      }
+      
       this.emit('error', this.state);
       return false;
     }
@@ -178,7 +190,10 @@ class HashConnectService {
         this.emit('reconnected', this.state);
       }
     } catch (error) {
-      console.log('No existing connection found:', error);
+      console.log('Error checking existing connection, clearing corrupted data:', error);
+      // Clear potentially corrupted data that might cause encryption errors
+      this.clearConnectionData();
+      this.clearAllHashConnectData();
     }
   }
 
@@ -274,6 +289,34 @@ class HashConnectService {
       localStorage.removeItem('hashconnect_data');
     } catch (error) {
       console.log('Failed to clear connection data:', error);
+    }
+  }
+
+  private clearAllHashConnectData() {
+    try {
+      // Clear all possible HashConnect localStorage keys that might be corrupted
+      const keysToRemove = [
+        'hashconnect_data',
+        'hashconnect_topic',
+        'hashconnect_pairing_data',
+        'hashconnect',
+        'hashconnect_debug',
+        'walletconnect',
+        'WC_VERSION'
+      ];
+      
+      keysToRemove.forEach(key => {
+        try {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        } catch (error) {
+          console.warn(`Failed to remove ${key}:`, error);
+        }
+      });
+      
+      console.log('Cleared all HashConnect storage data');
+    } catch (error) {
+      console.warn('Failed to clear HashConnect data:', error);
     }
   }
 
