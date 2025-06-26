@@ -72,11 +72,21 @@ export function WalletConnectModal() {
       setWallets(availableWallets);
     };
 
+    // Only detect once when component mounts
     detectWallets();
     
-    // Re-detect every 2 seconds in case user installs wallet
-    const interval = setInterval(detectWallets, 2000);
-    return () => clearInterval(interval);
+    // Listen for wallet injection events instead of polling
+    const handleWalletInjection = () => detectWallets();
+    
+    window.addEventListener('hashpack:initialized', handleWalletInjection);
+    window.addEventListener('blade:initialized', handleWalletInjection);
+    window.addEventListener('ethereum#initialized', handleWalletInjection);
+    
+    return () => {
+      window.removeEventListener('hashpack:initialized', handleWalletInjection);
+      window.removeEventListener('blade:initialized', handleWalletInjection);
+      window.removeEventListener('ethereum#initialized', handleWalletInjection);
+    };
   }, []);
 
   const connectWallet = async (walletName: string) => {

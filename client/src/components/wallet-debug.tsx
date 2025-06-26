@@ -60,19 +60,15 @@ export function WalletDebug() {
   };
 
   useEffect(() => {
-    // Auto-run debug on mount
+    // Only run debug on mount, no continuous polling
     runDebug();
     
-    // Subscribe to HashPack detection changes
+    // Subscribe to HashPack detection changes (but don't auto-refresh)
     const detector = HashPackDetector.getInstance();
     detector.onDetectionChange((detected) => {
       console.log(`HashPack detection changed: ${detected}`);
-      runDebug();
+      // Don't auto-refresh to avoid spam
     });
-    
-    // Periodic refresh
-    const interval = setInterval(runDebug, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
