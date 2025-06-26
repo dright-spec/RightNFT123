@@ -40,7 +40,11 @@ class FinalHashConnect {
         console.warn('⚠️ Init failed, continuing without it:', initError);
       }
 
-      // Step 4: Try direct extension connection first (most reliable)
+      // Step 4: Check for HashPack extension availability
+      console.log('🔍 Checking HashPack extension availability...');
+      console.log('window.hashpack exists:', !!(window as any).hashpack);
+      console.log('HashPack extension details:', (window as any).hashpack);
+      
       if (typeof window !== 'undefined' && (window as any).hashpack) {
         console.log('🚀 Trying direct HashPack extension...');
         const hashpack = (window as any).hashpack;
@@ -53,6 +57,8 @@ class FinalHashConnect {
         } catch (error) {
           console.log('❌ Direct HashPack failed:', error);
         }
+      } else {
+        console.log('⚠️ HashPack extension not found in window object');
       }
 
       // Step 5: Use findLocalWallets approach (the working method)
@@ -64,26 +70,64 @@ class FinalHashConnect {
       
       console.log('📋 Available HashConnect methods:', methods);
 
+      // Try connectToExtension directly (might work without findLocalWallets)
+      if (methods.includes('connectToExtension')) {
+        console.log('🔗 Trying direct connectToExtension...');
+        try {
+          await (this.hashConnect as any).connectToExtension();
+          console.log('✅ connectToExtension initiated - waiting for response...');
+          
+          // Wait for connection with shorter timeout since it might connect directly
+          const result = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Direct connection timeout'));
+            }, 15000); // 15 seconds for direct connection
+
+            const checkConnection = () => {
+              if (this.pairingData?.accountIds?.length > 0) {
+                clearTimeout(timeout);
+                const accountId = this.pairingData.accountIds[0];
+                console.log('✅ Direct connection successful:', accountId);
+                resolve(accountId);
+              } else {
+                setTimeout(checkConnection, 1000);
+              }
+            };
+
+            setTimeout(checkConnection, 2000);
+          });
+          
+          return result as string;
+          
+        } catch (error) {
+          console.log('❌ Direct connectToExtension failed:', error);
+        }
+      }
+
+      // Fallback: Try findLocalWallets approach
       if (methods.includes('findLocalWallets')) {
         console.log('🔍 Finding local wallets...');
         const wallets = (this.hashConnect as any).findLocalWallets();
         console.log('📱 Found local wallets:', wallets);
+        console.log('📱 Wallets type:', typeof wallets);
+        console.log('📱 Wallets length:', Array.isArray(wallets) ? wallets.length : 'not array');
         
-        if (wallets && wallets.length > 0) {
-          console.log('🔗 Attempting to connect to first wallet:', wallets[0]);
+        // Check if wallets is an object with wallet data
+        const hasWallets = (Array.isArray(wallets) && wallets.length > 0) || 
+                          (typeof wallets === 'object' && wallets !== null && Object.keys(wallets).length > 0);
+        
+        if (hasWallets) {
+          console.log('🔗 Found wallets, attempting HashConnect pairing...');
           
-          // Try connectToExtension with the found wallet
-          if (methods.includes('connectToExtension')) {
-            await (this.hashConnect as any).connectToExtension();
-            console.log('✅ Connected via connectToExtension');
-          }
-          // Try connectToLocalWallet if it exists
-          else if (methods.includes('connectToLocalWallet')) {
-            await (this.hashConnect as any).connectToLocalWallet(wallets[0]);
-            console.log('✅ Connected via connectToLocalWallet');
-          }
-          else {
-            console.log('⚠️ No connection method available for found wallets');
+          // For HashConnect v3, we might need to trigger pairing after finding wallets
+          if (methods.includes('generatePairingString')) {
+            try {
+              console.log('📋 Generating pairing string...');
+              const pairingString = await (this.hashConnect as any).generatePairingString();
+              console.log('📋 Pairing string generated:', !!pairingString);
+            } catch (error) {
+              console.log('⚠️ Pairing string generation failed:', error);
+            }
           }
         } else {
           console.log('❌ No local wallets found');
@@ -91,7 +135,6 @@ class FinalHashConnect {
         }
       } else {
         console.log('❌ findLocalWallets method not available');
-        throw new Error('Wallet discovery not available in this HashConnect version');
       }
 
       // Wait for pairing with proper timeout
