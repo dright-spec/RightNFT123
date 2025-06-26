@@ -144,26 +144,25 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing Proper HashConnect Protocol...');
+                  console.log('🚀 Testing HashPack Connector (fixed event handling)...');
                   
                   try {
-                    const { ProperHashConnectService } = await import('@/utils/proper-hashconnect');
-                    const service = new ProperHashConnectService();
+                    const { hashPackConnector } = await import('@/utils/proper-hashconnect-service');
                     
-                    console.log('🔄 Starting proper HashConnect connection...');
-                    const accountId = await service.connectToHashPack();
+                    console.log('🔄 Starting HashConnect with improved event handling...');
+                    const accountId = await hashPackConnector.connect();
                     
-                    console.log('✅ Proper HashConnect successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing official HashConnect protocol!`);
+                    console.log('✅ HashPack connection successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nConnection event handling fixed!`);
                     
                   } catch (error) {
-                    console.error('❌ Proper HashConnect failed:', error);
-                    alert(`❌ Connection Failed\n\n${(error as Error).message}\n\nEnsure HashPack is installed and unlocked.`);
+                    console.error('❌ HashPack connection failed:', error);
+                    alert(`❌ Connection Failed\n\n${(error as Error).message}\n\nPlease approve pairing in HashPack.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Proper Protocol
+                Test Fixed Connector
               </button>
             </div>
           </div>
