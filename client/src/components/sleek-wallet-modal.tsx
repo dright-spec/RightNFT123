@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvailableWallets, type WalletInfo } from "@/utils/detectWallets";
-import { finalHashConnect } from "@/lib/hashconnect-final";
+import { hashPackWallet } from "@/lib/hashpack-direct";
 
 interface SleekWalletModalProps {
   open: boolean;
@@ -35,12 +35,23 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
     
     try {
       if (walletId === 'hashpack') {
-        console.log('🚀 Starting HashPack connection via official HashConnect SDK...');
+        console.log('🚀 Starting HashPack connection via direct API...');
         
         try {
-          console.log('🔄 Initializing connection to HashPack wallet...');
+          console.log('🔍 Checking HashPack availability...');
+          const isAvailable = await hashPackWallet.isAvailable();
           
-          const accountId = await finalHashConnect.connectWallet();
+          if (!isAvailable) {
+            toast({
+              title: "HashPack Not Found",
+              description: "Please install the HashPack browser extension",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          console.log('🔄 Connecting to HashPack wallet...');
+          const accountId = await hashPackWallet.connect();
           
           console.log('✅ HashPack connected successfully:', accountId);
           onConnect?.(accountId);
