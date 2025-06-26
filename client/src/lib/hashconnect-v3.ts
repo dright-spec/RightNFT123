@@ -31,13 +31,13 @@ class HashConnectV3Service {
     try {
       console.log('🔄 Initializing HashConnect v3...');
       
-      // Create HashConnect instance  
+      // Create HashConnect instance with v3 constructor
       this.hashConnect = new HashConnect();
 
       // Set up event listeners
       this.setupEventListeners();
 
-      // Initialize the connection
+      // Initialize the connection with proper v3 parameters
       await this.hashConnect.init(appMetadata, network, false);
       
       console.log('✅ HashConnect v3 initialized successfully');
