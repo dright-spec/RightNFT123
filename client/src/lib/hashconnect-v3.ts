@@ -5,12 +5,12 @@
 
 import { HashConnect, HashConnectTypes, MessageTypes } from "@hashgraph/hashconnect";
 
-// App metadata for HashConnect v3
-const appMetadata: HashConnectTypes.AppMetadata = {
+// App metadata for HashConnect v3 - correct format
+const appMetadata = {
   name: "Dright – Rights Marketplace",
   description: "Hedera NFT marketplace for tokenizing legal rights",
-  icon: window.location.origin + "/favicon.ico",
-  url: window.location.origin,
+  icons: [window.location.origin + "/favicon.ico"],
+  url: window.location.origin
 };
 
 // Project configuration
