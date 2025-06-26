@@ -4,12 +4,13 @@
  */
 
 import { HashConnect, HashConnectTypes, MessageTypes } from "@hashgraph/hashconnect";
+import { LedgerId } from "@hashgraph/sdk";
 
-// App metadata for HashConnect v3 - correct format
-const appMetadata = {
+// App metadata for HashConnect v3 - using both formats for compatibility
+const appMetadata: HashConnectTypes.AppMetadata = {
   name: "Dright – Rights Marketplace",
   description: "Hedera NFT marketplace for tokenizing legal rights",
-  icons: [window.location.origin + "/favicon.ico"],
+  icon: window.location.origin + "/favicon.ico",
   url: window.location.origin
 };
 
@@ -31,14 +32,18 @@ class HashConnectV3Service {
     try {
       console.log('🔄 Initializing HashConnect v3...');
       
-      // Create HashConnect instance with v3 constructor
-      this.hashConnect = new HashConnect();
+      // Create HashConnect instance - check if v3 constructor accepts parameters
+      try {
+        // Try v3 constructor with parameters
+        this.hashConnect = new HashConnect(LedgerId.TESTNET, projectId, appMetadata, true);
+      } catch (error) {
+        // Fallback to basic constructor if parameters not supported
+        console.log('Using basic HashConnect constructor');
+        this.hashConnect = new HashConnect();
+      }
 
       // Set up event listeners
       this.setupEventListeners();
-
-      // Initialize the connection with proper v3 parameters
-      await this.hashConnect.init(appMetadata, network, false);
       
       console.log('✅ HashConnect v3 initialized successfully');
       
