@@ -1,8 +1,7 @@
 // Import the proper HashConnect integration
-import { hashConnectService } from './hashConnectService';
+import { properHashPackConnector } from './proper-hashpack-connector';
 import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
 import { debugWalletEnvironment } from './debug-wallet';
-import { hashPackWallet } from './hashpack-direct';
 import { config } from './env';
 
 export interface WalletInfo {
