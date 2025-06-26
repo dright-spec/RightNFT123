@@ -31,7 +31,8 @@ export class HashPackConnector {
     const initData = await this.hashconnect.init(
       APP_METADATA,
       NETWORK,
-      false
+      false,
+      {} // no saved privKey
     );
 
     console.log("✅ HashConnect initialized:", initData);
@@ -41,7 +42,7 @@ export class HashPackConnector {
     this.topic = topic;
     
     console.log("🔄 Starting pairing process...");
-    await this.hashconnect.connect(pairingString);
+    await this.hashconnect.connect({ pairingString });
 
     // 3. listen for when user approves in wallet
     return new Promise((resolve, reject) => {
@@ -49,7 +50,6 @@ export class HashPackConnector {
         reject(new Error("Connection timeout - please approve the pairing in HashPack"));
       }, 60000);
 
-      // Set up pairing event listener before connecting
       this.hashconnect.pairingEvent.once((pairing) => {
         clearTimeout(timeout);
         
@@ -72,41 +72,9 @@ export class HashPackConnector {
         }
       });
 
-      // Also listen for connection status changes
+      // Handle connection errors
       this.hashconnect.connectionStatusChangeEvent.on((status) => {
-        console.log("🔄 Connection status changed:", status);
-        
-        // Check for successful connection with account data
-        if (status === "Connected") {
-          // Try to get account from paired data
-          const hcData = (this.hashconnect as any).hcData;
-          if (hcData && hcData.pairingData && hcData.pairingData.length > 0) {
-            const pairingInfo = hcData.pairingData[0];
-            if (pairingInfo.accountIds && pairingInfo.accountIds.length > 0) {
-              clearTimeout(timeout);
-              this.pairedAccount = pairingInfo.accountIds[0];
-              console.log("✅ Account extracted from connection status:", this.pairedAccount);
-              
-              // Save pairing data
-              localStorage.setItem("hashconnectData", JSON.stringify(pairingInfo));
-              
-              resolve(this.pairedAccount);
-            }
-          }
-        }
-      });
-
-      // Set up message listener for additional account info
-      this.hashconnect.on("message", (message) => {
-        console.log("📨 Received message:", message);
-        
-        // Check if message contains account information
-        if (message && message.response && message.response.accountId) {
-          clearTimeout(timeout);
-          this.pairedAccount = message.response.accountId;
-          console.log("✅ Account extracted from message:", this.pairedAccount);
-          resolve(this.pairedAccount);
-        }
+        console.log("Connection status:", status);
       });
     });
   }
