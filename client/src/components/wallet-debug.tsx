@@ -144,16 +144,16 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing HashPack Connector (fixed event handling)...');
+                  console.log('🚀 Testing Reference HashConnect Implementation...');
                   
                   try {
                     const { hashPackConnector } = await import('@/utils/proper-hashconnect-service');
                     
-                    console.log('🔄 Starting HashConnect with improved event handling...');
+                    console.log('🔄 Starting HashConnect with reference pattern...');
                     const accountId = await hashPackConnector.connect();
                     
                     console.log('✅ HashPack connection successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nConnection event handling fixed!`);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nReference implementation working!`);
                     
                   } catch (error) {
                     console.error('❌ HashPack connection failed:', error);
@@ -162,7 +162,7 @@ export function WalletDebug() {
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Fixed Connector
+                Test Reference Pattern
               </button>
             </div>
           </div>
