@@ -89,23 +89,25 @@ class HashConnectV3Service {
     try {
       console.log('🔍 Searching for wallet extensions...');
       
-      // Use findLocalWallets to discover available wallets
-      try {
-        const wallets = this.hashConnect.findLocalWallets();
-        console.log('📱 Local wallets found:', wallets);
+      // In HashConnect v3, extensions are discovered via events, not direct method calls
+      console.log('📱 Using HashConnect v3 event-based wallet discovery...');
+      
+      // Wait for the foundExtensionEvent to populate available extensions
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // If no extensions found via events, manually check for HashPack
+      if (this.availableExtensions.length === 0) {
+        console.log('📱 Manually checking for HashPack extension...');
         
-        if (Array.isArray(wallets)) {
-          this.availableExtensions = wallets;
-        } else {
-          // If findLocalWallets doesn't return an array, try alternative approach
-          console.log('📱 Trying alternative wallet discovery...');
-          // Wait for foundExtensionEvent to populate extensions
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        // Create a synthetic HashPack wallet metadata if window.hashpack exists
+        if (typeof window !== 'undefined' && (window as any).hashpack) {
+          this.availableExtensions = [{
+            name: 'HashPack',
+            description: 'HashPack Wallet',
+            icon: 'hashpack-icon.png'
+          } as HashConnectTypes.WalletMetadata];
+          console.log('📱 HashPack detected via window object');
         }
-      } catch (error) {
-        console.warn('findLocalWallets not available, using event-based discovery');
-        // Wait for foundExtensionEvent to populate extensions
-        await new Promise(resolve => setTimeout(resolve, 2000));
       }
       console.log(`📱 Found ${this.availableExtensions.length} wallet extensions`);
       return this.availableExtensions;
@@ -139,7 +141,8 @@ class HashConnectV3Service {
       console.log('📱 Found HashPack extension:', hashPackExtension);
 
       // Initiate pairing with HashPack using the correct v3 method
-      await this.hashConnect!.connectToLocalWallet(hashPackExtension);
+      // In v3, connectToLocalWallet() expects no parameters
+      this.hashConnect!.connectToLocalWallet();
 
       // Wait for pairing to complete
       await new Promise((resolve, reject) => {
