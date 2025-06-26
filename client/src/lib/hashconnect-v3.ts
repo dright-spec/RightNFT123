@@ -89,9 +89,24 @@ class HashConnectV3Service {
     try {
       console.log('🔍 Searching for wallet extensions...');
       
-      // Wait for extensions to be discovered
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Use findLocalWallets to discover available wallets
+      try {
+        const wallets = this.hashConnect.findLocalWallets();
+        console.log('📱 Local wallets found:', wallets);
+        
+        if (Array.isArray(wallets)) {
+          this.availableExtensions = wallets;
+        } else {
+          // If findLocalWallets doesn't return an array, try alternative approach
+          console.log('📱 Trying alternative wallet discovery...');
+          // Wait for foundExtensionEvent to populate extensions
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } catch (error) {
+        console.warn('findLocalWallets not available, using event-based discovery');
+        // Wait for foundExtensionEvent to populate extensions
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
       console.log(`📱 Found ${this.availableExtensions.length} wallet extensions`);
       return this.availableExtensions;
       
@@ -123,8 +138,8 @@ class HashConnectV3Service {
 
       console.log('📱 Found HashPack extension:', hashPackExtension);
 
-      // Initiate pairing with HashPack
-      await this.hashConnect!.connectToLocalWallet();
+      // Initiate pairing with HashPack using the correct v3 method
+      await this.hashConnect!.connectToLocalWallet(hashPackExtension);
 
       // Wait for pairing to complete
       await new Promise((resolve, reject) => {
