@@ -144,26 +144,26 @@ export function WalletDebug() {
               </button>
               <button 
                 onClick={async () => {
-                  console.log('🚀 Testing HashPack Connection (Original Method)...');
+                  console.log('🚀 Testing Proper HashConnect Protocol...');
                   
                   try {
-                    const { HashPackConnector } = await import('@/utils/hashpack-connector');
-                    const connector = new HashPackConnector();
+                    const { ProperHashConnectService } = await import('@/utils/proper-hashconnect');
+                    const service = new ProperHashConnectService();
                     
-                    console.log('🔄 Starting original connection method...');
-                    const accountId = await connector.connect();
+                    console.log('🔄 Starting proper HashConnect connection...');
+                    const accountId = await service.connectToHashPack();
                     
-                    console.log('✅ Original connection successful:', accountId);
-                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing original working method!`);
+                    console.log('✅ Proper HashConnect successful:', accountId);
+                    alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing official HashConnect protocol!`);
                     
                   } catch (error) {
-                    console.error('❌ Original connection failed:', error);
-                    alert(`❌ Connection Failed\n\n${(error as Error).message}\n\nTry refreshing the page.`);
+                    console.error('❌ Proper HashConnect failed:', error);
+                    alert(`❌ Connection Failed\n\n${(error as Error).message}\n\nEnsure HashPack is installed and unlocked.`);
                   }
                 }}
                 className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
               >
-                Test Original Method
+                Test Proper Protocol
               </button>
             </div>
           </div>

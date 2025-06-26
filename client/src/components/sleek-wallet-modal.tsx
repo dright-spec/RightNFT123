@@ -38,7 +38,6 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
         console.log('🚀 Starting HashPack connection via official HashConnect SDK...');
         
         try {
-          const { HashPackConnector } = await import('@/utils/hashpack-connector');
           const connector = new HashPackConnector();
           console.log('🔄 Initializing connection to HashPack wallet...');
           
@@ -57,7 +56,7 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
           console.error('❌ HashPack connection failed:', error);
           toast({
             title: "HashPack Connection Failed",
-            description: `${(error as Error).message || 'Unknown error occurred'}`,
+            description: `${error.message || 'Unknown error occurred'}`,
             variant: "destructive",
           });
           return;
