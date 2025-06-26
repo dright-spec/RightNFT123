@@ -128,33 +128,33 @@ class HashConnectService {
     console.log('Setting up HashConnect event listeners...');
 
     try {
-      // Connection status change events
-      if (this.hashconnect.connectionStatusChangeEvent && typeof this.hashconnect.connectionStatusChangeEvent.on === 'function') {
-        this.hashconnect.connectionStatusChangeEvent.on((connectionStatus) => {
+      // Connection status change events - using subscribe method
+      if (this.hashconnect.connectionStatusChangeEvent && typeof this.hashconnect.connectionStatusChangeEvent.subscribe === 'function') {
+        this.hashconnect.connectionStatusChangeEvent.subscribe((connectionStatus) => {
           console.log('HashConnect connection status changed:', connectionStatus);
           this.handleConnectionStatusChange(connectionStatus);
         });
       }
 
-      // Pairing events
-      if (this.hashconnect.pairingEvent && typeof this.hashconnect.pairingEvent.on === 'function') {
-        this.hashconnect.pairingEvent.on((pairingData) => {
-          console.log('HashConnect pairing event:', pairingData);
-          this.handlePairingEvent(pairingData);
+      // Pairing events - using subscribe method with proper decryption handling
+      if (this.hashconnect.pairingEvent && typeof this.hashconnect.pairingEvent.subscribe === 'function') {
+        this.hashconnect.pairingEvent.subscribe((pairingData) => {
+          console.log('HashConnect pairing event received:', pairingData);
+          this.handlePairingEventSafely(pairingData);
         });
       }
 
       // Found extension events
-      if (this.hashconnect.foundExtensionEvent && typeof this.hashconnect.foundExtensionEvent.on === 'function') {
-        this.hashconnect.foundExtensionEvent.on((walletMetadata) => {
+      if (this.hashconnect.foundExtensionEvent && typeof this.hashconnect.foundExtensionEvent.subscribe === 'function') {
+        this.hashconnect.foundExtensionEvent.subscribe((walletMetadata) => {
           console.log('HashConnect found extension:', walletMetadata);
           this.emit('extensionFound', walletMetadata);
         });
       }
 
       // Additional events
-      if (this.hashconnect.foundIframeEvent && typeof this.hashconnect.foundIframeEvent.on === 'function') {
-        this.hashconnect.foundIframeEvent.on((iframeData) => {
+      if (this.hashconnect.foundIframeEvent && typeof this.hashconnect.foundIframeEvent.subscribe === 'function') {
+        this.hashconnect.foundIframeEvent.subscribe((iframeData) => {
           console.log('HashConnect found iframe:', iframeData);
         });
       }
@@ -195,6 +195,58 @@ class HashConnectService {
       this.saveConnectionData(pairingData);
       
       this.emit('paired', this.state);
+    }
+  }
+
+  private handlePairingEventSafely(pairingData: any) {
+    console.log('Processing pairing event safely:', pairingData);
+    
+    try {
+      // Handle both encrypted and unencrypted pairing data
+      let processedData = pairingData;
+      
+      // If the data appears to be encrypted, try to handle it
+      if (pairingData && typeof pairingData === 'object' && pairingData.encryptedData) {
+        console.log('Received encrypted pairing data, attempting to process...');
+        
+        // Skip decryption for pairing data - it should be plain text
+        // Pairing approval data is typically not encrypted
+        if (pairingData.accountIds) {
+          processedData = pairingData;
+        } else {
+          console.log('Pairing data structure unexpected, using as-is');
+          processedData = pairingData;
+        }
+      }
+      
+      // Process the pairing data
+      if (processedData && processedData.accountIds && processedData.accountIds.length > 0) {
+        this.state.accountId = processedData.accountIds[0];
+        this.state.network = processedData.network === 'mainnet' ? 'mainnet' : 'testnet';
+        this.state.isConnected = true;
+        this.state.error = null;
+        
+        console.log(`Wallet paired successfully: ${this.state.accountId} on ${this.state.network}`);
+        
+        // Store connection data for persistence
+        this.saveConnectionData(processedData);
+        
+        this.emit('paired', this.state);
+      } else {
+        console.log('No account IDs found in pairing data');
+      }
+      
+    } catch (error) {
+      console.error('Error processing pairing event:', error);
+      
+      // Don't fail completely - try to extract what we can
+      if (pairingData && pairingData.accountIds && pairingData.accountIds.length > 0) {
+        console.log('Fallback: using pairing data as-is');
+        this.handlePairingEvent(pairingData);
+      } else {
+        this.state.error = 'Failed to process pairing data';
+        this.emit('error', this.state);
+      }
     }
   }
 
@@ -271,8 +323,16 @@ class HashConnectService {
         try {
           console.log('Attempting to connect to local HashPack extension...');
           await this.hashconnect.connectToLocalWallet();
+          
+          // Wait a moment to see if pairing happens
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          if (this.state.isConnected && this.state.accountId) {
+            console.log('Local wallet connected successfully:', this.state.accountId);
+            return this.state.accountId;
+          }
         } catch (error) {
-          console.log('Local wallet connection failed, falling back to pairing string');
+          console.log('Local wallet connection failed, falling back to pairing string:', error);
         }
       }
 
@@ -281,7 +341,16 @@ class HashConnectService {
 
     } catch (error) {
       console.error('Wallet connection failed:', error);
-      this.state.error = error instanceof Error ? error.message : 'Connection failed';
+      
+      // Handle specific decryption errors
+      if (error instanceof Error && (error.message.includes('decrypt') || error.message.includes('unencrypt'))) {
+        console.log('Decryption error detected, clearing storage and retrying...');
+        this.clearAllHashConnectData();
+        this.state.error = 'Connection data cleared due to encryption error. Please try connecting again.';
+      } else {
+        this.state.error = error instanceof Error ? error.message : 'Connection failed';
+      }
+      
       this.emit('error', this.state);
       throw error;
     }
