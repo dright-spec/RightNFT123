@@ -60,7 +60,7 @@ class SimpleHashPack {
       throw new Error('HashPack extension not found. Please install HashPack wallet.');
     }
 
-    const hashpack = (window as any).hashpack;
+    const hashpack = window.hashpack;
     
     try {
       console.log('🚀 Connecting to HashPack via direct API...');
@@ -137,7 +137,7 @@ class SimpleHashPack {
       this.accountId = null;
 
       // Try to disconnect from extension if method exists
-      const hashpack = (window as any).hashpack;
+      const hashpack = window.hashpack;
       if (hashpack?.disconnect) {
         await hashpack.disconnect();
       }

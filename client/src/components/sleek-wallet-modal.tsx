@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvailableWallets, type WalletInfo } from "@/utils/detectWallets";
-import { HashPackConnector } from "@/utils/hashpack-connector";
+import { simpleHashPack } from "@/lib/simple-hashpack";
 
 interface SleekWalletModalProps {
   open: boolean;
@@ -38,10 +38,9 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
         console.log('🚀 Starting HashPack connection via official HashConnect SDK...');
         
         try {
-          const connector = new HashPackConnector();
           console.log('🔄 Initializing connection to HashPack wallet...');
           
-          const accountId = await connector.connect();
+          const accountId = await simpleHashPack.connectWallet();
           
           console.log('✅ HashPack connected successfully:', accountId);
           onConnect?.(accountId);
@@ -52,7 +51,7 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
           });
           return;
           
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ HashPack connection failed:', error);
           toast({
             title: "HashPack Connection Failed",
