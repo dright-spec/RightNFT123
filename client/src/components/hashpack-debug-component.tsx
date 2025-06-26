@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { hashPackOnHashChangeConnector } from '@/lib/hashpack-onhashchange-connector';
 import { workingHashPackExtensionConnector } from '@/lib/working-hashpack-extension-connector';
 import { authenticHashPackConnector } from '@/lib/authentic-hashpack-connector';
+import { HashPackConnector } from '@/utils/hashpack-connector';
 
 export function HashPackDebugComponent() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
@@ -171,6 +172,43 @@ export function HashPackDebugComponent() {
     }
   };
 
+  const testOriginalWorkingConnector = async () => {
+    setIsConnecting(true);
+    
+    try {
+      console.log('🔗 Testing ORIGINAL working HashPack connector (was connecting successfully)...');
+      
+      // This is the exact connector that was working but had decryption issues
+      const originalConnector = new HashPackConnector();
+      
+      // Use the proven working connection method
+      const accountId = await originalConnector.connect();
+      
+      const connection = {
+        accountId,
+        network: 'testnet',
+        isConnected: true
+      };
+      
+      setConnection(connection);
+      
+      toast({
+        title: "ORIGINAL Connector Success",
+        description: `Connected to account: ${accountId}`,
+      });
+      
+    } catch (error) {
+      console.error('Original working connector failed:', error);
+      toast({
+        title: "Original Working Connector Failed", 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   const testOnHashChange = () => {
     const onHashChange = (window as any).onhashchange;
     
@@ -239,9 +277,16 @@ export function HashPackDebugComponent() {
           <Button 
             onClick={testAuthenticConnector} 
             disabled={isConnecting}
-            className="bg-primary"
+            variant="outline"
           >
             {isConnecting ? 'Testing...' : 'Test Authentic Connector (Proven)'}
+          </Button>
+          <Button 
+            onClick={testOriginalWorkingConnector} 
+            disabled={isConnecting}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isConnecting ? 'Testing...' : 'Test ORIGINAL Working Connector'}
           </Button>
         </div>
 
