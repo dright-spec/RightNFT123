@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getAvailableWallets, type WalletInfo } from "@/utils/detectWallets";
-import { cleanHashPack } from "@/lib/clean-hashpack";
+import { hashConnectV3 } from "@/lib/hashconnect-v3";
 
 interface SleekWalletModalProps {
   open: boolean;
@@ -40,7 +40,7 @@ export function SleekWalletModal({ open, onClose, onConnect }: SleekWalletModalP
         try {
           console.log('🔄 Initializing connection to HashPack wallet...');
           
-          const accountId = await cleanHashPack.connectWallet();
+          const accountId = await hashConnectV3.connectWallet();
           
           console.log('✅ HashPack connected successfully:', accountId);
           onConnect?.(accountId);
