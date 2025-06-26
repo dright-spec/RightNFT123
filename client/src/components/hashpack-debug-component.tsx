@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { hashPackOnHashChangeConnector } from '@/lib/hashpack-onhashchange-connector';
+import { workingHashPackExtensionConnector } from '@/lib/working-hashpack-extension-connector';
 
 export function HashPackDebugComponent() {
   const [debugInfo, setDebugInfo] = useState<any>(null);
@@ -109,6 +110,36 @@ export function HashPackDebugComponent() {
     }
   };
 
+  const testWorkingExtensionConnector = async () => {
+    setIsConnecting(true);
+    
+    try {
+      console.log('🔗 Testing working HashPack extension connector...');
+      
+      // Debug detected objects first
+      workingHashPackExtensionConnector.debugDetectedObjects();
+      
+      // Attempt connection using the proven connectToExtension method
+      const walletConnection = await workingHashPackExtensionConnector.connectWallet();
+      setConnection(walletConnection);
+      
+      toast({
+        title: "Working Connector Success",
+        description: `Connected to account: ${walletConnection.accountId}`,
+      });
+      
+    } catch (error) {
+      console.error('Working extension connector failed:', error);
+      toast({
+        title: "Working Connector Failed", 
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: "destructive",
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   const testOnHashChange = () => {
     const onHashChange = (window as any).onhashchange;
     
@@ -163,9 +194,16 @@ export function HashPackDebugComponent() {
           <Button 
             onClick={testHashPackConnection} 
             disabled={isConnecting}
-            className="bg-primary"
+            variant="outline"
           >
             {isConnecting ? 'Testing...' : 'Test HashPack Connection'}
+          </Button>
+          <Button 
+            onClick={testWorkingExtensionConnector} 
+            disabled={isConnecting}
+            className="bg-primary"
+          >
+            {isConnecting ? 'Testing...' : 'Test Working Extension Connector'}
           </Button>
         </div>
 
