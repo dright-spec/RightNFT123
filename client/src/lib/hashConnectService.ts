@@ -1,3 +1,4 @@
+
 // Proper HashConnect initialization and management
 // This handles the complete HashConnect lifecycle for Hedera wallet connections
 
@@ -14,6 +15,7 @@ export interface HashConnectState {
 }
 
 class HashConnectService {
+  private static instance: HashConnectService | null = null;
   private hashconnect: HashConnect | null = null;
   private state: HashConnectState = {
     isInitialized: false,
@@ -25,15 +27,44 @@ class HashConnectService {
     error: null
   };
   private eventHandlers: Map<string, Function[]> = new Map();
+  private isInitializing = false;
+
+  // Singleton pattern to prevent multiple instances
+  static getInstance(): HashConnectService {
+    if (!HashConnectService.instance) {
+      HashConnectService.instance = new HashConnectService();
+    }
+    return HashConnectService.instance;
+  }
 
   async initialize(): Promise<boolean> {
+    if (this.isInitializing) {
+      console.log('HashConnect initialization already in progress...');
+      return false;
+    }
+
+    if (this.state.isInitialized && this.hashconnect) {
+      console.log('HashConnect already initialized');
+      return true;
+    }
+
     console.log('=== Initializing HashConnect ===');
+    this.isInitializing = true;
     
     try {
       // Clear any potentially corrupted data first
       if (this.state.error?.includes('unencrypt') || this.state.error?.includes('decrypt')) {
         console.log('Previous encryption error detected, clearing all data');
         this.clearAllHashConnectData();
+      }
+
+      // Cleanup any existing instance
+      if (this.hashconnect) {
+        try {
+          await this.hashconnect.disconnect();
+        } catch (error) {
+          console.log('Error cleaning up existing HashConnect:', error);
+        }
       }
 
       // Create HashConnect instance
@@ -86,6 +117,8 @@ class HashConnectService {
       
       this.emit('error', this.state);
       return false;
+    } finally {
+      this.isInitializing = false;
     }
   }
 
@@ -94,28 +127,40 @@ class HashConnectService {
 
     console.log('Setting up HashConnect event listeners...');
 
-    // Connection status change events
-    this.hashconnect.connectionStatusChangeEvent.on((connectionStatus) => {
-      console.log('HashConnect connection status changed:', connectionStatus);
-      this.handleConnectionStatusChange(connectionStatus);
-    });
+    try {
+      // Connection status change events
+      if (this.hashconnect.connectionStatusChangeEvent && typeof this.hashconnect.connectionStatusChangeEvent.on === 'function') {
+        this.hashconnect.connectionStatusChangeEvent.on((connectionStatus) => {
+          console.log('HashConnect connection status changed:', connectionStatus);
+          this.handleConnectionStatusChange(connectionStatus);
+        });
+      }
 
-    // Pairing events
-    this.hashconnect.pairingEvent.on((pairingData) => {
-      console.log('HashConnect pairing event:', pairingData);
-      this.handlePairingEvent(pairingData);
-    });
+      // Pairing events
+      if (this.hashconnect.pairingEvent && typeof this.hashconnect.pairingEvent.on === 'function') {
+        this.hashconnect.pairingEvent.on((pairingData) => {
+          console.log('HashConnect pairing event:', pairingData);
+          this.handlePairingEvent(pairingData);
+        });
+      }
 
-    // Found extension events
-    this.hashconnect.foundExtensionEvent.on((walletMetadata) => {
-      console.log('HashConnect found extension:', walletMetadata);
-      this.emit('extensionFound', walletMetadata);
-    });
+      // Found extension events
+      if (this.hashconnect.foundExtensionEvent && typeof this.hashconnect.foundExtensionEvent.on === 'function') {
+        this.hashconnect.foundExtensionEvent.on((walletMetadata) => {
+          console.log('HashConnect found extension:', walletMetadata);
+          this.emit('extensionFound', walletMetadata);
+        });
+      }
 
-    // Additional events
-    this.hashconnect.foundIframeEvent.on((iframeData) => {
-      console.log('HashConnect found iframe:', iframeData);
-    });
+      // Additional events
+      if (this.hashconnect.foundIframeEvent && typeof this.hashconnect.foundIframeEvent.on === 'function') {
+        this.hashconnect.foundIframeEvent.on((iframeData) => {
+          console.log('HashConnect found iframe:', iframeData);
+        });
+      }
+    } catch (error) {
+      console.error('Error setting up HashConnect event listeners:', error);
+    }
   }
 
   private handleConnectionStatusChange(connectionStatus: any) {
@@ -221,8 +266,17 @@ class HashConnectService {
         throw new Error('No pairing string available. Please refresh and try again.');
       }
 
-      // The actual connection happens when user scans QR code or opens pairing string
-      // For now, return the pairing string so UI can display it
+      // Check for local extension first
+      if (this.hashconnect && this.hashconnect.connectToLocalWallet) {
+        try {
+          console.log('Attempting to connect to local HashPack extension...');
+          await this.hashconnect.connectToLocalWallet();
+        } catch (error) {
+          console.log('Local wallet connection failed, falling back to pairing string');
+        }
+      }
+
+      // Return the pairing string for QR code connection
       return this.state.pairingString;
 
     } catch (error) {
@@ -238,7 +292,9 @@ class HashConnectService {
     
     if (this.hashconnect && this.state.isConnected) {
       try {
-        await this.hashconnect.disconnect(this.state.topic!);
+        if (this.state.topic) {
+          await this.hashconnect.disconnect(this.state.topic);
+        }
         this.clearConnectionData();
         
         this.state.isConnected = false;
@@ -406,4 +462,4 @@ class HashConnectService {
 }
 
 // Export singleton instance
-export const hashConnectService = new HashConnectService();
+export const hashConnectService = HashConnectService.getInstance();
