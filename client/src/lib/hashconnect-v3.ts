@@ -3,8 +3,7 @@
  * Following official HashConnect v3 documentation
  */
 
-import { HashConnect, HashConnectTypes, MessageTypes } from "@hashgraph/hashconnect";
-import { LedgerId } from "@hashgraph/sdk";
+import { HashConnect, HashConnectTypes, MessageTypes, LedgerId } from "hashconnect";
 
 // App metadata for HashConnect v3 - using both formats for compatibility
 const appMetadata: HashConnectTypes.AppMetadata = {
@@ -32,14 +31,11 @@ class HashConnectV3Service {
     try {
       console.log('🔄 Initializing HashConnect v3...');
       
-      // Create HashConnect instance with latest 1.24.0 version
-      this.hashConnect = new HashConnect();
+      // Create HashConnect instance with v3 constructor as shown in docs
+      this.hashConnect = new HashConnect(LedgerId.TESTNET, projectId, appMetadata, true);
 
       // Set up event listeners
       this.setupEventListeners();
-
-      // Initialize HashConnect with correct parameters for v1.24.0
-      await this.hashConnect.init(appMetadata, network, false);
       
       console.log('✅ HashConnect v3 initialized successfully');
       
