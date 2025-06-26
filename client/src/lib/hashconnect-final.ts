@@ -55,37 +55,43 @@ class FinalHashConnect {
         }
       }
 
-      // Step 5: Use HashConnect pairing flow
-      console.log('🔄 Using HashConnect pairing flow...');
+      // Step 5: Use findLocalWallets approach (the working method)
+      console.log('🔄 Using findLocalWallets approach...');
       
-      // Try different pairing methods available in v3
       const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this.hashConnect))
         .concat(Object.getOwnPropertyNames(this.hashConnect))
         .filter(name => typeof (this.hashConnect as any)[name] === 'function');
       
       console.log('📋 Available HashConnect methods:', methods);
 
-      // Try openPairingModal if available
-      if (methods.includes('openPairingModal')) {
-        (this.hashConnect as any).openPairingModal();
-        console.log('📱 Pairing modal opened via openPairingModal');
-      } 
-      // Try connectToExtension if available  
-      else if (methods.includes('connectToExtension')) {
-        await (this.hashConnect as any).connectToExtension();
-        console.log('📱 Connection started via connectToExtension');
-      }
-      // Try findLocalWallets approach
-      else if (methods.includes('findLocalWallets')) {
+      if (methods.includes('findLocalWallets')) {
+        console.log('🔍 Finding local wallets...');
         const wallets = (this.hashConnect as any).findLocalWallets();
         console.log('📱 Found local wallets:', wallets);
+        
         if (wallets && wallets.length > 0) {
-          // Try to connect to first available wallet
-          await (this.hashConnect as any).connectToLocalWallet(wallets[0]);
+          console.log('🔗 Attempting to connect to first wallet:', wallets[0]);
+          
+          // Try connectToExtension with the found wallet
+          if (methods.includes('connectToExtension')) {
+            await (this.hashConnect as any).connectToExtension();
+            console.log('✅ Connected via connectToExtension');
+          }
+          // Try connectToLocalWallet if it exists
+          else if (methods.includes('connectToLocalWallet')) {
+            await (this.hashConnect as any).connectToLocalWallet(wallets[0]);
+            console.log('✅ Connected via connectToLocalWallet');
+          }
+          else {
+            console.log('⚠️ No connection method available for found wallets');
+          }
+        } else {
+          console.log('❌ No local wallets found');
+          throw new Error('No HashPack wallet found. Please install HashPack extension.');
         }
-      }
-      else {
-        console.log('⚠️ No known pairing methods available');
+      } else {
+        console.log('❌ findLocalWallets method not available');
+        throw new Error('Wallet discovery not available in this HashConnect version');
       }
 
       // Wait for pairing with proper timeout
