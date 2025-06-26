@@ -6,7 +6,7 @@
 // Simple HashPack extension interface
 declare global {
   interface Window {
-    hashpack?: {
+    hashconnect?: {
       requestAccountInfo(): Promise<{
         accountId: string;
         network: string;
@@ -25,7 +25,7 @@ class CleanHashPack {
    * Check if HashPack extension is available
    */
   isAvailable(): boolean {
-    return !!(window.hashpack || (window as any).hashpack);
+    return !!(window.hashconnect || (window as any).hashconnect);
   }
 
   /**
@@ -70,15 +70,15 @@ class CleanHashPack {
     try {
       console.log('🚀 Connecting to HashPack...');
       
-      const hashpack = window.hashpack || (window as any).hashpack;
+      const hashconnect = window.hashconnect || (window as any).hashconnect;
       
-      if (!hashpack.requestAccountInfo) {
+      if (!hashconnect.requestAccountInfo) {
         throw new Error('HashPack extension is outdated. Please update to the latest version.');
       }
 
       // Request account info from HashPack
-      const result = await hashpack.requestAccountInfo();
-      console.log('📞 HashPack response:', result);
+      const result = await hashconnect.requestAccountInfo();
+      console.log('📞 HashConnect response:', result);
 
       if (!result || !result.accountId) {
         throw new Error('No account information received from HashPack');
