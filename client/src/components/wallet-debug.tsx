@@ -141,11 +141,10 @@ export function WalletDebug() {
                   console.log('🚀 Testing Proper HashConnect Protocol...');
                   
                   try {
-                    const { ProperHashConnectService } = await import('@/utils/proper-hashconnect');
-                    const service = new ProperHashConnectService();
+                    const { workingHashConnect } = await import('@/lib/hashconnect-working');
                     
-                    console.log('🔄 Starting proper HashConnect connection...');
-                    const accountId = await service.connectToHashPack();
+                    console.log('🔄 Starting working HashConnect connection...');
+                    const accountId = await workingHashConnect.connectWallet();
                     
                     console.log('✅ Proper HashConnect successful:', accountId);
                     alert(`🎉 HashPack Connected Successfully!\n\nAccount: ${accountId}\n\nUsing official HashConnect protocol!`);
