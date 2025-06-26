@@ -28,6 +28,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
+import { HashPackDebugComponent } from "@/components/hashpack-debug-component";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -501,6 +502,9 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* HashPack Debug Component */}
+            <HashPackDebugComponent />
           </TabsContent>
         </Tabs>
       </div>
