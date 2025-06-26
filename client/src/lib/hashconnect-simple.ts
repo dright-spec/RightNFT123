@@ -49,31 +49,58 @@ class SimpleHashConnect {
       
       console.log('📋 Available HashConnect methods:', availableMethods);
 
-      // Try the actual v3 methods that were discovered
-      const v3Methods = ['connectToExtension', 'openPairingModal', 'findLocalWallets'];
-      
-      for (const method of v3Methods) {
-        if (availableMethods.includes(method)) {
-          console.log(`🔄 Trying HashConnect v3 method: ${method}...`);
-          try {
-            if (method === 'findLocalWallets') {
-              const wallets = await (this.hashConnect as any)[method]();
-              console.log('📱 Found wallets:', wallets);
-              if (wallets && wallets.length > 0) {
-                // Try to connect to first wallet
-                await (this.hashConnect as any).connectToExtension(wallets[0]);
-              }
-            } else {
-              await (this.hashConnect as any)[method]();
-            }
+      // First try openPairingModal which should trigger HashPack popup
+      if (availableMethods.includes('openPairingModal')) {
+        console.log('🔄 Opening HashConnect pairing modal...');
+        try {
+          (this.hashConnect as any).openPairingModal();
+          
+          // Wait for pairing event
+          const result = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Pairing timeout - please try again'));
+            }, 45000);
             
-            // Wait for pairing with longer timeout for user interaction
-            await new Promise((resolve, reject) => {
-              const timeout = setTimeout(() => reject(new Error('Connection timeout - user may have cancelled')), 30000);
+            let hasResolved = false;
+            const checkPairing = () => {
+              if (this.pairingData?.accountIds?.length > 0 && !hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                resolve(this.pairingData.accountIds[0]);
+              } else if (!hasResolved) {
+                setTimeout(checkPairing, 1000);
+              }
+            };
+            
+            // Start checking
+            setTimeout(checkPairing, 1000);
+          });
+          
+          return result as string;
+          
+        } catch (error) {
+          console.log('❌ Pairing modal failed:', error);
+        }
+      }
+
+      // Fallback: try findLocalWallets + connectToExtension
+      if (availableMethods.includes('findLocalWallets')) {
+        console.log('🔄 Finding local wallets...');
+        try {
+          const wallets = await (this.hashConnect as any).findLocalWallets();
+          console.log('📱 Found wallets:', wallets);
+          
+          if (wallets && wallets.length > 0) {
+            console.log('🔄 Connecting to extension...');
+            await (this.hashConnect as any).connectToExtension(wallets[0]);
+            
+            // Wait for connection
+            const result = await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => reject(new Error('Extension connection timeout')), 20000);
               const check = () => {
                 if (this.pairingData?.accountIds?.length > 0) {
                   clearTimeout(timeout);
-                  resolve(this.pairingData);
+                  resolve(this.pairingData.accountIds[0]);
                 } else {
                   setTimeout(check, 500);
                 }
@@ -81,10 +108,10 @@ class SimpleHashConnect {
               check();
             });
             
-            return this.pairingData.accountIds[0];
-          } catch (error) {
-            console.log(`❌ ${method} failed:`, error);
+            return result as string;
           }
+        } catch (error) {
+          console.log('❌ findLocalWallets failed:', error);
         }
       }
 
