@@ -58,13 +58,35 @@ class FinalHashConnect {
       // Step 5: Use HashConnect pairing flow
       console.log('🔄 Using HashConnect pairing flow...');
       
-      // Generate pairing string (required for v3)
-      const pairingString = await this.hashConnect.generatePairingString();
-      console.log('📋 Pairing string generated:', !!pairingString);
+      // Try different pairing methods available in v3
+      const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(this.hashConnect))
+        .concat(Object.getOwnPropertyNames(this.hashConnect))
+        .filter(name => typeof (this.hashConnect as any)[name] === 'function');
+      
+      console.log('📋 Available HashConnect methods:', methods);
 
-      // Open pairing modal
-      this.hashConnect.openPairingModal();
-      console.log('📱 Pairing modal opened');
+      // Try openPairingModal if available
+      if (methods.includes('openPairingModal')) {
+        (this.hashConnect as any).openPairingModal();
+        console.log('📱 Pairing modal opened via openPairingModal');
+      } 
+      // Try connectToExtension if available  
+      else if (methods.includes('connectToExtension')) {
+        await (this.hashConnect as any).connectToExtension();
+        console.log('📱 Connection started via connectToExtension');
+      }
+      // Try findLocalWallets approach
+      else if (methods.includes('findLocalWallets')) {
+        const wallets = (this.hashConnect as any).findLocalWallets();
+        console.log('📱 Found local wallets:', wallets);
+        if (wallets && wallets.length > 0) {
+          // Try to connect to first available wallet
+          await (this.hashConnect as any).connectToLocalWallet(wallets[0]);
+        }
+      }
+      else {
+        console.log('⚠️ No known pairing methods available');
+      }
 
       // Wait for pairing with proper timeout
       return await new Promise((resolve, reject) => {
@@ -136,7 +158,12 @@ class FinalHashConnect {
   disconnect(): void {
     if (this.hashConnect && this.pairingData) {
       try {
-        this.hashConnect.disconnect(this.pairingData.topic);
+        // Try different disconnect methods
+        if (typeof (this.hashConnect as any).disconnect === 'function') {
+          (this.hashConnect as any).disconnect(this.pairingData.topic);
+        } else if (typeof (this.hashConnect as any).clearPairings === 'function') {
+          (this.hashConnect as any).clearPairings();
+        }
       } catch (error) {
         console.warn('Disconnect failed:', error);
       }
