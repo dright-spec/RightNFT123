@@ -12,7 +12,7 @@ declare global {
 
 class SimpleHashPack {
   private accountId: string | null = null;
-  private readonly STORAGE_KEY = 'hashpack_account';
+  private readonly STORAGE_KEY = "hashpack_account";
 
   /**
    * Check if HashPack extension is available
@@ -48,7 +48,7 @@ class SimpleHashPack {
       localStorage.setItem(this.STORAGE_KEY, accountId);
       this.accountId = accountId;
     } catch (error) {
-      console.warn('Failed to store account:', error);
+      console.warn("Failed to store account:", error);
     }
   }
 
@@ -57,37 +57,38 @@ class SimpleHashPack {
    */
   async connectWallet(): Promise<string> {
     if (!this.isAvailable()) {
-      throw new Error('HashPack extension not found. Please install HashPack wallet.');
+      throw new Error(
+        "HashPack extension not found. Please install HashPack wallet.",
+      );
     }
 
     const hashpack = window.hashpack;
-    
+
     try {
-      console.log('🚀 Connecting to HashPack via direct API...');
+      console.log("🚀 Connecting to HashPack via direct API...");
 
       // Method 1: Try requestAccountInfo (most common)
       let result;
       if (hashpack.requestAccountInfo) {
-        console.log('📞 Using requestAccountInfo method...');
+        console.log("📞 Using requestAccountInfo method...");
         result = await hashpack.requestAccountInfo();
       }
       // Method 2: Try getAccountInfo fallback
       else if (hashpack.getAccountInfo) {
-        console.log('📞 Using getAccountInfo fallback...');
+        console.log("📞 Using getAccountInfo fallback...");
         result = await hashpack.getAccountInfo();
       }
       // Method 3: Try direct account access
       else if (hashpack.account) {
-        console.log('📞 Using direct account access...');
+        console.log("📞 Using direct account access...");
         result = { accountId: hashpack.account };
-      }
-      else {
-        throw new Error('No compatible HashPack API methods found');
+      } else {
+        throw new Error("No compatible HashPack API methods found");
       }
 
       // Extract account ID from various response formats
       let accountId: string;
-      if (typeof result === 'string') {
+      if (typeof result === "string") {
         accountId = result;
       } else if (result?.accountId) {
         accountId = result.accountId;
@@ -96,7 +97,7 @@ class SimpleHashPack {
       } else if (result?.data?.accountId) {
         accountId = result.data.accountId;
       } else {
-        throw new Error('Invalid response format from HashPack');
+        throw new Error("Invalid response format from HashPack");
       }
 
       // Validate Hedera account format
@@ -106,24 +107,27 @@ class SimpleHashPack {
 
       // Store and return the account ID
       this.storeAccount(accountId);
-      console.log('✅ HashPack connected successfully:', accountId);
-      
+      console.log("✅ HashPack connected successfully:", accountId);
+
       return accountId;
-
     } catch (error: any) {
-      console.error('❌ HashPack connection failed:', error);
-      
+      console.error("❌ HashPack connection failed:", error);
+
       // Handle user rejection
-      if (error.message?.includes('rejected') || error.code === 4001) {
-        throw new Error('Connection cancelled by user');
-      }
-      
-      // Handle extension errors
-      if (error.message?.includes('extension')) {
-        throw new Error('HashPack extension error. Please try refreshing the page.');
+      if (error.message?.includes("rejected") || error.code === 4001) {
+        throw new Error("Connection cancelled by user");
       }
 
-      throw new Error(`HashPack connection failed: ${error.message || 'Unknown error'}`);
+      // Handle extension errors
+      if (error.message?.includes("extension")) {
+        throw new Error(
+          "HashPack extension error. Please try refreshing the page.",
+        );
+      }
+
+      throw new Error(
+        `HashPack connection failed: ${error.message || "Unknown error"}`,
+      );
     }
   }
 
@@ -142,9 +146,9 @@ class SimpleHashPack {
         await hashpack.disconnect();
       }
 
-      console.log('✅ HashPack disconnected successfully');
+      console.log("✅ HashPack disconnected successfully");
     } catch (error) {
-      console.warn('Warning during HashPack disconnect:', error);
+      console.warn("Warning during HashPack disconnect:", error);
     }
   }
 

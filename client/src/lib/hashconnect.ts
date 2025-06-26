@@ -8,38 +8,34 @@ const APP_METADATA: HashConnectTypes.AppMetadata = {
   icon: window.location.origin + "/favicon.ico",
   url: window.location.origin,
 };
+
+const PROJECT_ID = "dright-rights-marketplace";
 const NETWORK = "testnet";  // change to "mainnet" when you go live
 
 let hashconnect: HashConnect;
 let topic: string;
 let accountIds: string[] = [];
-let pairingData: HashConnectTypes.SavedPairingData;
+let savedPairingData: HashConnectTypes.SavedPairingData[] = [];
 
 export async function initializeHashConnect(): Promise<void> {
   if (hashconnect) return;
 
   try {
+    // v2 syntax with proper project metadata
     hashconnect = new HashConnect();
-    const initData = await hashconnect.init(APP_METADATA, NETWORK);
-    pairingData = initData.pairingData;
+    const initData = await hashconnect.init(APP_METADATA, NETWORK, true);
     topic = initData.topic;
     
-    // Silent initialization to prevent performance issues
+    // Listen for extension discovery
+    hashconnect.foundExtensionEvent.once((walletMetadata) => {
+      console.log('🔍 Found HashPack extension:', walletMetadata);
+    });
 
-    // listen for when a wallet approves
-    if (hashconnect.foundExtension) {
-      hashconnect.foundExtension.subscribe((ext) => {
-        // Silent handling
-      });
-    }
-
-    if (hashconnect.pairingEvent) {
-      hashconnect.pairingEvent.subscribe((pairing) => {
-        accountIds = pairing.accountIds;
-        topic = pairing.topic;
-        // Silent pairing
-      });
-    }
+    // Listen for pairing approval
+    hashconnect.pairingEvent.once((pairingData) => {
+      console.log('HashConnect paired:', pairingData);
+      accountIds = pairingData.accountIds || [];
+    });
   } catch (error) {
     console.error('Failed to initialize HashConnect:', error);
     throw error;
