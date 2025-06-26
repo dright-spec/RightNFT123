@@ -52,10 +52,8 @@ export function WalletDebug() {
       timestamp: new Date().toISOString()
     };
     
-    console.log('=== COMPREHENSIVE WALLET DEBUG ===');
-    console.log('Wallet Debug Info:', info);
-    console.log('HashPack Checks:', hashpackChecks);
-    console.log('All window keys with wallet/hash/web3:', info.allWindowProps);
+    // Only log when manually triggered, not continuously
+    console.log('Manual wallet debug triggered');
     setDebugInfo(info);
   };
 

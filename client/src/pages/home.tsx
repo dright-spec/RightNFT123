@@ -764,8 +764,8 @@ export default function Home() {
         </div>
       </footer>
       
-      {/* Debug Panel */}
-      {process.env.NODE_ENV === 'development' && <WalletDebug />}
+      {/* Debug Panel - Disabled to prevent performance issues */}
+      {false && process.env.NODE_ENV === 'development' && <WalletDebug />}
     </div>
   );
 }

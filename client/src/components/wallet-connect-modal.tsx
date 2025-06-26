@@ -1,9 +1,18 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { detectAvailableWallets, connectToWallet } from "@/lib/wallet-manager";
+import {
+  detectAvailableWallets,
+  connectToWallet,
+} from "@/lib/wallet-manager";
 import type { WalletInfo } from "@/lib/wallet-manager";
 
 interface WalletConnectModalProps {
@@ -12,92 +21,102 @@ interface WalletConnectModalProps {
   onConnect: (walletId: string, address: string) => void;
 }
 
-export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConnectModalProps) {
-  const [connecting, setConnecting] = useState<string | null>(null);
+export function WalletConnectModal({
+  open,
+  onOpenChange,
+  onConnect,
+}: WalletConnectModalProps) {
   const [wallets, setWallets] = useState<WalletInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [connectingId, setConnectingId] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Detect wallets when `open` goes true
   useEffect(() => {
-    if (open) {
-      const detectWallets = async () => {
-        try {
-          console.log('Starting wallet detection...');
-          const detectedWallets = await detectAvailableWallets();
-          console.log('Detected wallets:', detectedWallets);
-          setWallets(detectedWallets);
-        } catch (error) {
-          console.error('Error detecting wallets:', error);
-          setWallets([
-            {
-              id: 'hashpack',
-              name: 'HashPack',
-              description: 'Official Hedera wallet with native HTS support',
-              icon: '🟡',
-              isAvailable: !!(window as any).hashpack,
-              isRecommended: true,
-              isHederaNative: true,
-              downloadUrl: 'https://www.hashpack.app/'
-            },
-            {
-              id: 'metamask',
-              name: 'MetaMask',
-              description: 'Popular Ethereum wallet',
-              icon: '🦊',
-              isAvailable: !!(window as any).ethereum?.isMetaMask,
-              downloadUrl: 'https://metamask.io/'
-            },
-            {
-              id: 'walletconnect',
-              name: 'WalletConnect',
-              description: 'Connect using WalletConnect protocol',
-              icon: '🔗',
-              isAvailable: true,
-              isHederaNative: false,
-              downloadUrl: 'https://walletconnect.com/'
-            }
-          ]);
-        }
-      };
-      
-      setTimeout(detectWallets, 300);
-    }
+    if (!open) return;
+    let active = true;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const detected = await detectAvailableWallets();
+        if (!active) return;
+        setWallets(detected);
+      } catch {
+        if (!active) return;
+        // fallback defaults (all fields filled)
+        setWallets([
+          {
+            id: "hashpack",
+            name: "HashPack",
+            description: "Official Hedera wallet with native HTS support",
+            icon: "🟡",
+            isAvailable: Boolean((window as any).hashpack),
+            isRecommended: true,
+            isHederaNative: true,
+            downloadUrl: "https://www.hashpack.app/",
+          },
+          {
+            id: "metamask",
+            name: "MetaMask",
+            description: "Popular Ethereum wallet",
+            icon: "🦊",
+            isAvailable: Boolean((window as any).ethereum?.isMetaMask),
+            isRecommended: false,
+            isHederaNative: false,
+            downloadUrl: "https://metamask.io/",
+          },
+          {
+            id: "walletconnect",
+            name: "WalletConnect",
+            description: "Connect using WalletConnect protocol",
+            icon: "🔗",
+            isAvailable: true,
+            isRecommended: false,
+            isHederaNative: false,
+            downloadUrl: "https://walletconnect.com/",
+          },
+        ]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, [open]);
 
-  const handleConnect = async (walletId: string) => {
-    setConnecting(walletId);
-    
-    try {
-      console.log(`Attempting to connect to ${walletId}...`);
-      
-      const address = await connectToWallet(walletId);
-      
-      if (address) {
-        const walletName = wallets.find(w => w.id === walletId)?.name || walletId;
-        
-        console.log(`Successfully connected to ${walletName}: ${address}`);
-        
+  const handleConnect = useCallback(
+    async (walletId: string) => {
+      if (connectingId || loading) return;
+      setConnectingId(walletId);
+
+      try {
+        const address = await connectToWallet(walletId);
+        if (!address) throw new Error("No address returned");
+        const wallet = wallets.find((w) => w.id === walletId)!;
         toast({
           title: "Wallet Connected",
-          description: `Successfully connected to ${walletName}`,
+          description: `Connected to ${wallet.name}`,
         });
-        
         onConnect(walletId, address);
         onOpenChange(false);
+      } catch (err: any) {
+        const wallet = wallets.find((w) => w.id === walletId);
+        toast({
+          title: "Connection Failed",
+          description:
+            err?.message ||
+            `Could not connect to ${wallet?.name || walletId}`,
+          variant: "destructive",
+        });
+      } finally {
+        setConnectingId(null);
       }
-    } catch (error) {
-      console.error(`Failed to connect ${walletId}:`, error);
-      
-      const walletName = wallets.find(w => w.id === walletId)?.name || walletId;
-      
-      toast({
-        title: "Connection Failed",
-        description: error instanceof Error ? error.message : `Failed to connect to ${walletName}`,
-        variant: "destructive",
-      });
-    } finally {
-      setConnecting(null);
-    }
-  };
+    },
+    [connectingId, loading, wallets, onConnect, onOpenChange, toast]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,77 +127,84 @@ export function WalletConnectModal({ open, onOpenChange, onConnect }: WalletConn
             Connect Wallet
           </DialogTitle>
           <DialogDescription>
-            Choose a wallet to connect to Dright marketplace. HashPack is recommended for optimal Hedera experience.
+            Choose a wallet. HashPack is recommended for Hedera.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
-          {wallets.length === 0 ? (
+          {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin mr-2" />
-              <span>Detecting wallets...</span>
+              Detecting wallets...
             </div>
           ) : (
-            <div className="space-y-3">
-              {wallets.map((wallet) => (
-                <div
-                  key={wallet.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    wallet.isAvailable 
-                      ? 'hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700' 
-                      : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50'
-                  }`}
-                  onClick={() => wallet.isAvailable ? handleConnect(wallet.id) : window.open(wallet.downloadUrl, '_blank')}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{wallet.icon}</div>
-                      <div>
-                        <h3 className="font-medium flex items-center gap-2">
-                          {wallet.name}
-                          {wallet.isRecommended && (
-                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                              Recommended
-                            </span>
-                          )}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{wallet.description}</p>
-                        {wallet.isHederaNative && (
-                          <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-1">
-                            Hedera Native
+            wallets.map((w) => (
+              <div
+                key={w.id}
+                className={`
+                  p-4 border rounded-lg transition-colors cursor-pointer
+                  ${
+                    w.isAvailable
+                      ? "hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
+                      : "bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-800"
+                  }
+                `}
+                onClick={() =>
+                  w.isAvailable
+                    ? handleConnect(w.id)
+                    : window.open(w.downloadUrl, "_blank")
+                }
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl">{w.icon}</div>
+                    <div>
+                      <h3 className="font-medium flex items-center gap-2">
+                        {w.name}
+                        {w.isRecommended && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                            Recommended
                           </span>
                         )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {wallet.isAvailable ? (
-                        <span className="text-green-600 text-sm font-medium">
-                          {connecting === wallet.id ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                              Connecting...
-                            </div>
-                          ) : (
-                            'Available'
-                          )}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {w.description}
+                      </p>
+                      {w.isHederaNative && (
+                        <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                          Hedera Native
                         </span>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(wallet.downloadUrl, '_blank');
-                          }}
-                        >
-                          Install
-                        </Button>
                       )}
                     </div>
                   </div>
+                  <div>
+                    {w.isAvailable ? (
+                      connectingId === w.id ? (
+                        <div className="flex items-center text-green-600 text-sm font-medium gap-2">
+                          <span className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                          Connecting…
+                        </div>
+                      ) : (
+                        <span className="text-green-600 text-sm font-medium">
+                          Available
+                        </span>
+                      )
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(w.downloadUrl, "_blank");
+                        }}
+                      >
+                        Install
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
       </DialogContent>
