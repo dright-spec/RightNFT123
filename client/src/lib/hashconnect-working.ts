@@ -23,22 +23,26 @@ class WorkingHashConnect {
     try {
       console.log('🔄 Initializing HashConnect v3...');
       
-      // Create HashConnect instance 
-      this.hashConnect = new HashConnect();
+      // Create HashConnect instance with correct v3 parameters
+      this.hashConnect = new HashConnect("testnet", "dright-app", appMetadata, true);
 
       // Set up basic event listeners
       this.setupEventListeners();
-
-      // Try to initialize with basic parameters
-      if (typeof this.hashConnect.init === 'function') {
-        await this.hashConnect.init(appMetadata, "testnet", true);
-      }
       
       console.log('✅ HashConnect initialized successfully');
       
     } catch (error) {
       console.error('❌ Failed to initialize HashConnect:', error);
-      throw error;
+      // Try fallback constructor
+      try {
+        console.log('🔄 Trying fallback HashConnect initialization...');
+        this.hashConnect = new HashConnect();
+        this.setupEventListeners();
+        console.log('✅ HashConnect fallback initialization successful');
+      } catch (fallbackError) {
+        console.error('❌ Fallback initialization also failed:', fallbackError);
+        throw fallbackError;
+      }
     }
   }
 
