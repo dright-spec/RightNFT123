@@ -1,7 +1,8 @@
 // Import the proper HashConnect integration
-import { properHashPackConnector } from './proper-hashpack-connector';
+import { connectWallet as connectHashConnect, isConnected as isHashConnectConnected, getConnectedAccountIds } from './hashconnect';
 import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
 import { debugWalletEnvironment } from './debug-wallet';
+import { hashPackWallet } from './hashpack-direct';
 import { config } from './env';
 
 export interface WalletInfo {
@@ -27,7 +28,7 @@ export async function detectAvailableWallets(): Promise<WalletInfo[]> {
     // Check if HashConnect is already connected
     let isHashConnected = false;
     try {
-      isHashConnected = hashConnectService.isConnected();
+      isHashConnected = isHashConnectConnected();
     } catch (error) {
       console.warn('Error checking HashConnect status:', error);
     }
@@ -155,7 +156,7 @@ async function connectHashPack(): Promise<string> {
     console.log('Attempting HashPack connection via HashConnect...');
     
     // Use the official HashConnect integration
-    const accountId = await hashConnectService.connectWallet();
+    const accountId = await connectHashConnect();
     
     // Validate Hedera account format
     if (!/^0\.0\.\d+$/.test(accountId)) {
@@ -203,15 +204,15 @@ async function connectMetaMask(): Promise<string> {
 async function connectWalletConnect(): Promise<string> {
   // First try to use HashConnect if available
   try {
-    if (hashConnectService.isConnected()) {
-      const accountId = hashConnectService.getAccountId();
-      if (accountId) {
-        return accountId;
+    if (isHashConnectConnected()) {
+      const accounts = getConnectedAccountIds();
+      if (accounts.length > 0) {
+        return accounts[0];
       }
     }
     
     // Try to initialize HashConnect
-    const accountId = await hashConnectService.connectWallet();
+    const accountId = await connectHashConnect();
     if (accountId) {
       return accountId;
     }
@@ -258,12 +259,12 @@ async function connectBlade(): Promise<string> {
 export function getStoredWalletConnection(): ConnectedWallet | null {
   try {
     // Check if HashConnect is connected first
-    if (hashConnectService.isConnected()) {
-      const accountId = hashConnectService.getAccountId();
-      if (accountId) {
+    if (isHashConnectConnected()) {
+      const connectedAccounts = getConnectedAccountIds();
+      if (connectedAccounts.length > 0) {
         return {
           walletId: 'hashpack',
-          address: accountId,
+          address: connectedAccounts[0],
           isConnected: true
         };
       }

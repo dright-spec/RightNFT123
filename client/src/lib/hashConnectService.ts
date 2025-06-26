@@ -1,4 +1,3 @@
-
 // Proper HashConnect initialization and management
 // This handles the complete HashConnect lifecycle for Hedera wallet connections
 
@@ -15,7 +14,6 @@ export interface HashConnectState {
 }
 
 class HashConnectService {
-  private static instance: HashConnectService | null = null;
   private hashconnect: HashConnect | null = null;
   private state: HashConnectState = {
     isInitialized: false,
@@ -27,48 +25,13 @@ class HashConnectService {
     error: null
   };
   private eventHandlers: Map<string, Function[]> = new Map();
-  private isInitializing = false;
-
-  // Singleton pattern to prevent multiple instances
-  static getInstance(): HashConnectService {
-    if (!HashConnectService.instance) {
-      HashConnectService.instance = new HashConnectService();
-    }
-    return HashConnectService.instance;
-  }
 
   async initialize(): Promise<boolean> {
-    if (this.isInitializing) {
-      console.log('HashConnect initialization already in progress...');
-      return false;
-    }
-
-    if (this.state.isInitialized && this.hashconnect) {
-      console.log('HashConnect already initialized');
-      return true;
-    }
-
     console.log('=== Initializing HashConnect ===');
-    this.isInitializing = true;
-    
-    // Suppress encryption-related errors that cause the overlay
-    this.suppressEncryptionErrors();
     
     try {
-      // Clear any potentially corrupted data first
-      if (this.state.error?.includes('unencrypt') || this.state.error?.includes('decrypt')) {
-        console.log('Previous encryption error detected, clearing all data');
-        this.clearAllHashConnectData();
-      }
-
-      // Cleanup any existing instance
-      if (this.hashconnect) {
-        try {
-          await this.hashconnect.disconnect();
-        } catch (error) {
-          console.log('Error cleaning up existing HashConnect:', error);
-        }
-      }
+      // Initialize HashConnect without requiring extension detection
+      // HashConnect can work with both extension and dApp connections
 
       // Create HashConnect instance
       this.hashconnect = new HashConnect(
@@ -78,7 +41,7 @@ class HashConnectService {
       // Set up event listeners before initialization
       this.setupEventListeners();
 
-      // Initialize HashConnect with error handling for encryption issues
+      // Initialize HashConnect
       console.log('Calling hashconnect.init()...');
       const initData = await this.hashconnect.init(
         {
@@ -108,20 +71,9 @@ class HashConnectService {
 
     } catch (error) {
       console.error('HashConnect initialization failed:', error);
-      
-      // Handle encryption/decryption errors specifically
-      if (error instanceof Error && (error.message.includes('unencrypt') || error.message.includes('decrypt') || error.message.includes('crypto'))) {
-        console.log('Encryption error detected, clearing storage and retrying...');
-        this.clearAllHashConnectData();
-        this.state.error = 'Storage cleared due to encryption error. Please try connecting again.';
-      } else {
-        this.state.error = error instanceof Error ? error.message : 'Initialization failed';
-      }
-      
+      this.state.error = error instanceof Error ? error.message : 'Initialization failed';
       this.emit('error', this.state);
       return false;
-    } finally {
-      this.isInitializing = false;
     }
   }
 
@@ -130,40 +82,28 @@ class HashConnectService {
 
     console.log('Setting up HashConnect event listeners...');
 
-    try {
-      // Connection status change events - using subscribe method
-      if (this.hashconnect.connectionStatusChangeEvent && typeof this.hashconnect.connectionStatusChangeEvent.subscribe === 'function') {
-        this.hashconnect.connectionStatusChangeEvent.subscribe((connectionStatus) => {
-          console.log('HashConnect connection status changed:', connectionStatus);
-          this.handleConnectionStatusChange(connectionStatus);
-        });
-      }
+    // Connection status change events
+    this.hashconnect.connectionStatusChangeEvent.on((connectionStatus) => {
+      console.log('HashConnect connection status changed:', connectionStatus);
+      this.handleConnectionStatusChange(connectionStatus);
+    });
 
-      // Pairing events - using subscribe method with proper decryption handling
-      if (this.hashconnect.pairingEvent && typeof this.hashconnect.pairingEvent.subscribe === 'function') {
-        this.hashconnect.pairingEvent.subscribe((pairingData) => {
-          console.log('HashConnect pairing event received:', pairingData);
-          this.handlePairingEventSafely(pairingData);
-        });
-      }
+    // Pairing events
+    this.hashconnect.pairingEvent.on((pairingData) => {
+      console.log('HashConnect pairing event:', pairingData);
+      this.handlePairingEvent(pairingData);
+    });
 
-      // Found extension events
-      if (this.hashconnect.foundExtensionEvent && typeof this.hashconnect.foundExtensionEvent.subscribe === 'function') {
-        this.hashconnect.foundExtensionEvent.subscribe((walletMetadata) => {
-          console.log('HashConnect found extension:', walletMetadata);
-          this.emit('extensionFound', walletMetadata);
-        });
-      }
+    // Found extension events
+    this.hashconnect.foundExtensionEvent.on((walletMetadata) => {
+      console.log('HashConnect found extension:', walletMetadata);
+      this.emit('extensionFound', walletMetadata);
+    });
 
-      // Additional events
-      if (this.hashconnect.foundIframeEvent && typeof this.hashconnect.foundIframeEvent.subscribe === 'function') {
-        this.hashconnect.foundIframeEvent.subscribe((iframeData) => {
-          console.log('HashConnect found iframe:', iframeData);
-        });
-      }
-    } catch (error) {
-      console.error('Error setting up HashConnect event listeners:', error);
-    }
+    // Additional events
+    this.hashconnect.foundIframeEvent.on((iframeData) => {
+      console.log('HashConnect found iframe:', iframeData);
+    });
   }
 
   private handleConnectionStatusChange(connectionStatus: any) {
@@ -198,72 +138,6 @@ class HashConnectService {
       this.saveConnectionData(pairingData);
       
       this.emit('paired', this.state);
-    }
-  }
-
-  private handlePairingEventSafely(pairingData: any) {
-    console.log('Processing pairing event safely:', pairingData);
-    
-    try {
-      // Pairing data from HashPack is NEVER encrypted - always use as-is
-      // The encryption error happens when we try to decrypt non-encrypted data
-      console.log('Using pairing data directly (no decryption needed)');
-      
-      // Process the pairing data directly without any decryption attempts
-      if (pairingData && pairingData.accountIds && pairingData.accountIds.length > 0) {
-        this.state.accountId = pairingData.accountIds[0];
-        this.state.network = pairingData.network === 'mainnet' ? 'mainnet' : 'testnet';
-        this.state.isConnected = true;
-        this.state.error = null;
-        
-        console.log(`Wallet paired successfully: ${this.state.accountId} on ${this.state.network}`);
-        
-        // Store connection data for persistence
-        this.saveConnectionData(pairingData);
-        
-        this.emit('paired', this.state);
-      } else {
-        console.log('No account IDs found in pairing data, checking structure:', Object.keys(pairingData || {}));
-        
-        // Try alternate data structures that HashPack might use
-        if (pairingData && pairingData.data && pairingData.data.accountIds) {
-          console.log('Found account IDs in nested data structure');
-          const accountIds = pairingData.data.accountIds;
-          this.state.accountId = accountIds[0];
-          this.state.network = pairingData.data.network === 'mainnet' ? 'mainnet' : 'testnet';
-          this.state.isConnected = true;
-          this.state.error = null;
-          
-          console.log(`Wallet paired successfully (nested): ${this.state.accountId} on ${this.state.network}`);
-          
-          this.saveConnectionData({
-            accountIds: accountIds,
-            network: this.state.network
-          });
-          
-          this.emit('paired', this.state);
-        } else {
-          console.warn('Unable to extract account ID from pairing data');
-        }
-      }
-      
-    } catch (error) {
-      console.error('Error processing pairing event:', error);
-      
-      // Last resort - try to use the data as-is if it has the expected structure
-      if (pairingData && pairingData.accountIds && Array.isArray(pairingData.accountIds) && pairingData.accountIds.length > 0) {
-        console.log('Fallback: using pairing data structure directly');
-        this.state.accountId = pairingData.accountIds[0];
-        this.state.network = pairingData.network === 'mainnet' ? 'mainnet' : 'testnet';
-        this.state.isConnected = true;
-        this.state.error = null;
-        
-        this.saveConnectionData(pairingData);
-        this.emit('paired', this.state);
-      } else {
-        this.state.error = 'Failed to process pairing data - invalid structure';
-        this.emit('error', this.state);
-      }
     }
   }
 
@@ -304,10 +178,7 @@ class HashConnectService {
         this.emit('reconnected', this.state);
       }
     } catch (error) {
-      console.log('Error checking existing connection, clearing corrupted data:', error);
-      // Clear potentially corrupted data that might cause encryption errors
-      this.clearConnectionData();
-      this.clearAllHashConnectData();
+      console.log('No existing connection found:', error);
     }
   }
 
@@ -335,39 +206,13 @@ class HashConnectService {
         throw new Error('No pairing string available. Please refresh and try again.');
       }
 
-      // Check for local extension first
-      if (this.hashconnect && this.hashconnect.connectToLocalWallet) {
-        try {
-          console.log('Attempting to connect to local HashPack extension...');
-          await this.hashconnect.connectToLocalWallet();
-          
-          // Wait a moment to see if pairing happens
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          if (this.state.isConnected && this.state.accountId) {
-            console.log('Local wallet connected successfully:', this.state.accountId);
-            return this.state.accountId;
-          }
-        } catch (error) {
-          console.log('Local wallet connection failed, falling back to pairing string:', error);
-        }
-      }
-
-      // Return the pairing string for QR code connection
+      // The actual connection happens when user scans QR code or opens pairing string
+      // For now, return the pairing string so UI can display it
       return this.state.pairingString;
 
     } catch (error) {
       console.error('Wallet connection failed:', error);
-      
-      // Handle specific decryption errors
-      if (error instanceof Error && (error.message.includes('decrypt') || error.message.includes('unencrypt'))) {
-        console.log('Decryption error detected, clearing storage and retrying...');
-        this.clearAllHashConnectData();
-        this.state.error = 'Connection data cleared due to encryption error. Please try connecting again.';
-      } else {
-        this.state.error = error instanceof Error ? error.message : 'Connection failed';
-      }
-      
+      this.state.error = error instanceof Error ? error.message : 'Connection failed';
       this.emit('error', this.state);
       throw error;
     }
@@ -378,9 +223,7 @@ class HashConnectService {
     
     if (this.hashconnect && this.state.isConnected) {
       try {
-        if (this.state.topic) {
-          await this.hashconnect.disconnect(this.state.topic);
-        }
+        await this.hashconnect.disconnect(this.state.topic!);
         this.clearConnectionData();
         
         this.state.isConnected = false;
@@ -431,96 +274,6 @@ class HashConnectService {
       localStorage.removeItem('hashconnect_data');
     } catch (error) {
       console.log('Failed to clear connection data:', error);
-    }
-  }
-
-  private suppressEncryptionErrors() {
-    // Comprehensive error suppression for encryption-related issues
-    const originalConsoleError = console.error;
-    console.error = (...args) => {
-      const message = args.join(' ');
-      const encryptionErrorPatterns = [
-        'Invalid encrypted text received',
-        'Decryption halted',
-        'crypto_box_open_easy',
-        'LibSodium',
-        'unencrypt',
-        'decrypt'
-      ];
-      
-      if (encryptionErrorPatterns.some(pattern => message.includes(pattern))) {
-        console.log('🛡️ Suppressed encryption error:', message.substring(0, 100));
-        return;
-      }
-      
-      originalConsoleError.apply(console, args);
-    };
-
-    // Suppress runtime error overlay
-    if (typeof window !== 'undefined') {
-      const originalOnError = window.onerror;
-      window.onerror = (message, source, lineno, colno, error) => {
-        if (typeof message === 'string' && (
-          message.includes('Invalid encrypted text') ||
-          message.includes('Decryption halted') ||
-          message.includes('crypto_box_open_easy')
-        )) {
-          console.log('🛡️ Suppressed window error:', message.substring(0, 100));
-          return true; // Prevent default error handling
-        }
-        
-        if (originalOnError) {
-          return originalOnError(message, source, lineno, colno, error);
-        }
-        return false;
-      };
-
-      // Suppress unhandled promise rejections for encryption errors
-      const originalOnUnhandledRejection = window.onunhandledrejection;
-      window.onunhandledrejection = (event) => {
-        const message = event.reason?.message || event.reason?.toString() || '';
-        if (typeof message === 'string' && (
-          message.includes('Invalid encrypted text') ||
-          message.includes('Decryption halted') ||
-          message.includes('crypto_box_open_easy')
-        )) {
-          console.log('🛡️ Suppressed unhandled rejection:', message.substring(0, 100));
-          event.preventDefault();
-          return;
-        }
-        
-        if (originalOnUnhandledRejection) {
-          return originalOnUnhandledRejection(event);
-        }
-      };
-    }
-  }
-
-  private clearAllHashConnectData() {
-    try {
-      // Clear all possible HashConnect localStorage keys that might be corrupted
-      const keysToRemove = [
-        'hashconnect_data',
-        'hashconnect_topic',
-        'hashconnect_pairing_data',
-        'hashconnect',
-        'hashconnect_debug',
-        'walletconnect',
-        'WC_VERSION'
-      ];
-      
-      keysToRemove.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-          sessionStorage.removeItem(key);
-        } catch (error) {
-          console.warn(`Failed to remove ${key}:`, error);
-        }
-      });
-      
-      console.log('Cleared all HashConnect storage data');
-    } catch (error) {
-      console.warn('Failed to clear HashConnect data:', error);
     }
   }
 
@@ -610,4 +363,4 @@ class HashConnectService {
 }
 
 // Export singleton instance
-export const hashConnectService = HashConnectService.getInstance();
+export const hashConnectService = new HashConnectService();
