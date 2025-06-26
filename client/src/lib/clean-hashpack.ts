@@ -6,14 +6,11 @@
 // Simple HashPack extension interface
 declare global {
   interface Window {
-    hashconnect?: {
-      requestAccountInfo(): Promise<{
-        accountId: string;
-        network: string;
-      }>;
-      isInjected?: boolean;
-      isConnected?: boolean;
-    };
+    hashpack?: any;
+    hashconnect?: any;
+    HashPack?: any;
+    hcSdk?: any;
+    hedera?: any;
   }
 }
 
@@ -23,9 +20,22 @@ class CleanHashPack {
 
   /**
    * Check if HashPack extension is available
+   * Uses the same detection logic that was working before
    */
   isAvailable(): boolean {
-    return !!(window.hashconnect || (window as any).hashconnect);
+    // Check all possible HashPack global objects
+    return !!(
+      window.hashpack ||
+      window.hashconnect ||
+      window.HashPack ||
+      window.hcSdk ||
+      window.hedera ||
+      (window as any).hashpack ||
+      (window as any).hashconnect ||
+      (window as any).HashPack ||
+      (window as any).hcSdk ||
+      (window as any).hedera
+    );
   }
 
   /**
@@ -70,15 +80,40 @@ class CleanHashPack {
     try {
       console.log('🚀 Connecting to HashPack...');
       
-      const hashconnect = window.hashconnect || (window as any).hashconnect;
+      // Try to find the HashPack extension using multiple approaches
+      let hashpackExtension = window.hashpack || 
+                            window.hashconnect || 
+                            window.HashPack || 
+                            window.hcSdk || 
+                            window.hedera ||
+                            (window as any).hashpack ||
+                            (window as any).hashconnect ||
+                            (window as any).HashPack ||
+                            (window as any).hcSdk ||
+                            (window as any).hedera;
       
-      if (!hashconnect.requestAccountInfo) {
-        throw new Error('HashPack extension is outdated. Please update to the latest version.');
+      if (!hashpackExtension) {
+        throw new Error('HashPack extension not found');
       }
 
-      // Request account info from HashPack
-      const result = await hashconnect.requestAccountInfo();
-      console.log('📞 HashConnect response:', result);
+      console.log('📱 Found HashPack extension object:', hashpackExtension);
+      
+      // Try different method names for requesting account info
+      let result;
+      if (hashpackExtension.requestAccountInfo) {
+        console.log('📞 Using requestAccountInfo method...');
+        result = await hashpackExtension.requestAccountInfo();
+      } else if (hashpackExtension.getAccountInfo) {
+        console.log('📞 Using getAccountInfo method...');
+        result = await hashpackExtension.getAccountInfo();
+      } else if (hashpackExtension.connect) {
+        console.log('📞 Using connect method...');
+        result = await hashpackExtension.connect();
+      } else {
+        throw new Error('No compatible HashPack API methods found');
+      }
+      
+      console.log('📞 HashPack response:', result);
 
       if (!result || !result.accountId) {
         throw new Error('No account information received from HashPack');
