@@ -24,23 +24,18 @@ export interface ConnectedWallet {
 // Detect available wallets in the browser
 export async function detectAvailableWallets(): Promise<WalletInfo[]> {
   try {
-    // Check if HashConnect is already connected
+    // Check if HashPack is connected using direct API
     let isHashConnected = false;
     try {
-      isHashConnected = isHashConnectConnected();
+      isHashConnected = directHashPack.isConnected();
     } catch (error) {
-      console.warn('Error checking HashConnect status:', error);
+      console.warn('Error checking HashPack status:', error);
     }
     
-    // Enhanced HashPack detection using community-recommended approach
+    // Direct HashPack detection without encryption issues
     let hasHashPack = false;
     try {
-      hasHashPack = await detectHashPack(3000); // Give more time for detection
-      
-      // Also check using our direct API
-      if (!hasHashPack) {
-        hasHashPack = await hashPackWallet.isAvailable();
-      }
+      hasHashPack = await directHashPack.detectHashPack();
     } catch (error) {
       console.warn('Error detecting HashPack:', error);
     }
@@ -252,12 +247,12 @@ async function connectBlade(): Promise<string> {
 export function getStoredWalletConnection(): ConnectedWallet | null {
   try {
     // Check if HashConnect is connected first
-    if (isHashConnectConnected()) {
-      const connectedAccounts = getConnectedAccountIds();
-      if (connectedAccounts.length > 0) {
+    if (directHashPack.isConnected()) {
+      const account = directHashPack.getStoredAccount();
+      if (account) {
         return {
           walletId: 'hashpack',
-          address: connectedAccounts[0],
+          address: account,
           isConnected: true
         };
       }
