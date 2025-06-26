@@ -16,35 +16,16 @@ export class HashPackDetector {
   }
   
   private startDetection() {
-    // Immediate check
+    // Only run immediate check, no continuous polling
     this.checkHashPack();
     
-    // Wait for DOM ready
+    // Wait for DOM ready - single check only
     if (document.readyState !== 'complete') {
-      window.addEventListener('load', () => this.checkHashPack());
+      window.addEventListener('load', () => this.checkHashPack(), { once: true });
     }
     
-    // Periodic checks for delayed injection
-    const intervals = [100, 500, 1000, 2000, 5000];
-    intervals.forEach(delay => {
-      setTimeout(() => this.checkHashPack(), delay);
-    });
-    
-    // Listen for window events that might indicate HashPack loading
-    window.addEventListener('message', (event) => {
-      if (event.data && typeof event.data === 'object') {
-        const data = event.data;
-        if (data.type?.includes?.('hashpack') || 
-            data.source?.includes?.('hashpack') ||
-            data.action?.includes?.('hashpack')) {
-          console.log('HashPack window message detected:', event.data);
-          this.checkHashPack();
-        }
-      }
-    });
-    
-    // Monitor window object changes
-    this.monitorWindowChanges();
+    // No more periodic checks to prevent performance issues
+    // No more window monitoring to prevent excessive polling
   }
   
   private monitorWindowChanges() {

@@ -24,13 +24,12 @@ export async function initializeHashConnect(): Promise<void> {
     pairingData = initData.pairingData;
     topic = initData.topic;
     
-    // Log initialization success
-    console.log('HashConnect initialized successfully', { topic, pairingData });
+    // Silent initialization to prevent performance issues
 
     // listen for when a wallet approves
     if (hashconnect.foundExtension) {
       hashconnect.foundExtension.subscribe((ext) => {
-        console.info("Found wallet extension:", ext.metadata.name);
+        // Silent handling
       });
     }
 
@@ -38,7 +37,7 @@ export async function initializeHashConnect(): Promise<void> {
       hashconnect.pairingEvent.subscribe((pairing) => {
         accountIds = pairing.accountIds;
         topic = pairing.topic;
-        console.info("Paired to wallet:", pairing.metadata.name, accountIds);
+        // Silent pairing
       });
     }
   } catch (error) {
