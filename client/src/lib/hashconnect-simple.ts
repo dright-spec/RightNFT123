@@ -25,6 +25,17 @@ class SimpleHashConnect {
 
       // Set up event listeners if they exist
       this.setupEventListeners();
+
+      // Try to initialize HashConnect with proper parameters
+      if (typeof this.hashConnect.init === 'function') {
+        try {
+          console.log('🔄 Calling HashConnect init...');
+          await this.hashConnect.init(appMetadata, "testnet", true);
+          console.log('✅ HashConnect init successful');
+        } catch (initError) {
+          console.log('⚠️ HashConnect init failed, continuing without it:', initError);
+        }
+      }
       
       console.log('✅ HashConnect initialized successfully');
 
@@ -49,11 +60,17 @@ class SimpleHashConnect {
       
       console.log('📋 Available HashConnect methods:', availableMethods);
 
-      // First try openPairingModal which should trigger HashPack popup
-      if (availableMethods.includes('openPairingModal')) {
-        console.log('🔄 Opening HashConnect pairing modal...');
+      // Try generatePairingString + openPairingModal approach
+      if (availableMethods.includes('generatePairingString') && availableMethods.includes('openPairingModal')) {
+        console.log('🔄 Generating pairing string and opening modal...');
         try {
+          // Generate pairing string first
+          const pairingString = await (this.hashConnect as any).generatePairingString();
+          console.log('📋 Generated pairing string:', pairingString ? 'Success' : 'Failed');
+          
+          // Open pairing modal
           (this.hashConnect as any).openPairingModal();
+          console.log('📱 Pairing modal opened - waiting for user interaction...');
           
           // Wait for pairing event
           const result = await new Promise((resolve, reject) => {
@@ -79,7 +96,40 @@ class SimpleHashConnect {
           return result as string;
           
         } catch (error) {
-          console.log('❌ Pairing modal failed:', error);
+          console.log('❌ Pairing string/modal failed:', error);
+        }
+      }
+
+      // Fallback: try just openPairingModal
+      if (availableMethods.includes('openPairingModal')) {
+        console.log('🔄 Opening HashConnect pairing modal (fallback)...');
+        try {
+          (this.hashConnect as any).openPairingModal();
+          
+          // Wait for pairing event
+          const result = await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Pairing timeout - please try again'));
+            }, 30000);
+            
+            let hasResolved = false;
+            const checkPairing = () => {
+              if (this.pairingData?.accountIds?.length > 0 && !hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                resolve(this.pairingData.accountIds[0]);
+              } else if (!hasResolved) {
+                setTimeout(checkPairing, 1000);
+              }
+            };
+            
+            setTimeout(checkPairing, 1000);
+          });
+          
+          return result as string;
+          
+        } catch (error) {
+          console.log('❌ Pairing modal fallback failed:', error);
         }
       }
 
