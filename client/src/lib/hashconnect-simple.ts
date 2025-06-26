@@ -49,22 +49,33 @@ class SimpleHashConnect {
       
       console.log('📋 Available HashConnect methods:', availableMethods);
 
-      // Try any connect method that exists
-      for (const method of ['connectToLocalWallet', 'openRequestedPairing', 'pair']) {
+      // Try the actual v3 methods that were discovered
+      const v3Methods = ['connectToExtension', 'openPairingModal', 'findLocalWallets'];
+      
+      for (const method of v3Methods) {
         if (availableMethods.includes(method)) {
-          console.log(`🔄 Trying ${method}...`);
+          console.log(`🔄 Trying HashConnect v3 method: ${method}...`);
           try {
-            await (this.hashConnect as any)[method]();
+            if (method === 'findLocalWallets') {
+              const wallets = await (this.hashConnect as any)[method]();
+              console.log('📱 Found wallets:', wallets);
+              if (wallets && wallets.length > 0) {
+                // Try to connect to first wallet
+                await (this.hashConnect as any).connectToExtension(wallets[0]);
+              }
+            } else {
+              await (this.hashConnect as any)[method]();
+            }
             
-            // Wait for pairing
+            // Wait for pairing with longer timeout for user interaction
             await new Promise((resolve, reject) => {
-              const timeout = setTimeout(() => reject(new Error('Timeout')), 10000);
+              const timeout = setTimeout(() => reject(new Error('Connection timeout - user may have cancelled')), 30000);
               const check = () => {
                 if (this.pairingData?.accountIds?.length > 0) {
                   clearTimeout(timeout);
                   resolve(this.pairingData);
                 } else {
-                  setTimeout(check, 100);
+                  setTimeout(check, 500);
                 }
               };
               check();
