@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet, LogOut } from "lucide-react";
 import { SleekWalletModal } from "./sleek-wallet-modal";
+import { WalletOnboardingJourney } from "./wallet-onboarding-journey";
 import { getConnectedWallet, disconnectWallet } from "@/lib/wallet-manager";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,6 +11,7 @@ export function Web3ModalConnectButton() {
   const [connecting, setConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connectedWallet, setConnectedWallet] = useState<{walletId: string, address: string} | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { toast } = useToast();
 
   // Check for existing connection on component mount
@@ -106,10 +108,21 @@ export function Web3ModalConnectButton() {
     );
   }
 
+  const handleConnectClick = () => {
+    // Check if user has completed onboarding before
+    const hasCompletedOnboarding = localStorage.getItem('dright_onboarding_completed');
+    
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true);
+    } else {
+      setIsOpen(true);
+    }
+  };
+
   return (
     <>
       <Button
-        onClick={() => setIsOpen(true)}
+        onClick={handleConnectClick}
         disabled={connecting}
         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200"
       >
@@ -121,6 +134,12 @@ export function Web3ModalConnectButton() {
         open={isOpen}
         onOpenChange={setIsOpen}
         onConnect={handleWalletConnect}
+      />
+      
+      <WalletOnboardingJourney
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onWalletConnect={() => setIsOpen(true)}
       />
     </>
   );
