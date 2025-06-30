@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MintingProgressTracker } from "@/components/minting-progress-tracker";
+import { SimpleMintingProgress } from "@/components/simple-minting-progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Home } from "lucide-react";
@@ -68,7 +68,7 @@ export default function MintingProgressPage() {
         </div>
 
         {/* Progress Tracker */}
-        <MintingProgressTracker
+        <SimpleMintingProgress
           rightId={parseInt(rightId)}
           rightTitle={decodeURIComponent(rightTitle)}
           onComplete={handleMintingComplete}

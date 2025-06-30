@@ -564,18 +564,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function triggerUserControlledNFTMinting(right: any) {
     console.log(`Starting user-controlled NFT minting for right ${right.id}: ${right.title}`);
     
-    // Initialize minting status
+    // Initialize simplified, user-friendly minting status
     mintingStatus.set(right.id, {
       rightId: right.id,
       status: "processing",
       currentStep: 0,
       steps: [
-        { id: "verification", title: "Verification Complete", status: "completed" },
-        { id: "metadata", title: "Metadata Preparation", status: "processing" },
-        { id: "ipfs", title: "IPFS Upload", status: "pending" },
-        { id: "token-creation", title: "Hedera Token Creation", status: "pending" },
-        { id: "minting", title: "NFT Minting", status: "pending" },
-        { id: "marketplace", title: "Marketplace Listing", status: "pending" }
+        { id: "preparing", title: "🎯 Preparing Your NFT", status: "processing" },
+        { id: "certificate", title: "📜 Creating Digital Certificate", status: "pending" },
+        { id: "blockchain", title: "⛓️ Recording on Blockchain", status: "pending" },
+        { id: "marketplace", title: "🏪 Adding to Marketplace", status: "pending" }
       ],
       startedAt: new Date().toISOString()
     });
@@ -612,38 +610,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metadataUri = JSON.stringify(metadata);
       updateMintingStep(right.id, 2, "completed");
       
-      // Step 3: Create Hedera NFT Token
+      // Step 3: Get creator for comprehensive metadata
       updateMintingStep(right.id, 3, "processing");
-      const { hederaNFTService } = await import("./hedera");
-      
-      const tokenInfo = await hederaNFTService.createNFTToken({
-        name: `Dright ${right.type} #${right.id}`,
-        symbol: `DR${right.type.substring(0, 3).toUpperCase()}`,
-        memo: `Tokenized ${right.type} right: ${right.title}`,
-        maxSupply: 1
-      });
+      const creator = await storage.getUser(right.creatorId);
+      if (!creator) {
+        throw new Error("Creator information not found");
+      }
       updateMintingStep(right.id, 3, "completed");
       
-      // Step 4: Mint NFT on Hedera testnet
+      // Step 4: Mint comprehensive rights NFT on Ethereum
       updateMintingStep(right.id, 4, "processing");
-      const mintResult = await hederaNFTService.mintNFT({
-        tokenId: tokenInfo.tokenId,
-        metadata: metadataUri
-      });
+      const { ethereumNFTService } = await import("./ethereum");
+      const mintResult = await ethereumNFTService.mintRightNFT(right, creator);
       updateMintingStep(right.id, 4, "completed");
       
-      // Step 5: Marketplace Listing
-      updateMintingStep(right.id, 5, "processing");
+      // Step 3: Marketplace Listing
+      updateMintingStep(right.id, 3, "processing");
       await storage.updateRight(right.id, {
         contractAddress: mintResult.contractAddress,
         tokenId: mintResult.tokenId,
         transactionHash: mintResult.transactionHash,
-        ownerAddress: process.env.ETHEREUM_WALLET_ADDRESS!,
+        ownerAddress: creator.walletAddress || mintResult.contractAddress,
         metadataUri: mintResult.metadataUri,
         mintingStatus: "completed",
         isListed: true
       });
-      updateMintingStep(right.id, 5, "completed");
+      updateMintingStep(right.id, 3, "completed");
 
       const results = {
         contractAddress: mintResult.contractAddress,
