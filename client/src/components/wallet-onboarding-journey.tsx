@@ -19,8 +19,8 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
 
   const steps = [
     {
-      title: "Welcome to the Future of Rights Trading",
-      description: "Join thousands of creators earning from their intellectual property",
+      title: "Welcome to Digital Rights Trading",
+      description: "Transform your intellectual property into tradeable digital assets",
       icon: Star,
       content: (
         <div className="space-y-6">
@@ -32,30 +32,30 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 rounded-lg">
-                <DollarSign className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-600">$2.4M+</div>
-                <div className="text-sm text-blue-700 dark:text-blue-300">Total Value Traded</div>
+                <Shield className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-blue-600">Secure</div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">Blockchain Protection</div>
               </div>
               <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 rounded-lg">
-                <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-600">5,000+</div>
-                <div className="text-sm text-purple-700 dark:text-purple-300">Active Creators</div>
+                <Zap className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-purple-600">Fast</div>
+                <div className="text-sm text-purple-700 dark:text-purple-300">3-5 Second Transactions</div>
               </div>
               <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/30 rounded-lg">
-                <Globe className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-emerald-600">150+</div>
-                <div className="text-sm text-emerald-700 dark:text-emerald-300">Countries</div>
+                <DollarSign className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-emerald-600">Low Cost</div>
+                <div className="text-sm text-emerald-700 dark:text-emerald-300">Minimal Transaction Fees</div>
               </div>
             </div>
 
             <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-4">
               <p className="text-sm text-muted-foreground mb-3">
-                <strong>Transform Your Rights Into Income:</strong> Turn music royalties, patents, real estate, and more into tradeable digital assets with instant global market access.
+                <strong>How It Works:</strong> Turn music royalties, patents, real estate, and other intellectual property into tradeable NFTs using blockchain technology for transparent ownership verification.
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
-                <Badge variant="secondary" className="text-xs">90% Reduced Legal Costs</Badge>
-                <Badge variant="secondary" className="text-xs">Instant Global Access</Badge>
-                <Badge variant="secondary" className="text-xs">24/7 Automated Revenue</Badge>
+                <Badge variant="secondary" className="text-xs">Transparent Ownership</Badge>
+                <Badge variant="secondary" className="text-xs">Global Marketplace</Badge>
+                <Badge variant="secondary" className="text-xs">Automated Transfers</Badge>
               </div>
             </div>
           </div>
@@ -222,7 +222,7 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
           <DialogHeader>
             <DialogTitle className="text-2xl text-center">Welcome to Dright! 🎉</DialogTitle>
             <DialogDescription className="text-center text-lg">
-              Ready to turn your creative rights into liquid, tradeable assets?
+              Ready to explore digital rights trading on the blockchain?
             </DialogDescription>
           </DialogHeader>
           
@@ -230,7 +230,7 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
             <div className="text-center">
               <div className="text-6xl mb-4">🚀</div>
               <p className="text-muted-foreground mb-6">
-                Let's get you started with a quick 3-step journey to understand how Dright can transform your intellectual property into income-generating assets.
+                Let's get you started with a quick 3-step journey to understand how Dright works and how you can participate in the digital rights marketplace.
               </p>
             </div>
 
