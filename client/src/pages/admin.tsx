@@ -267,7 +267,7 @@ export default function Admin() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="h-8 w-8 bg-primary/20 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-bold">ℏ</span>
+                  <span className="text-primary font-bold">Ξ</span>
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Revenue</p>

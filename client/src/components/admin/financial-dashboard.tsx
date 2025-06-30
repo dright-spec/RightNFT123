@@ -28,7 +28,7 @@ export function FinancialDashboard() {
     queryKey: ["/api/admin/financials"],
   });
 
-  const formatETH = (amount: number) => `${amount.toFixed(2)} ℏ`;
+  const formatETH = (amount: number) => `${amount.toFixed(2)} ETH`;
 
   return (
     <div className="space-y-6">

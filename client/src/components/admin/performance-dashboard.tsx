@@ -285,11 +285,11 @@ export function PerformanceDashboard() {
                   <p className="text-sm text-muted-foreground">Recent Transactions</p>
                 </div>
                 <div className="text-center p-4 bg-muted/30 rounded">
-                  <div className="text-2xl font-bold">{metrics?.revenue.todayTotal.toFixed(2) || 0} ℏ</div>
+                  <div className="text-2xl font-bold">{metrics?.revenue.todayTotal.toFixed(2) || 0} ETH</div>
                   <p className="text-sm text-muted-foreground">Today's Revenue</p>
                 </div>
                 <div className="text-center p-4 bg-muted/30 rounded">
-                  <div className="text-2xl font-bold">{metrics?.revenue.hourlyRate.toFixed(2) || 0} ℏ</div>
+                  <div className="text-2xl font-bold">{metrics?.revenue.hourlyRate.toFixed(2) || 0} ETH</div>
                   <p className="text-sm text-muted-foreground">Hourly Rate</p>
                 </div>
               </div>
