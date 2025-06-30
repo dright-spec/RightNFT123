@@ -15,7 +15,7 @@ import { NFTViewer } from "@/components/nft-viewer";
 import { AdminDocumentViewer } from "@/components/admin-document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { HederaTestPanel } from "@/components/hedera-test-panel";
+import { EthereumTestPanel } from "@/components/ethereum-test-panel";
 import { 
   Users, 
   FileText, 
@@ -298,7 +298,7 @@ export default function Admin() {
             <TabsTrigger value="verification">Verification</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="hedera">Hedera</TabsTrigger>
+            <TabsTrigger value="ethereum">Ethereum</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -339,7 +339,7 @@ export default function Admin() {
                       <Badge className="bg-green-100 text-green-800">Healthy</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Hedera Network</span>
+                      <span className="text-sm text-muted-foreground">Ethereum Network</span>
                       <Badge className="bg-green-100 text-green-800">Connected</Badge>
                     </div>
                     <div className="flex justify-between items-center">
@@ -898,16 +898,16 @@ export default function Admin() {
             <PerformanceDashboard />
           </TabsContent>
 
-          {/* Hedera Tab */}
-          <TabsContent value="hedera" className="space-y-6">
+          {/* Ethereum Tab */}
+          <TabsContent value="ethereum" className="space-y-6">
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-2">Hedera Testnet Integration</h2>
+                <h2 className="text-2xl font-bold mb-2">Ethereum Network Integration</h2>
                 <p className="text-muted-foreground">
-                  Test and monitor the Hedera blockchain integration for NFT minting
+                  Test and monitor the Ethereum blockchain integration for NFT minting
                 </p>
               </div>
-              <HederaTestPanel />
+              <EthereumTestPanel />
             </div>
           </TabsContent>
         </Tabs>

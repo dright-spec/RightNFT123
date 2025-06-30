@@ -13,7 +13,7 @@ export interface RealTimeMetrics {
     memoryUsage: number;
     responseTime: number;
   };
-  hederaNetwork: {
+  ethereumNetwork: {
     status: 'healthy' | 'degraded' | 'down';
     lastTransactionTime: Date | null;
     pendingTransactions: number;
@@ -167,9 +167,9 @@ export class PerformanceMonitor {
   }
 
   /**
-   * Check Hedera network status
+   * Check Ethereum network status
    */
-  private async checkHederaStatus() {
+  private async checkEthereumStatus() {
     try {
       // In production, this would check actual Hedera network status
       const lastTransactionTime = await db
