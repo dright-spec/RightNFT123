@@ -88,7 +88,7 @@ export function HederaWalletButton() {
         ...wallet,
         connected: true,
         accountId: "0.0.123456",
-        balance: "100.5 HBAR"
+        balance: "100.5 ETH"
       };
 
       setConnectedWallet(mockConnectedWallet);

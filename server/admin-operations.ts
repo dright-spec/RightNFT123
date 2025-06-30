@@ -80,9 +80,9 @@ export class AdminOperations {
         verifiedRights: verifiedRights[0].count,
         rejectedRights: rejectedRights[0].count,
         totalTransactions: totalTransactions[0].count,
-        totalRevenue: `${totalRevenue} HBAR`,
+        totalRevenue: `${totalRevenue} ETH`,
         monthlyGrowth,
-        platformFees: `${platformFees} HBAR`,
+        platformFees: `${platformFees} ETH`,
         avgVerificationTime
       };
     } catch (error) {

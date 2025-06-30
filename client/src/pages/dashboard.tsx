@@ -93,7 +93,7 @@ export default function Dashboard() {
     },
     {
       title: "Revenue Generated", 
-      value: statsLoading ? "..." : `${totalRevenue} HBAR`,
+      value: statsLoading ? "..." : `${totalRevenue} ETH`,
       description: "From sales & royalties",
       icon: DollarSign,
       change: "+0% this month",
@@ -336,7 +336,7 @@ export default function Dashboard() {
                         <div className="text-right">
                           {activity.amount && (
                             <div className="font-medium text-green-600 dark:text-green-400">
-                              {activity.amount} HBAR
+                              {activity.amount} ETH
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground">

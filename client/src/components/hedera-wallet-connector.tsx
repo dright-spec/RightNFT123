@@ -143,7 +143,7 @@ export function HederaWalletConnector({
             {account.balance && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Balance:</span>
-                <span className="text-sm font-medium">{account.balance} HBAR</span>
+                <span className="text-sm font-medium">{account.balance} ETH</span>
               </div>
             )}
           </div>

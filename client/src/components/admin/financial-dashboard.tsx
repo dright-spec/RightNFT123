@@ -28,7 +28,7 @@ export function FinancialDashboard() {
     queryKey: ["/api/admin/financials"],
   });
 
-  const formatHBAR = (amount: number) => `${amount.toFixed(2)} ℏ`;
+  const formatETH = (amount: number) => `${amount.toFixed(2)} ℏ`;
 
   return (
     <div className="space-y-6">
@@ -40,7 +40,7 @@ export function FinancialDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalRevenue || "0 HBAR"}</div>
+            <div className="text-2xl font-bold">{stats?.totalRevenue || "0 ETH"}</div>
             <p className="text-xs text-muted-foreground">
               +{stats?.monthlyGrowth || 0}% from last month
             </p>
@@ -53,7 +53,7 @@ export function FinancialDashboard() {
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.platformFees || "0 HBAR"}</div>
+            <div className="text-2xl font-bold">{stats?.platformFees || "0 ETH"}</div>
             <p className="text-xs text-muted-foreground">
               2.5% of total revenue
             </p>
@@ -67,7 +67,7 @@ export function FinancialDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatHBAR(financials?.totalPayouts || 0)}
+              {formatETH(financials?.totalPayouts || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               To creators and rights holders
@@ -110,7 +110,7 @@ export function FinancialDashboard() {
                   {financials.dailyRevenue.slice(-7).map((day, index) => (
                     <div key={index} className="flex items-center justify-between p-2 rounded bg-muted/30">
                       <span className="text-sm">{day.date}</span>
-                      <Badge variant="secondary">{formatHBAR(day.amount)}</Badge>
+                      <Badge variant="secondary">{formatETH(day.amount)}</Badge>
                     </div>
                   ))}
                 </div>
@@ -141,7 +141,7 @@ export function FinancialDashboard() {
                           <p className="text-sm text-muted-foreground">User ID: {earner.userId}</p>
                         </div>
                       </div>
-                      <Badge variant="default">{formatHBAR(earner.earnings)}</Badge>
+                      <Badge variant="default">{formatETH(earner.earnings)}</Badge>
                     </div>
                   ))}
                 </div>
@@ -162,7 +162,7 @@ export function FinancialDashboard() {
                 <div className="flex justify-between">
                   <span>Average Transaction Value</span>
                   <Badge variant="secondary">
-                    {formatHBAR((financials?.totalPayouts || 0) / Math.max(stats?.totalTransactions || 1, 1))}
+                    {formatETH((financials?.totalPayouts || 0) / Math.max(stats?.totalTransactions || 1, 1))}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
@@ -189,7 +189,7 @@ export function FinancialDashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span>Pending Payouts</span>
-                  <Badge variant="outline">{formatHBAR(financials?.pendingPayouts || 0)}</Badge>
+                  <Badge variant="outline">{formatETH(financials?.pendingPayouts || 0)}</Badge>
                 </div>
               </CardContent>
             </Card>

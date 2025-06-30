@@ -22,12 +22,12 @@ Dright is a comprehensive web3 marketplace for tokenizing and trading legal righ
 - **File Processing**: IPFS integration for metadata storage
 
 ### Blockchain Integration
-- **Blockchain**: Hedera Hashgraph (mainnet production)
-- **NFT Standard**: Hedera Token Service (HTS) native NFTs
-- **Wallet**: HashPack and Blade wallet integration
+- **Blockchain**: Ethereum (mainnet production)
+- **NFT Standard**: ERC-721 NFTs
+- **Wallet**: MetaMask, WalletConnect, and Coinbase Wallet integration
 - **Storage**: IPFS for NFT metadata and legal documents
-- **Currency**: HBAR (Hedera's native cryptocurrency)
-- **Smart Contracts**: Native token functionality with automated revenue distribution
+- **Currency**: ETH (Ethereum's native cryptocurrency)
+- **Smart Contracts**: ERC-721 token functionality with automated revenue distribution
 
 ## Key Components
 
@@ -117,6 +117,7 @@ The platform implements a comprehensive verification workflow where rights must 
 - Real-time updates via periodic data refreshing
 
 ## Changelog
+- June 30, 2025: **COMPLETE ETHEREUM MIGRATION ACCOMPLISHED**: Successfully migrated entire platform from Hedera to Ethereum blockchain. Updated database schema (hedera_token_id → contract_address, hedera_transaction_id → transaction_hash, hedera_account_id → owner_address), replaced Hedera NFT service with Ethereum NFT service using ethers.js, updated wallet manager to prioritize MetaMask over HashPack, converted all pricing from HBAR to ETH throughout application, and updated documentation to reflect Ethereum-first approach. Platform now fully operates on Ethereum with ERC-721 NFTs, MetaMask integration, and ETH-based payments.
 - June 26, 2025: **IMPLEMENTED WORKING WALLET-MANAGER SOLUTION**: Successfully restored wallet connections using the proven wallet-manager approach from client/src/lib/wallet-manager.ts. This solution uses simpleHashPack.connectWallet() which bypasses HashConnect encryption issues entirely. Modal now implements the exact pattern provided by user with proper error handling, fallback wallet detection, and robust connection flow. This approach was confirmed working and eliminates all previous HashConnect compatibility problems.
 - June 26, 2025: **HASHCONNECT V3 MIGRATION ATTEMPTED**: Attempted migration to HashConnect v3 API but encountered persistent wallet pairing issues. findLocalWallets() returned empty objects and connectToExtension() failed to trigger wallet connections. User correctly pointed out to use the previously working solution instead of repeating the same mistakes.
 - June 25, 2025: **PROPER HASHCONNECT PROTOCOL IMPLEMENTATION**: Implemented ProperHashConnectService following official Hedera template patterns. Uses correct HashConnect initialization with proper metadata, event listeners, and pairing workflows. Eliminates direct extension access that causes encryption errors. Follows the exact protocol used in working Hedera DApp templates with proper state management and connection handling. This addresses the root cause by using the official recommended approach instead of bypassing it.

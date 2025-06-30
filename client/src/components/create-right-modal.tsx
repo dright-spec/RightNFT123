@@ -696,7 +696,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         tags: data.tags,
         listingType: data.listingType,
         price: data.price,
-        currency: "HBAR", // Use HBAR for Hedera
+        currency: "ETH", // Use ETH for Hedera
         auctionEndTime: data.listingType === "auction" && data.auctionDuration 
           ? new Date(Date.now() + data.auctionDuration * 60 * 60 * 1000) 
           : undefined,

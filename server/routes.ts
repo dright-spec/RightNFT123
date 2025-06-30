@@ -597,7 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { trait_type: "Creator", value: right.creatorId },
           { trait_type: "Listing Type", value: right.listingType || "buy_now" },
           { trait_type: "Price", value: right.price || "0" },
-          { trait_type: "Currency", value: right.currency || "HBAR" }
+          { trait_type: "Currency", value: right.currency || "ETH" }
         ],
         rightDetails: {
           type: right.type,
@@ -1002,7 +1002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toUserId: mockUserId,
           transactionHash: null, // Will be set when actual Hedera transaction occurs
           price: right.price || "0",
-          currency: right.currency || "HBAR",
+          currency: right.currency || "ETH",
           type: "mint",
         });
       }
@@ -1353,7 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (newBidAmount < minimumBid) {
         return res.status(400).json({ 
-          error: `Bid must be at least ${minimumBid.toFixed(4)} HBAR` 
+          error: `Bid must be at least ${minimumBid.toFixed(4)} ETH` 
         });
       }
       
@@ -1361,7 +1361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rightId,
         bidderId: mockUserId,
         amount,
-        currency: "HBAR",
+        currency: "ETH",
       });
       
       res.status(201).json(bid);

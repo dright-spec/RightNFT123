@@ -271,7 +271,7 @@ export default function Admin() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 HBAR"}</p>
+                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 ETH"}</p>
                 </div>
               </div>
             </CardContent>
@@ -445,7 +445,7 @@ export default function Admin() {
                                   </Badge>
                                   {right.price && (
                                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                      {right.price} {right.currency || 'HBAR'}
+                                      {right.price} {right.currency || 'ETH'}
                                     </Badge>
                                   )}
                                   {right.contentSource && (
@@ -620,7 +620,7 @@ export default function Admin() {
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Pricing</div>
-                                                    <div className="text-gray-800">{selectedRight?.price || 'Free'} {selectedRight?.currency || 'HBAR'}</div>
+                                                    <div className="text-gray-800">{selectedRight?.price || 'Free'} {selectedRight?.currency || 'ETH'}</div>
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Current Status</div>

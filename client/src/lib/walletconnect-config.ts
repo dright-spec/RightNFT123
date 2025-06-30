@@ -7,7 +7,7 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 const hedera = {
   chainId: 295,
   name: 'Hedera Mainnet',
-  currency: 'HBAR',
+  currency: 'ETH',
   explorerUrl: 'https://hashscan.io',
   rpcUrl: 'https://mainnet.hashio.io/api'
 }
@@ -15,7 +15,7 @@ const hedera = {
 const hederaTestnet = {
   chainId: 296,
   name: 'Hedera Testnet',
-  currency: 'HBAR',
+  currency: 'ETH',
   explorerUrl: 'https://hashscan.io/testnet',
   rpcUrl: 'https://testnet.hashio.io/api'
 }

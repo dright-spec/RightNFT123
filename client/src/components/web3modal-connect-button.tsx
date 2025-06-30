@@ -27,44 +27,19 @@ export function Web3ModalConnectButton() {
       
       console.log(`Connecting wallet: ${walletId} - ${address}`);
       
-      // Store wallet info locally
-      storeWalletConnection(walletId, address);
-      
-      // Authenticate with backend
-      const response = await fetch('/api/auth/wallet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          walletType: walletId, 
-          address: address 
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setIsConnected(true);
-        setConnectedWallet({ walletId, address });
-        setIsOpen(false); // Close modal on success
-        
-        console.log(`Wallet connection successful:`, data);
-        
-        toast({
-          title: "Wallet Connected",
-          description: `Successfully connected ${walletId === 'hashpack' ? 'HashPack' : walletId} wallet`,
-        });
-      } else {
-        throw new Error(data.message || 'Connection failed');
-      }
-    } catch (error) {
-      console.error('Wallet connection error:', error);
-      
-      // Clear stored wallet info on failure
-      clearWalletConnection();
+      setIsConnected(true);
+      setConnectedWallet({ walletId, address });
+      setIsOpen(false);
       
       toast({
+        title: "Wallet Connected",
+        description: `Successfully connected to ${walletId}`,
+      });
+    } catch (error) {
+      console.error("Connection failed:", error);
+      toast({
         title: "Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to connect wallet. Please try again.",
+        description: "Failed to connect wallet. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -72,39 +47,62 @@ export function Web3ModalConnectButton() {
     }
   };
 
-  const handleDisconnect = () => {
-    clearWalletConnection();
-    setIsConnected(false);
-    setConnectedWallet(null);
-    
-    toast({
-      title: "Wallet Disconnected",
-      description: "Successfully disconnected from wallet",
-    });
+  const handleDisconnect = async () => {
+    try {
+      await disconnectWallet();
+      setIsConnected(false);
+      setConnectedWallet(null);
+      
+      toast({
+        title: "Wallet Disconnected",
+        description: "Successfully disconnected from wallet",
+      });
+    } catch (error) {
+      console.error("Disconnect failed:", error);
+      toast({
+        title: "Disconnect Failed",
+        description: "Failed to disconnect wallet.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getWalletDisplayName = (walletId: string) => {
+    const names: Record<string, string> = {
+      metamask: "MetaMask",
+      walletconnect: "WalletConnect", 
+      coinbase: "Coinbase Wallet"
+    };
+    return names[walletId] || walletId;
   };
 
   const formatAddress = (address: string) => {
-    if (address.startsWith('0.0.')) {
-      // Hedera account ID
-      return address;
-    } else {
-      // Ethereum address
-      return `${address.slice(0, 6)}...${address.slice(-4)}`;
-    }
+    if (address.length < 10) return address;
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   if (isConnected && connectedWallet) {
     return (
-      <Button
-        onClick={handleDisconnect}
-        variant="outline"
-        size="sm"
-        className="flex items-center gap-2"
-      >
-        <div className="w-2 h-2 bg-green-500 rounded-full" />
-        <span className="hidden sm:inline">{formatAddress(connectedWallet.address)}</span>
-        <LogOut className="h-4 w-4" />
-      </Button>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-sm font-medium text-green-700 dark:text-green-300">
+            {getWalletDisplayName(connectedWallet.walletId)}
+          </span>
+          <span className="text-xs text-green-600 dark:text-green-400">
+            {formatAddress(connectedWallet.address)}
+          </span>
+        </div>
+        <Button
+          onClick={handleDisconnect}
+          variant="outline"
+          size="sm"
+          className="h-9"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Disconnect
+        </Button>
+      </div>
     );
   }
 
@@ -113,18 +111,16 @@ export function Web3ModalConnectButton() {
       <Button
         onClick={() => setIsOpen(true)}
         disabled={connecting}
-        variant="outline"
-        size="sm"
-        className="flex items-center gap-2"
+        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-none shadow-lg hover:shadow-xl transition-all duration-200"
       >
-        <Wallet className="h-4 w-4" />
-        {connecting ? 'Connecting...' : 'Connect Wallet'}
+        <Wallet className="w-4 h-4 mr-2" />
+        {connecting ? "Connecting..." : "Connect Wallet"}
       </Button>
 
       <SleekWalletModal
         open={isOpen}
-        onClose={() => setIsOpen(false)}
-        onConnect={(address) => handleWalletConnect('web3modal', address)}
+        onOpenChange={setIsOpen}
+        onConnect={handleWalletConnect}
       />
     </>
   );
