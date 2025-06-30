@@ -399,6 +399,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Session check endpoint
+  app.get('/api/auth/session', async (req, res) => {
+    try {
+      const userId = req.session?.userId;
+      const walletAddress = req.session?.walletAddress;
+      
+      if (!userId && !walletAddress) {
+        return res.json({ 
+          isAuthenticated: false, 
+          user: null 
+        });
+      }
+      
+      let user = null;
+      if (userId) {
+        user = await storage.getUser(userId);
+      } else if (walletAddress) {
+        user = await storage.getUserByWalletAddress(walletAddress);
+        if (user) {
+          req.session.userId = user.id;
+        }
+      }
+      
+      if (!user) {
+        return res.json({ 
+          isAuthenticated: false, 
+          user: null 
+        });
+      }
+      
+      const { password, ...userWithoutPassword } = user;
+      res.json({ 
+        isAuthenticated: true, 
+        user: userWithoutPassword 
+      });
+    } catch (error) {
+      console.error('Session check error:', error);
+      res.status(500).json({ error: 'Failed to check session' });
+    }
+  });
+
   // Verify email token (optional enhancement)
   app.post('/api/verify-email', async (req, res) => {
     try {
