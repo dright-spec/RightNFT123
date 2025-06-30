@@ -635,10 +635,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Step 5: Marketplace Listing
       updateMintingStep(right.id, 5, "processing");
       await storage.updateRight(right.id, {
-        hederaTokenId: mintResult.tokenId,
-        hederaSerialNumber: mintResult.serialNumber,
-        hederaTransactionId: mintResult.transactionId,
-        hederaAccountId: process.env.HEDERA_ACCOUNT_ID!,
+        contractAddress: mintResult.contractAddress,
+        tokenId: mintResult.tokenId,
+        transactionHash: mintResult.transactionHash,
+        ownerAddress: process.env.ETHEREUM_WALLET_ADDRESS!,
         metadataUri: mintResult.metadataUri,
         mintingStatus: "completed",
         isListed: true
@@ -646,16 +646,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       updateMintingStep(right.id, 5, "completed");
 
       const results = {
+        contractAddress: mintResult.contractAddress,
         tokenId: mintResult.tokenId,
-        serialNumber: mintResult.serialNumber,
-        transactionId: mintResult.transactionId,
+        transactionHash: mintResult.transactionHash,
         metadataUri: mintResult.metadataUri,
         explorerUrl: mintResult.explorerUrl,
         mintedAt: new Date().toISOString(),
         status: "completed"
       };
 
-      console.log(`Real NFT minted successfully on Hedera: ${results.tokenId}/${results.serialNumber}`);
+      console.log(`Real NFT minted successfully on Ethereum: ${results.contractAddress}/${results.tokenId}`);
 
       // Mark minting as completed
       const status = mintingStatus.get(right.id);
@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting" });
       }
 
-      if (right.hederaTokenId) {
+      if (right.contractAddress) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
@@ -1045,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if right is already verified or has NFT
-      if (right.verificationStatus === "verified" || right.hederaTokenId) {
+      if (right.verificationStatus === "verified" || right.contractAddress) {
         return res.status(400).json({ error: "Right is already verified or has NFT minted" });
       }
 
@@ -1087,13 +1087,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting NFT" });
       }
 
-      if (right.hederaTokenId) {
+      if (right.contractAddress) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
       // Update right with Hedera NFT data
       const updatedRight = await storage.updateRight(id, {
-        hederaTokenId: hederaData.tokenId,
+        contractAddress: hederaData.tokenId,
         hederaSerialNumber: hederaData.serialNumber,
         hederaTransactionId: hederaData.transactionId,
         hederaMetadataUri: hederaData.metadataUri,
@@ -2283,8 +2283,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`[hedera] Testing NFT creation: ${name} (${symbol})`);
 
       // Create test NFT token
-      const { hederaNFTService } = await import("./hedera");
-      const tokenInfo = await hederaNFTService.createNFTToken({
+      const { ethereumNFTService } = await import("./ethereum");
+      const contractInfo = await ethereumNFTService.createNFTContract({
         name: name,
         symbol: symbol,
         memo: description || "Test NFT from Dright platform",
@@ -2303,17 +2303,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       });
 
-      const mintResult = await hederaNFTService.mintNFT({
-        tokenId: tokenInfo.tokenId,
+      const mintResult = await ethereumNFTService.mintNFT({
+        contractAddress: contractInfo.contractAddress,
         metadata: metadata
       });
 
-      console.log(`[hedera] Test NFT minted successfully: ${mintResult.tokenId}/${mintResult.serialNumber}`);
+      console.log(`[ethereum] Test NFT minted successfully: ${mintResult.contractAddress}/${mintResult.tokenId}`);
 
       res.json({
         success: true,
-        message: "Test NFT minted successfully on Hedera testnet",
-        tokenInfo,
+        message: "Test NFT minted successfully on Ethereum",
+        contractInfo,
         mintResult
       });
     } catch (error: any) {
