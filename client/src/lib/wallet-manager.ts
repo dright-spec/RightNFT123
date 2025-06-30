@@ -1,9 +1,4 @@
-// Simple HashPack API without encryption issues
-import { simpleHashPack } from './simple-hashpack';
-import { detectHashPack, detectMetaMask, detectBlade } from './wallet-detection';
-import { debugWalletEnvironment } from './debug-wallet';
-import { config } from './env';
-
+// Ethereum wallet manager with MetaMask and WalletConnect support
 export interface WalletInfo {
   id: string;
   name: string;
@@ -11,7 +6,7 @@ export interface WalletInfo {
   icon: string;
   isAvailable: boolean;
   isRecommended?: boolean;
-  isHederaNative?: boolean;
+  isEthereumNative?: boolean;
   downloadUrl?: string;
 }
 
@@ -21,264 +16,164 @@ export interface ConnectedWallet {
   isConnected: boolean;
 }
 
-// Detect available wallets in the browser
+// Detect available Ethereum wallets
 export async function detectAvailableWallets(): Promise<WalletInfo[]> {
-  try {
-    // Check if HashPack is connected using simple API
-    let isHashConnected = false;
-    try {
-      isHashConnected = simpleHashPack.isConnected();
-    } catch (error) {
-      console.warn('Error checking HashPack status:', error);
-    }
-    
-    // Simple HashPack detection without encryption issues
-    let hasHashPack = false;
-    try {
-      hasHashPack = simpleHashPack.isAvailable();
-    } catch (error) {
-      console.warn('Error detecting HashPack:', error);
-    }
-    
-    // Additional manual HashPack check for debugging
-    const manualHashPackCheck = !!(window as any).hashpack;
-    
-    // Run comprehensive wallet debugging
-    debugWalletEnvironment();
-    
-    // Debug wallet detection
-    console.log('Wallet detection:', {
-      hashpack: hasHashPack,
-      manualHashPackCheck,
-      hashConnected: isHashConnected,
-      metamask: detectMetaMask(),
-      blade: detectBlade(),
-      finalHashPackAvailable: hasHashPack || isHashConnected || manualHashPackCheck,
-      windowObjects: {
-        hashpack: typeof (window as any).hashpack,
-        HashPack: typeof (window as any).HashPack,
-        hashconnect: typeof (window as any).hashconnect
-      }
-    });
-    
-    const wallets: WalletInfo[] = [
-      {
-        id: 'hashpack',
-        name: 'HashPack',
-        description: 'Official Hedera wallet with native HTS support',
-        icon: '🟡',
-        isAvailable: hasHashPack || isHashConnected || manualHashPackCheck,
-        isRecommended: true,
-        isHederaNative: true,
-        downloadUrl: 'https://www.hashpack.app/'
-      },
-      {
-        id: 'metamask',
-        name: 'MetaMask',
-        description: 'Popular Ethereum wallet',
-        icon: '🦊',
-        isAvailable: detectMetaMask(),
-        downloadUrl: 'https://metamask.io/'
-      },
-      {
-        id: 'walletconnect',
-        name: 'HashConnect',
-        description: 'Connect using HashConnect protocol',
-        icon: '🔗',
-        isAvailable: true,
-        isHederaNative: true,
-        downloadUrl: 'https://docs.hedera.com/hedera/sdks-and-apis/sdks/wallet-integrations/hashconnect'
-      },
-      {
-        id: 'blade',
-        name: 'Blade Wallet',
-        description: 'Multi-chain wallet with Hedera support',
-        icon: '⚔️',
-        isAvailable: detectBlade(),
-        isHederaNative: true,
-        downloadUrl: 'https://bladewallet.io/'
-      }
-    ];
+  const wallets: WalletInfo[] = [];
 
-    return wallets;
-  } catch (error) {
-    console.error('Error in detectAvailableWallets:', error);
-    
-    // Return basic wallet list on error
-    return [
-      {
-        id: 'hashpack',
-        name: 'HashPack',
-        description: 'Official Hedera wallet with native HTS support',
-        icon: '🟡',
-        isAvailable: !!(window as any).hashpack || !!(window as any).HashPack,
-        isRecommended: true,
-        isHederaNative: true,
-        downloadUrl: 'https://www.hashpack.app/'
-      },
-      {
-        id: 'metamask',
-        name: 'MetaMask',
-        description: 'Popular Ethereum wallet',
-        icon: '🦊',
-        isAvailable: detectMetaMask(),
-        downloadUrl: 'https://metamask.io/'
-      }
-    ];
-  }
+  // MetaMask detection
+  const hasMetaMask = !!(window as any).ethereum?.isMetaMask;
+  wallets.push({
+    id: "metamask",
+    name: "MetaMask",
+    description: "Popular Ethereum wallet with extensive dApp support",
+    icon: "🦊",
+    isAvailable: hasMetaMask,
+    isRecommended: true,
+    isEthereumNative: true,
+    downloadUrl: "https://metamask.io/download/",
+  });
+
+  // WalletConnect
+  wallets.push({
+    id: "walletconnect",
+    name: "WalletConnect",
+    description: "Connect to mobile wallets via QR code",
+    icon: "🔗",
+    isAvailable: true,
+    isRecommended: false,
+    isEthereumNative: true,
+    downloadUrl: "https://walletconnect.com/",
+  });
+
+  // Coinbase Wallet
+  const hasCoinbase = !!(window as any).ethereum?.isCoinbaseWallet;
+  wallets.push({
+    id: "coinbase",
+    name: "Coinbase Wallet",
+    description: "Connect with Coinbase Wallet",
+    icon: "🟦",
+    isAvailable: hasCoinbase,
+    isRecommended: false,
+    isEthereumNative: true,
+    downloadUrl: "https://www.coinbase.com/wallet",
+  });
+
+  console.log('Detected Ethereum wallets:', wallets);
+  return wallets;
 }
 
 // Connect to a specific wallet
 export async function connectToWallet(walletId: string): Promise<string> {
+  console.log(`Connecting to ${walletId}...`);
+
   switch (walletId) {
-    case 'hashpack':
-      return await connectHashPack();
-    case 'metamask':
+    case "metamask":
       return await connectMetaMask();
-    case 'walletconnect':
+    case "walletconnect":
       return await connectWalletConnect();
-    case 'blade':
-      return await connectBlade();
+    case "coinbase":
+      return await connectCoinbase();
     default:
       throw new Error(`Unsupported wallet: ${walletId}`);
-  }
-}
-
-// HashPack connection using simple API (no encryption)
-async function connectHashPack(): Promise<string> {
-  try {
-    console.log('🚀 Starting HashPack connection via simple API...');
-    
-    // Use simple HashPack API to avoid encryption issues
-    const accountId = await simpleHashPack.connectWallet();
-    
-    console.log('✅ HashPack connected successfully:', accountId);
-    return accountId;
-  } catch (error: any) {
-    console.error('❌ HashPack connection failed:', error);
-    
-    if (error.message?.includes('User rejected') || error.code === 4001) {
-      throw new Error('Connection cancelled by user');
-    }
-    
-    throw new Error(`HashPack connection failed: ${error.message || 'Unknown error'}`);
   }
 }
 
 // MetaMask connection
 async function connectMetaMask(): Promise<string> {
   if (!(window as any).ethereum?.isMetaMask) {
-    throw new Error('MetaMask not installed');
+    throw new Error("MetaMask not installed");
   }
 
   try {
     const accounts = await (window as any).ethereum.request({
-      method: 'eth_requestAccounts'
+      method: "eth_requestAccounts",
     });
 
-    if (accounts && accounts.length > 0) {
-      return accounts[0];
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found");
     }
 
-    throw new Error('No accounts found in MetaMask');
-  } catch (error) {
-    if (error.code === 4001) {
-      throw new Error('Connection cancelled by user');
-    }
-    throw error;
-  }
-}
-
-// WalletConnect that prompts for manual Hedera account entry
-async function connectWalletConnect(): Promise<string> {
-  // Prompt user for manual Hedera account ID entry
-  const accountId = prompt('Please enter your Hedera account ID (format: 0.0.xxxxx):');
-  
-  if (!accountId) {
-    throw new Error('Account ID entry cancelled by user');
-  }
-  
-  // Validate Hedera account format
-  if (!/^0\.0\.\d+$/.test(accountId.trim())) {
-    throw new Error('Invalid Hedera account ID format. Please use format: 0.0.xxxxx');
-  }
-  
-  // Fallback to manual entry only if HashConnect fails
-  const address = prompt('Enter your Hedera account ID (format: 0.0.xxxxx):');
-  
-  if (!address) {
-    throw new Error('Connection cancelled by user');
-  }
-  
-  // Validate Hedera account format
-  if (!/^0\.0\.\d+$/.test(address)) {
-    throw new Error('Invalid Hedera account ID format. Use 0.0.xxxxx format');
-  }
-  
-  return address;
-}
-
-// Blade wallet connection
-async function connectBlade(): Promise<string> {
-  if (!(window as any).bladeWallet) {
-    throw new Error('Blade wallet not installed');
-  }
-
-  try {
-    const blade = (window as any).bladeWallet;
-    const result = await blade.connect();
-    
-    if (result.success && result.accountId) {
-      return result.accountId;
-    }
-
-    throw new Error('Failed to connect to Blade wallet');
-  } catch (error) {
-    throw error;
-  }
-}
-
-// Check if a wallet is connected by looking at HashConnect first, then localStorage
-export function getStoredWalletConnection(): ConnectedWallet | null {
-  try {
-    // Check if HashConnect is connected first
-    if (simpleHashPack.isConnected()) {
-      const account = simpleHashPack.getStoredAccount();
-      if (account) {
-        return {
-          walletId: 'hashpack',
-          address: account,
-          isConnected: true
-        };
+    // Switch to Ethereum mainnet if needed
+    try {
+      await (window as any).ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x1" }], // Ethereum mainnet
+      });
+    } catch (switchError: any) {
+      // Chain doesn't exist, add it
+      if (switchError.code === 4902) {
+        await (window as any).ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: "0x1",
+              chainName: "Ethereum Mainnet",
+              nativeCurrency: {
+                name: "Ether",
+                symbol: "ETH",
+                decimals: 18,
+              },
+              rpcUrls: ["https://mainnet.infura.io/v3/"],
+              blockExplorerUrls: ["https://etherscan.io/"],
+            },
+          ],
+        });
       }
     }
-    
-    // Fallback to localStorage for other wallets
-    const walletId = localStorage.getItem('connected_wallet');
-    const address = localStorage.getItem('wallet_address');
-    
-    if (walletId && address) {
-      return {
-        walletId,
-        address,
-        isConnected: true
-      };
-    }
-  } catch (error) {
-    console.error('Error getting stored wallet connection:', error);
+
+    return accounts[0];
+  } catch (error: any) {
+    throw new Error(`MetaMask connection failed: ${error.message}`);
   }
-  
+}
+
+// WalletConnect connection
+async function connectWalletConnect(): Promise<string> {
+  try {
+    // For now, we'll use a simple modal approach
+    // In a production app, you'd integrate with WalletConnect SDK
+    throw new Error("WalletConnect integration coming soon");
+  } catch (error: any) {
+    throw new Error(`WalletConnect connection failed: ${error.message}`);
+  }
+}
+
+// Coinbase Wallet connection
+async function connectCoinbase(): Promise<string> {
+  if (!(window as any).ethereum?.isCoinbaseWallet) {
+    throw new Error("Coinbase Wallet not installed");
+  }
+
+  try {
+    const accounts = await (window as any).ethereum.request({
+      method: "eth_requestAccounts",
+    });
+
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found");
+    }
+
+    return accounts[0];
+  } catch (error: any) {
+    throw new Error(`Coinbase Wallet connection failed: ${error.message}`);
+  }
+}
+
+// Get connected wallet info
+export function getConnectedWallet(): ConnectedWallet | null {
+  if ((window as any).ethereum && (window as any).ethereum.selectedAddress) {
+    return {
+      walletId: "metamask",
+      address: (window as any).ethereum.selectedAddress,
+      isConnected: true,
+    };
+  }
   return null;
 }
 
-// Store wallet connection info
-export function storeWalletConnection(walletId: string, address: string): void {
-  localStorage.setItem('connected_wallet', walletId);
-  localStorage.setItem('wallet_address', address);
-}
-
-// Clear stored wallet connection
-export function clearWalletConnection(): void {
-  localStorage.removeItem('connected_wallet');
-  localStorage.removeItem('wallet_address');
+// Disconnect wallet
+export async function disconnectWallet(): Promise<void> {
+  // MetaMask doesn't have a disconnect method
+  // Users need to disconnect from their wallet directly
+  console.log("Please disconnect from your wallet directly");
 }

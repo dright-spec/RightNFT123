@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet, LogOut } from "lucide-react";
 import { SleekWalletModal } from "./sleek-wallet-modal";
-import { storeWalletConnection, clearWalletConnection, getStoredWalletConnection } from "@/lib/wallet-manager";
+import { getConnectedWallet, disconnectWallet } from "@/lib/wallet-manager";
 import { useToast } from "@/hooks/use-toast";
 
 export function Web3ModalConnectButton() {
@@ -14,10 +14,10 @@ export function Web3ModalConnectButton() {
 
   // Check for existing connection on component mount
   useEffect(() => {
-    const stored = getStoredWalletConnection();
-    if (stored && stored.isConnected) {
+    const wallet = getConnectedWallet();
+    if (wallet && wallet.isConnected) {
       setIsConnected(true);
-      setConnectedWallet({ walletId: stored.walletId, address: stored.address });
+      setConnectedWallet({ walletId: wallet.walletId, address: wallet.address });
     }
   }, []);
 

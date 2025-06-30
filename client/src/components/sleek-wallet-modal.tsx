@@ -21,12 +21,17 @@ interface WalletConnectModalProps {
   onConnect: (walletId: string, address: string) => void;
 }
 
+// Extend WalletInfo to include Ethereum-specific properties
+interface ExtendedWalletInfo extends WalletInfo {
+  isEthereumNative?: boolean;
+}
+
 export function SleekWalletModal({
   open,
   onOpenChange,
   onConnect,
 }: WalletConnectModalProps) {
-  const [wallets, setWallets] = useState<WalletInfo[]>([]);
+  const [wallets, setWallets] = useState<ExtendedWalletInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -47,34 +52,34 @@ export function SleekWalletModal({
         // fallback defaults (all fields filled)
         setWallets([
           {
-            id: "hashpack",
-            name: "HashPack",
-            description: "Official Hedera wallet with native HTS support",
-            icon: "🟡",
-            isAvailable: Boolean((window as any).hashpack),
-            isRecommended: true,
-            isHederaNative: true,
-            downloadUrl: "https://www.hashpack.app/",
-          },
-          {
             id: "metamask",
             name: "MetaMask",
-            description: "Popular Ethereum wallet",
+            description: "Popular Ethereum wallet with extensive dApp support",
             icon: "🦊",
             isAvailable: Boolean((window as any).ethereum?.isMetaMask),
-            isRecommended: false,
-            isHederaNative: false,
-            downloadUrl: "https://metamask.io/",
+            isRecommended: true,
+            isEthereumNative: true,
+            downloadUrl: "https://metamask.io/download/",
           },
           {
             id: "walletconnect",
             name: "WalletConnect",
-            description: "Connect using WalletConnect protocol",
+            description: "Connect to mobile wallets via QR code",
             icon: "🔗",
             isAvailable: true,
             isRecommended: false,
-            isHederaNative: false,
+            isEthereumNative: true,
             downloadUrl: "https://walletconnect.com/",
+          },
+          {
+            id: "coinbase",
+            name: "Coinbase Wallet",
+            description: "Connect with Coinbase Wallet",
+            icon: "🟦",
+            isAvailable: Boolean((window as any).ethereum?.isCoinbaseWallet),
+            isRecommended: false,
+            isEthereumNative: true,
+            downloadUrl: "https://www.coinbase.com/wallet",
           },
         ]);
       } finally {
@@ -127,7 +132,7 @@ export function SleekWalletModal({
             Connect Wallet
           </DialogTitle>
           <DialogDescription>
-            Choose a wallet. HashPack is recommended for Hedera.
+            Choose a wallet. MetaMask is recommended for Ethereum.
           </DialogDescription>
         </DialogHeader>
 
@@ -170,9 +175,9 @@ export function SleekWalletModal({
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {w.description}
                       </p>
-                      {w.isHederaNative && (
+                      {w.isEthereumNative && (
                         <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                          Hedera Native
+                          Ethereum Native
                         </span>
                       )}
                     </div>
