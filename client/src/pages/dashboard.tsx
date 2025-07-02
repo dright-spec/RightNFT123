@@ -25,16 +25,226 @@ import {
   ExternalLink,
   Crown,
   Zap,
-  Menu
+  Menu,
+  Settings,
+  Maximize2,
+  Minimize2,
+  X,
+  Target,
+  PieChart,
+  Activity,
+  Globe
 } from "lucide-react";
 import { RightCard } from "@/components/right-card";
 import { VerificationBadge } from "@/components/verification-badge";
 import { useSession } from "@/hooks/use-session";
 import type { RightWithCreator, User } from "@shared/schema";
 
+// Widget types and configuration
+interface DashboardWidget {
+  id: string;
+  type: 'stats' | 'chart' | 'activity' | 'goals' | 'market';
+  title: string;
+  icon: any;
+  size: 'small' | 'medium' | 'large';
+  position: { x: number; y: number };
+  visible: boolean;
+  config?: any;
+}
+
 export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [widgets, setWidgets] = useState<DashboardWidget[]>([
+    {
+      id: 'earnings',
+      type: 'stats',
+      title: 'Total Earnings',
+      icon: DollarSign,
+      size: 'small',
+      position: { x: 0, y: 0 },
+      visible: true
+    },
+    {
+      id: 'rights',
+      type: 'stats', 
+      title: 'My Rights',
+      icon: Crown,
+      size: 'small',
+      position: { x: 1, y: 0 },
+      visible: true
+    },
+    {
+      id: 'views',
+      type: 'stats',
+      title: 'Total Views',
+      icon: Eye,
+      size: 'small', 
+      position: { x: 2, y: 0 },
+      visible: true
+    },
+    {
+      id: 'performance',
+      type: 'chart',
+      title: 'Performance Overview',
+      icon: BarChart3,
+      size: 'large',
+      position: { x: 0, y: 1 },
+      visible: true
+    },
+    {
+      id: 'activity',
+      type: 'activity',
+      title: 'Recent Activity',
+      icon: Activity,
+      size: 'medium',
+      position: { x: 1, y: 1 },
+      visible: true
+    },
+    {
+      id: 'goals',
+      type: 'goals',
+      title: 'Monthly Goals',
+      icon: Target,
+      size: 'medium',
+      position: { x: 2, y: 1 },
+      visible: true
+    }
+  ]);
   const { isAuthenticated, user } = useSession();
+
+  // Widget management functions
+  const toggleWidget = (widgetId: string) => {
+    setWidgets(prev => 
+      prev.map(widget => 
+        widget.id === widgetId 
+          ? { ...widget, visible: !widget.visible }
+          : widget
+      )
+    );
+  };
+
+  const resizeWidget = (widgetId: string, newSize: 'small' | 'medium' | 'large') => {
+    setWidgets(prev =>
+      prev.map(widget =>
+        widget.id === widgetId
+          ? { ...widget, size: newSize }
+          : widget
+      )
+    );
+  };
+
+  const getWidgetSizeClass = (size: string) => {
+    switch (size) {
+      case 'small': return 'col-span-1';
+      case 'medium': return 'col-span-2';
+      case 'large': return 'col-span-3';
+      default: return 'col-span-1';
+    }
+  };
+
+  // Widget content renderer
+  const renderWidgetContent = (widget: DashboardWidget) => {
+    switch (widget.type) {
+      case 'stats':
+        return renderStatsWidget(widget);
+      case 'chart':
+        return renderChartWidget(widget);
+      case 'activity':
+        return renderActivityWidget(widget);
+      case 'goals':
+        return renderGoalsWidget(widget);
+      default:
+        return <div>Widget content</div>;
+    }
+  };
+
+  const renderStatsWidget = (widget: DashboardWidget) => {
+    let value = "0";
+    let description = "";
+    
+    switch (widget.id) {
+      case 'earnings':
+        value = "$0.00";
+        description = "Total earnings from all rights";
+        break;
+      case 'rights':
+        value = totalRights.toString();
+        description = "Rights you've created";
+        break;
+      case 'views':
+        value = "0";
+        description = "Total views across all rights";
+        break;
+    }
+
+    return (
+      <div className="text-center">
+        <div className="text-3xl font-bold text-primary mb-2">{value}</div>
+        <div className="text-sm text-muted-foreground">{description}</div>
+      </div>
+    );
+  };
+
+  const renderChartWidget = (widget: DashboardWidget) => (
+    <div className="space-y-4">
+      <div className="text-center text-muted-foreground">
+        <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
+        <p>Performance charts coming soon</p>
+      </div>
+    </div>
+  );
+
+  const renderActivityWidget = (widget: DashboardWidget) => (
+    <div className="space-y-3">
+      {recentActivity.length === 0 ? (
+        <div className="text-center text-muted-foreground py-4">
+          <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p className="text-sm">No recent activity</p>
+        </div>
+      ) : (
+        recentActivity.slice(0, 3).filter(isValidActivity).map((activity, index) => (
+          <div key={index} className="flex items-center gap-3 p-2 border rounded">
+            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 text-sm">
+              <div className="font-medium">{activity.title}</div>
+              <div className="text-xs text-muted-foreground">{activity.time}</div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderGoalsWidget = (widget: DashboardWidget) => (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Rights Created</span>
+            <span>{totalRights}/5</span>
+          </div>
+          <Progress value={(totalRights / 5) * 100} className="h-2" />
+        </div>
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Monthly Earnings</span>
+            <span>$0/$100</span>
+          </div>
+          <Progress value={0} className="h-2" />
+        </div>
+        <div>
+          <div className="flex justify-between text-sm mb-1">
+            <span>Profile Views</span>
+            <span>0/50</span>
+          </div>
+          <Progress value={0} className="h-2" />
+        </div>
+      </div>
+    </div>
+  );
 
   // Fetch user's rights only if authenticated
   const { data: userRights = [], isLoading: rightsLoading } = useQuery<RightWithCreator[]>({

@@ -37,7 +37,7 @@ export function Web3ModalConnectButton() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          walletAddress: address,
+          address: address,
           walletType: walletId,
         }),
       });
