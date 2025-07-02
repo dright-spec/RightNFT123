@@ -46,6 +46,7 @@ interface DashboardWidget {
   type: 'stats' | 'chart' | 'activity' | 'goals' | 'market';
   title: string;
   icon: any;
+  iconName: string;
   size: 'small' | 'medium' | 'large';
   position: { x: number; y: number };
   visible: boolean;
@@ -61,6 +62,7 @@ export default function Dashboard() {
       type: 'stats',
       title: 'Total Earnings',
       icon: DollarSign,
+      iconName: 'DollarSign',
       size: 'small',
       position: { x: 0, y: 0 },
       visible: true
@@ -70,6 +72,7 @@ export default function Dashboard() {
       type: 'stats', 
       title: 'My Rights',
       icon: Crown,
+      iconName: 'Crown',
       size: 'small',
       position: { x: 1, y: 0 },
       visible: true
@@ -79,6 +82,7 @@ export default function Dashboard() {
       type: 'stats',
       title: 'Total Views',
       icon: Eye,
+      iconName: 'Eye',
       size: 'small', 
       position: { x: 2, y: 0 },
       visible: true
@@ -88,6 +92,7 @@ export default function Dashboard() {
       type: 'chart',
       title: 'Performance Overview',
       icon: BarChart3,
+      iconName: 'BarChart3',
       size: 'large',
       position: { x: 0, y: 1 },
       visible: true
@@ -97,6 +102,7 @@ export default function Dashboard() {
       type: 'activity',
       title: 'Recent Activity',
       icon: Activity,
+      iconName: 'Activity',
       size: 'medium',
       position: { x: 1, y: 1 },
       visible: true
@@ -106,6 +112,7 @@ export default function Dashboard() {
       type: 'goals',
       title: 'Monthly Goals',
       icon: Target,
+      iconName: 'Target',
       size: 'medium',
       position: { x: 2, y: 1 },
       visible: true
@@ -113,13 +120,28 @@ export default function Dashboard() {
   ]);
   const { isAuthenticated, user } = useSession();
 
+  // Icon mapping for restoring icons from localStorage
+  const iconMap = {
+    'DollarSign': DollarSign,
+    'Crown': Crown,
+    'Eye': Eye,
+    'BarChart3': BarChart3,
+    'Activity': Activity,
+    'Target': Target
+  };
+
   // Load widget configuration from localStorage
   useEffect(() => {
     const savedWidgets = localStorage.getItem('dashboard-widgets');
     if (savedWidgets) {
       try {
         const parsedWidgets = JSON.parse(savedWidgets);
-        setWidgets(parsedWidgets);
+        // Restore icon functions from the icon map
+        const restoredWidgets = parsedWidgets.map((widget: any) => ({
+          ...widget,
+          icon: iconMap[widget.iconName as keyof typeof iconMap] || DollarSign
+        }));
+        setWidgets(restoredWidgets);
       } catch (error) {
         console.error('Failed to load widget configuration:', error);
       }
@@ -159,6 +181,7 @@ export default function Dashboard() {
         type: 'stats',
         title: 'Total Earnings',
         icon: DollarSign,
+        iconName: 'DollarSign',
         size: 'small',
         position: { x: 0, y: 0 },
         visible: true
@@ -168,6 +191,7 @@ export default function Dashboard() {
         type: 'stats', 
         title: 'My Rights',
         icon: Crown,
+        iconName: 'Crown',
         size: 'small',
         position: { x: 1, y: 0 },
         visible: true
@@ -177,6 +201,7 @@ export default function Dashboard() {
         type: 'stats',
         title: 'Total Views',
         icon: Eye,
+        iconName: 'Eye',
         size: 'small', 
         position: { x: 2, y: 0 },
         visible: true
@@ -186,6 +211,7 @@ export default function Dashboard() {
         type: 'chart',
         title: 'Performance Overview',
         icon: BarChart3,
+        iconName: 'BarChart3',
         size: 'large',
         position: { x: 0, y: 1 },
         visible: true
@@ -195,6 +221,7 @@ export default function Dashboard() {
         type: 'activity',
         title: 'Recent Activity',
         icon: Activity,
+        iconName: 'Activity',
         size: 'medium',
         position: { x: 1, y: 1 },
         visible: true
@@ -204,6 +231,7 @@ export default function Dashboard() {
         type: 'goals',
         title: 'Monthly Goals',
         icon: Target,
+        iconName: 'Target',
         size: 'medium',
         position: { x: 2, y: 1 },
         visible: true
@@ -545,7 +573,7 @@ export default function Dashboard() {
                         onClick={() => toggleWidget(widget.id)}
                         className="text-xs"
                       >
-                        <widget.icon className="h-3 w-3 mr-1" />
+                        {widget.icon && <widget.icon className="h-3 w-3 mr-1" />}
                         {widget.title}
                       </Button>
                     ))}
@@ -573,7 +601,7 @@ export default function Dashboard() {
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <widget.icon className="h-4 w-4 text-primary" />
+                      {widget.icon && <widget.icon className="h-4 w-4 text-primary" />}
                       {widget.title}
                     </CardTitle>
                     {editMode && (
