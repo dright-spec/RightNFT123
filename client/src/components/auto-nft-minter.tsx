@@ -2,12 +2,19 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { hederaService, type RightMetadata, type NFTMintResult } from "@/lib/hederaSimple";
 import type { RightWithCreator } from "@shared/schema";
+
+interface EthereumNFTResult {
+  contractAddress: string;
+  tokenId: string;
+  transactionHash: string;
+  metadataUri: string;
+  explorerUrl: string;
+}
 
 interface AutoNFTMinterProps {
   rightId: number;
-  onMintComplete?: (nftData: NFTMintResult) => void;
+  onMintComplete?: (nftData: EthereumNFTResult) => void;
 }
 
 export function AutoNFTMinter({ rightId, onMintComplete }: AutoNFTMinterProps) {
