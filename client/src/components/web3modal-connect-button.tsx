@@ -29,6 +29,27 @@ export function Web3ModalConnectButton() {
       
       console.log(`Connecting wallet: ${walletId} - ${address}`);
       
+      // Authenticate wallet with server
+      const authResponse = await fetch('/api/auth/wallet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          walletAddress: address,
+          walletType: walletId,
+        }),
+      });
+
+      if (!authResponse.ok) {
+        const errorData = await authResponse.json();
+        throw new Error(errorData.message || 'Wallet authentication failed');
+      }
+
+      const authData = await authResponse.json();
+      console.log('Wallet authentication successful:', authData);
+      
       setIsConnected(true);
       setConnectedWallet({ walletId, address });
       setIsOpen(false);
@@ -37,6 +58,9 @@ export function Web3ModalConnectButton() {
         title: "Wallet Connected",
         description: `Successfully connected to ${walletId}`,
       });
+
+      // Refresh the page to show authenticated state
+      window.location.reload();
     } catch (error) {
       console.error("Connection failed:", error);
       toast({

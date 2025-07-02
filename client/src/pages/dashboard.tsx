@@ -119,6 +119,17 @@ export default function Dashboard() {
 
   // Use real activity data from API
   const recentActivity = activityLoading ? [] : (userActivity || []);
+  
+  // Type guard for activity data
+  const isValidActivity = (activity: any): activity is {
+    type: string;
+    title: string;
+    description: string;
+    time: string;
+    amount?: string;
+  } => {
+    return activity && typeof activity.type === 'string' && typeof activity.title === 'string';
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -228,10 +239,7 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
-                <div className={`text-xs flex items-center gap-1 ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 'text-gray-600'
-                }`}>
-                  {stat.changeType === 'positive' && <TrendingUp className="h-3 w-3" />}
+                <div className="text-xs flex items-center gap-1 text-gray-600">
                   {stat.change}
                 </div>
               </CardContent>
@@ -487,29 +495,35 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className={`p-2 rounded-full ${
-                        activity.type === 'sale' ? 'bg-green-100 text-green-600' :
-                        activity.type === 'listing' ? 'bg-blue-100 text-blue-600' :
-                        activity.type === 'verification' ? 'bg-purple-100 text-purple-600' :
-                        'bg-orange-100 text-orange-600'
-                      }`}>
-                        {activity.type === 'sale' && <DollarSign className="h-4 w-4" />}
-                        {activity.type === 'listing' && <Gavel className="h-4 w-4" />}
-                        {activity.type === 'verification' && <CheckCircle className="h-4 w-4" />}
-                        {activity.type === 'bid' && <TrendingUp className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{activity.title}</div>
-                        <div className="text-sm text-muted-foreground">{activity.description}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{activity.time}</div>
-                      </div>
-                      {activity.amount && (
-                        <div className="font-medium text-green-600">{activity.amount}</div>
-                      )}
+                  {recentActivity.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No activity yet. Start creating rights to see your activity history.
                     </div>
-                  ))}
+                  ) : (
+                    recentActivity.filter(isValidActivity).map((activity: any, index: number) => (
+                      <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                        <div className={`p-2 rounded-full ${
+                          activity.type === 'sale' ? 'bg-green-100 text-green-600' :
+                          activity.type === 'listing' ? 'bg-blue-100 text-blue-600' :
+                          activity.type === 'verification' ? 'bg-purple-100 text-purple-600' :
+                          'bg-orange-100 text-orange-600'
+                        }`}>
+                          {activity.type === 'sale' && <DollarSign className="h-4 w-4" />}
+                          {activity.type === 'listing' && <Gavel className="h-4 w-4" />}
+                          {activity.type === 'verification' && <CheckCircle className="h-4 w-4" />}
+                          {activity.type === 'bid' && <TrendingUp className="h-4 w-4" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium">{activity.title}</div>
+                          <div className="text-sm text-muted-foreground">{activity.description}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{activity.time}</div>
+                        </div>
+                        {activity.amount && (
+                          <div className="font-medium text-green-600">{activity.amount}</div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
