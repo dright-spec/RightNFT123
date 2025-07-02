@@ -29,33 +29,49 @@ import {
 } from "lucide-react";
 import { RightCard } from "@/components/right-card";
 import { VerificationBadge } from "@/components/verification-badge";
+import { useSession } from "@/hooks/use-session";
 import type { RightWithCreator, User } from "@shared/schema";
 
 export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { isAuthenticated, user } = useSession();
 
-  // Fetch user's rights
+  // Fetch user's rights only if authenticated
   const { data: userRights = [], isLoading: rightsLoading } = useQuery<RightWithCreator[]>({
-    queryKey: ["/api/rights", "user"],
-    queryFn: () => fetch("/api/rights?creatorId=1").then(res => res.json()),
+    queryKey: ["/api/rights", "user", user?.id],
+    queryFn: () => fetch(`/api/rights?creatorId=${user?.id}`).then(res => res.json()),
+    enabled: !!user?.id,
   });
 
-  // Fetch user profile
-  const { data: userProfile } = useQuery<User>({
-    queryKey: ["/api/users", "profile"],
-    queryFn: () => fetch("/api/users/1").then(res => res.json()),
-  });
-
-  // Get real user stats from API
+  // Get real user stats from API only if authenticated  
   const { data: userStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['/api/users/stats'],
+    queryKey: ['/api/users/stats', user?.id],
+    queryFn: () => fetch(`/api/users/${user?.id}/stats`).then(res => res.json()),
+    enabled: !!user?.id,
     retry: false,
   });
 
   const { data: userActivity, isLoading: activityLoading } = useQuery({
-    queryKey: ['/api/users/activity'], 
+    queryKey: ['/api/users/activity', user?.id], 
+    queryFn: () => fetch(`/api/users/${user?.id}/activity`).then(res => res.json()),
+    enabled: !!user?.id,
     retry: false,
   });
+
+  // Guard: Redirect if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Access Restricted</h2>
+          <p className="text-muted-foreground mb-6">Please connect your wallet to access the dashboard.</p>
+          <Link href="/">
+            <Button>Return Home</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate dashboard metrics from real data
   const totalRights = userRights.length;
@@ -72,15 +88,15 @@ export default function Dashboard() {
       value: totalRights.toString(),
       description: "Rights you've created",
       icon: Crown,
-      change: "+2 this month",
-      changeType: "positive" as const
+      change: totalRights > 0 ? "Recently created" : "Get started",
+      changeType: "neutral" as const
     },
     {
       title: "Active Listings",
       value: activeListings.toString(),
       description: "Currently for sale",
       icon: Gavel,
-      change: `${Math.round((activeListings / totalRights) * 100)}% of portfolio`,
+      change: totalRights > 0 ? `${Math.round((activeListings / totalRights) * 100)}% of portfolio` : "No listings yet",
       changeType: "neutral" as const
     },
     {
@@ -88,16 +104,16 @@ export default function Dashboard() {
       value: totalViews.toLocaleString(),
       description: "Across all rights",
       icon: Eye,
-      change: "+12% this week",
-      changeType: "positive" as const
+      change: totalViews > 0 ? "Accumulating views" : "Pending views",
+      changeType: "neutral" as const
     },
     {
       title: "Revenue Generated", 
       value: statsLoading ? "..." : `${totalRevenue} ETH`,
       description: "From sales & royalties",
       icon: DollarSign,
-      change: "+0% this month",
-      changeType: "positive" as const
+      change: totalRevenue !== "0.00" ? "Earnings tracked" : "No revenue yet",
+      changeType: "neutral" as const
     }
   ];
 
@@ -163,30 +179,30 @@ export default function Dashboard() {
           </div>
 
         {/* User Profile Card */}
-        {userProfile && (
+        {user && (
           <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={userProfile.profileImageUrl || ""} />
+                  <AvatarImage src={user.profileImageUrl || ""} />
                   <AvatarFallback className="text-lg">
-                    {userProfile.username?.charAt(0).toUpperCase() || "U"}
+                    {user.username?.charAt(0).toUpperCase() || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{userProfile.username || "Creator"}</h2>
+                    <h2 className="text-xl font-semibold">{user.username || "Creator"}</h2>
                     <VerificationBadge status="verified" size="sm" />
                   </div>
                   <p className="text-muted-foreground">Digital Rights Creator</p>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      <span className="text-sm">0 followers</span>
+                      <span className="text-sm">Connected</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Heart className="h-4 w-4" />
-                      <span className="text-sm">0 favorites</span>
+                      <span className="text-sm">{totalRights} rights</span>
                     </div>
                   </div>
                 </div>
@@ -433,12 +449,16 @@ export default function Dashboard() {
                       <span className="font-medium">{totalViews.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Conversion Rate</span>
-                      <span className="font-medium">2.3%</span>
+                      <span>Rights Created</span>
+                      <span className="font-medium">{totalRights}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Average Sale Price</span>
-                      <span className="font-medium">1.2 ETH</span>
+                      <span>Verified Rights</span>
+                      <span className="font-medium">{verifiedRights}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Pending Verification</span>
+                      <span className="font-medium">{pendingRights}</span>
                     </div>
                   </div>
                 </CardContent>
