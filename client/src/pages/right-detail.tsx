@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
 import { useToast } from "@/hooks/use-toast";
-import { HederaNFTCard } from "@/components/hedera-nft-card";
-import { AutoNFTMinter } from "@/components/auto-nft-minter";
+// Removed Hedera NFT card - now using Ethereum
+// Removed auto NFT minter - now using backend Ethereum service
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -109,8 +109,7 @@ export default function RightDetail() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Auto NFT Minter - handles automatic minting when right is verified */}
-        <AutoNFTMinter rightId={right.id} />
+        {/* NFT minting now handled by backend Ethereum service */}
         
         {/* Title Section */}
         <div className="mb-8">
@@ -207,8 +206,37 @@ export default function RightDetail() {
               </Card>
             )}
 
-            {/* Hedera NFT Information */}
-            <HederaNFTCard right={right} />
+            {/* NFT Information - Now on Ethereum */}
+            {right.contractAddress && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Hash className="w-5 h-5" />
+                    NFT Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Contract Address</p>
+                      <p className="font-mono text-sm break-all">{right.contractAddress}</p>
+                    </div>
+                    {right.tokenId && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Token ID</p>
+                        <p className="font-mono text-sm">{right.tokenId}</p>
+                      </div>
+                    )}
+                    {right.transactionHash && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Transaction Hash</p>
+                        <p className="font-mono text-sm break-all">{right.transactionHash}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Technical Details */}
             <Card>
