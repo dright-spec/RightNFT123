@@ -23,36 +23,36 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
       description: "Transform your intellectual property into tradeable digital assets",
       icon: Star,
       content: (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full text-green-700 dark:text-green-300 text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/30 rounded-full text-green-700 dark:text-green-300 text-xs font-medium mb-3">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               Platform Highlights
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 rounded-lg">
-                <Shield className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-600">Secure</div>
-                <div className="text-sm text-blue-700 dark:text-blue-300">Blockchain Protection</div>
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/30 rounded-lg">
+                <Shield className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                <div className="text-lg font-bold text-blue-600">Secure</div>
+                <div className="text-xs text-blue-700 dark:text-blue-300">Blockchain Protection</div>
               </div>
-              <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 rounded-lg">
-                <Zap className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-600">Fast</div>
-                <div className="text-sm text-purple-700 dark:text-purple-300">3-5 Second Transactions</div>
+              <div className="p-3 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 rounded-lg">
+                <Zap className="w-6 h-6 text-purple-600 mx-auto mb-1" />
+                <div className="text-lg font-bold text-purple-600">Fast</div>
+                <div className="text-xs text-purple-700 dark:text-purple-300">3-5 Second Transactions</div>
               </div>
-              <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/30 rounded-lg">
-                <DollarSign className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-emerald-600">Low Cost</div>
-                <div className="text-sm text-emerald-700 dark:text-emerald-300">Minimal Transaction Fees</div>
+              <div className="p-3 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/30 rounded-lg">
+                <DollarSign className="w-6 h-6 text-emerald-600 mx-auto mb-1" />
+                <div className="text-lg font-bold text-emerald-600">Low Cost</div>
+                <div className="text-xs text-emerald-700 dark:text-emerald-300">Minimal Transaction Fees</div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-3">
-                <strong>How It Works:</strong> Turn music royalties, patents, real estate, and other intellectual property into tradeable NFTs using blockchain technology for transparent ownership verification.
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground mb-2">
+                <strong>How It Works:</strong> Turn IP into tradeable NFTs with blockchain verification.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-1 justify-center">
                 <Badge variant="secondary" className="text-xs">Transparent Ownership</Badge>
                 <Badge variant="secondary" className="text-xs">Global Marketplace</Badge>
                 <Badge variant="secondary" className="text-xs">Automated Transfers</Badge>
@@ -67,43 +67,43 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
       description: "Secure, decentralized access to the marketplace",
       icon: Wallet,
       content: (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Wallet className="w-10 h-10 text-primary" />
+            <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center mx-auto mb-3">
+              <Wallet className="w-8 h-8 text-primary" />
             </div>
-            <p className="text-muted-foreground mb-6">
-              Your wallet is your secure digital identity. It keeps your rights and earnings completely under your control.
+            <p className="text-muted-foreground text-sm mb-4">
+              Your wallet securely stores your rights and earnings under your complete control.
             </p>
           </div>
 
-          <div className="grid gap-4">
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <Shield className="w-5 h-5 text-green-600" />
+          <div className="grid gap-2">
+            <div className="flex items-center gap-3 p-2 border rounded-lg">
+              <Shield className="w-4 h-4 text-green-600" />
               <div>
-                <div className="font-medium">100% Secure</div>
-                <div className="text-sm text-muted-foreground">You own your private keys</div>
+                <div className="font-medium text-sm">100% Secure</div>
+                <div className="text-xs text-muted-foreground">You own your private keys</div>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <Zap className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-3 p-2 border rounded-lg">
+              <Zap className="w-4 h-4 text-blue-600" />
               <div>
-                <div className="font-medium">Instant Transactions</div>
-                <div className="text-sm text-muted-foreground">Buy and sell rights immediately</div>
+                <div className="font-medium text-sm">Instant Transactions</div>
+                <div className="text-xs text-muted-foreground">Buy and sell rights immediately</div>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
+            <div className="flex items-center gap-3 p-2 border rounded-lg">
+              <TrendingUp className="w-4 h-4 text-purple-600" />
               <div>
-                <div className="font-medium">Automatic Earnings</div>
-                <div className="text-sm text-muted-foreground">Receive royalties directly to your wallet</div>
+                <div className="font-medium text-sm">Automatic Earnings</div>
+                <div className="text-xs text-muted-foreground">Receive royalties directly</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <strong>First Time?</strong> Don't worry! We'll guide you through installing a wallet if needed. It only takes 2 minutes.
+          <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+              <strong>First Time?</strong> We'll guide you through wallet setup - takes only 2 minutes.
             </p>
           </div>
         </div>
@@ -114,20 +114,20 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
       description: "Three ways to get started immediately",
       icon: Upload,
       content: (
-        <div className="space-y-6">
-          <div className="grid gap-4">
+        <div className="space-y-4">
+          <div className="grid gap-3">
             <Link href="/create-right">
               <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-2 border-primary/20 hover:border-primary/40">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Upload className="w-6 h-6 text-primary" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
+                      <Upload className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">Create Your First Right</h3>
-                      <p className="text-sm text-muted-foreground">Upload YouTube videos, music, patents, or other intellectual property</p>
+                      <h3 className="font-semibold">Create Your First Right</h3>
+                      <p className="text-xs text-muted-foreground">Upload YouTube videos, music, patents, or IP</p>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </CardContent>
               </Card>
@@ -135,46 +135,29 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
 
             <Link href="/marketplace">
               <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-2 border-accent/20 hover:border-accent/40">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-accent/20 to-accent/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <TrendingUp className="w-6 h-6 text-accent" />
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-accent/20 to-accent/10 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-accent" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">Explore Marketplace</h3>
-                      <p className="text-sm text-muted-foreground">Browse and invest in rights from creators worldwide</p>
+                      <h3 className="font-semibold">Explore Marketplace</h3>
+                      <p className="text-xs text-muted-foreground">Browse and invest in rights from creators</p>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/docs">
-              <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-2 border-purple-200 dark:border-purple-800 hover:border-purple-400">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Shield className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">Learn the System</h3>
-                      <p className="text-sm text-muted-foreground">Understand legal frameworks and earning potential</p>
-                    </div>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-purple-600 transition-colors" />
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
                   </div>
                 </CardContent>
               </Card>
             </Link>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="font-medium text-green-800 dark:text-green-200">Pro Tip</span>
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="font-medium text-green-800 dark:text-green-200 text-sm">Pro Tip</span>
             </div>
-            <p className="text-sm text-green-700 dark:text-green-300">
-              Start by exploring the marketplace to see what others are earning. Then create your first right to join the ecosystem!
+            <p className="text-xs text-green-700 dark:text-green-300">
+              Start by exploring the marketplace, then create your first right to join the ecosystem!
             </p>
           </div>
         </div>
@@ -251,7 +234,7 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between mb-2">
             <DialogTitle className="flex items-center gap-3 text-xl">
@@ -268,11 +251,11 @@ export function WalletOnboardingJourney({ isOpen, onClose, onWalletConnect }: On
           <Progress value={progress} className="mt-4" />
         </DialogHeader>
         
-        <div className="py-6">
+        <div className="py-4">
           {currentStepData.content}
         </div>
 
-        <div className="flex justify-between pt-6 border-t">
+        <div className="flex justify-between pt-4 border-t">
           <Button 
             variant="outline" 
             onClick={handlePrevious} 
