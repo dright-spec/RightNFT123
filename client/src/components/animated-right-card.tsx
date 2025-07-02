@@ -5,6 +5,7 @@ import { Heart, Eye, TrendingUp, Clock, Shield } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { presets, staggerDelays, specialEffects, animationClasses } from "@/lib/animations";
+import { formatCurrency } from "@/lib/utils";
 import { rightTypeSymbols } from "@shared/schema";
 import type { RightWithCreator } from "@shared/schema";
 
@@ -152,7 +153,7 @@ export function AnimatedRightCard({
           {/* Price and Stats Row */}
           <div className="flex items-center justify-between mb-4">
             <div className={`${presets.rightPrice} ${isHighValue ? specialEffects.highValue : ''}`}>
-              <span className="text-2xl font-bold">{right.price}</span>
+              <span className="text-2xl font-bold">{formatCurrency(parseFloat(right.price || '0'))}</span>
               <span className="text-sm text-muted-foreground ml-1">{right.currency}</span>
             </div>
             
@@ -184,7 +185,7 @@ export function AnimatedRightCard({
                 <div className="text-right">
                   <div className="text-sm text-muted-foreground">Current bid</div>
                   <div className="font-semibold">
-                    {parseFloat(right.price || "0") * 1.2} {right.currency}
+                    {formatCurrency(parseFloat(right.price || "0") * 1.2)} {right.currency}
                   </div>
                 </div>
               </div>

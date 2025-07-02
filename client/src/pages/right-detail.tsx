@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
 // Removed Hedera NFT card - now using Ethereum
 // Removed auto NFT minter - now using backend Ethereum service
 import { 
@@ -291,7 +292,7 @@ export default function RightDetail() {
               <CardContent className="space-y-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-primary">
-                    {right.price} {right.currency}
+                    {formatCurrency(parseFloat(right.price || '0'))} {right.currency}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">Current Price</p>
                 </div>
