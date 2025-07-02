@@ -427,7 +427,7 @@ export default function About() {
                 </Button>
               </Link>
               <Link href="/marketplace">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-4 text-lg">
+                <Button size="lg" variant="ghost" className="border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 px-8 py-4 text-lg backdrop-blur-sm">
                   Explore Marketplace
                 </Button>
               </Link>
