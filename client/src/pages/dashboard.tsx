@@ -129,6 +129,11 @@ export default function Dashboard() {
     'Activity': Activity,
     'Target': Target
   };
+  
+  const renderWidgetIcon = (iconName: string, className: string) => {
+    const IconComponent = iconMap[iconName as keyof typeof iconMap];
+    return IconComponent ? <IconComponent className={className} /> : <DollarSign className={className} />;
+  };
 
   // Load widget configuration from localStorage
   useEffect(() => {
@@ -148,9 +153,13 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Save widget configuration to localStorage
+  // Save widget configuration to localStorage (exclude icon functions)
   useEffect(() => {
-    localStorage.setItem('dashboard-widgets', JSON.stringify(widgets));
+    const saveableWidgets = widgets.map(widget => ({
+      ...widget,
+      icon: undefined // Don't save the function
+    }));
+    localStorage.setItem('dashboard-widgets', JSON.stringify(saveableWidgets));
   }, [widgets]);
 
   // Widget management functions
@@ -573,7 +582,7 @@ export default function Dashboard() {
                         onClick={() => toggleWidget(widget.id)}
                         className="text-xs"
                       >
-                        {widget.icon && <widget.icon className="h-3 w-3 mr-1" />}
+                        {renderWidgetIcon(widget.iconName, "h-3 w-3 mr-1")}
                         {widget.title}
                       </Button>
                     ))}
@@ -601,7 +610,7 @@ export default function Dashboard() {
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      {widget.icon && <widget.icon className="h-4 w-4 text-primary" />}
+                      {renderWidgetIcon(widget.iconName, "h-4 w-4 text-primary")}
                       {widget.title}
                     </CardTitle>
                     {editMode && (
