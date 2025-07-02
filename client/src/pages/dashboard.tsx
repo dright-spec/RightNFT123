@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,6 +113,24 @@ export default function Dashboard() {
   ]);
   const { isAuthenticated, user } = useSession();
 
+  // Load widget configuration from localStorage
+  useEffect(() => {
+    const savedWidgets = localStorage.getItem('dashboard-widgets');
+    if (savedWidgets) {
+      try {
+        const parsedWidgets = JSON.parse(savedWidgets);
+        setWidgets(parsedWidgets);
+      } catch (error) {
+        console.error('Failed to load widget configuration:', error);
+      }
+    }
+  }, []);
+
+  // Save widget configuration to localStorage
+  useEffect(() => {
+    localStorage.setItem('dashboard-widgets', JSON.stringify(widgets));
+  }, [widgets]);
+
   // Widget management functions
   const toggleWidget = (widgetId: string) => {
     setWidgets(prev => 
@@ -132,6 +150,66 @@ export default function Dashboard() {
           : widget
       )
     );
+  };
+
+  const resetToDefault = () => {
+    const defaultWidgets: DashboardWidget[] = [
+      {
+        id: 'earnings',
+        type: 'stats',
+        title: 'Total Earnings',
+        icon: DollarSign,
+        size: 'small',
+        position: { x: 0, y: 0 },
+        visible: true
+      },
+      {
+        id: 'rights',
+        type: 'stats', 
+        title: 'My Rights',
+        icon: Crown,
+        size: 'small',
+        position: { x: 1, y: 0 },
+        visible: true
+      },
+      {
+        id: 'views',
+        type: 'stats',
+        title: 'Total Views',
+        icon: Eye,
+        size: 'small', 
+        position: { x: 2, y: 0 },
+        visible: true
+      },
+      {
+        id: 'performance',
+        type: 'chart',
+        title: 'Performance Overview',
+        icon: BarChart3,
+        size: 'large',
+        position: { x: 0, y: 1 },
+        visible: true
+      },
+      {
+        id: 'activity',
+        type: 'activity',
+        title: 'Recent Activity',
+        icon: Activity,
+        size: 'medium',
+        position: { x: 1, y: 1 },
+        visible: true
+      },
+      {
+        id: 'goals',
+        type: 'goals',
+        title: 'Monthly Goals',
+        icon: Target,
+        size: 'medium',
+        position: { x: 2, y: 1 },
+        visible: true
+      }
+    ];
+    setWidgets(defaultWidgets);
   };
 
   const getWidgetSizeClass = (size: string) => {
@@ -203,7 +281,7 @@ export default function Dashboard() {
           <p className="text-sm">No recent activity</p>
         </div>
       ) : (
-        recentActivity.slice(0, 3).filter(isValidActivity).map((activity, index) => (
+        recentActivity.slice(0, 3).filter(isValidActivity).map((activity: any, index: number) => (
           <div key={index} className="flex items-center gap-3 p-2 border rounded">
             <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
               <CheckCircle className="w-4 h-4 text-primary" />
@@ -390,13 +468,23 @@ export default function Dashboard() {
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <p className="text-muted-foreground">
-                Manage your digital rights portfolio and track performance
+                {editMode ? "Customize your dashboard widgets" : "Manage your digital rights portfolio and track performance"}
               </p>
             </div>
-            <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
-              <Plus className="h-4 w-4" />
-              Create New Right
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant={editMode ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setEditMode(!editMode)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                {editMode ? "Done" : "Customize"}
+              </Button>
+              <Button className="gap-2" onClick={() => setShowCreateModal(true)}>
+                <Plus className="h-4 w-4" />
+                Create New Right
+              </Button>
+            </div>
           </div>
 
         {/* User Profile Card */}
@@ -438,23 +526,83 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {dashboardStats.map((stat) => (
-            <Card key={stat.title} className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mb-2">{stat.description}</p>
-                <div className="text-xs flex items-center gap-1 text-gray-600">
-                  {stat.change}
+        {/* Personalized Widget Grid */}
+        <div className="space-y-4">
+          {editMode && (
+            <Card className="border-dashed border-2 border-primary/50 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Settings className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-primary">Widget Controls</span>
+                </div>
+                <div className="flex flex-wrap gap-2 justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    {widgets.map((widget) => (
+                      <Button
+                        key={widget.id}
+                        variant={widget.visible ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => toggleWidget(widget.id)}
+                        className="text-xs"
+                      >
+                        <widget.icon className="h-3 w-3 mr-1" />
+                        {widget.title}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={resetToDefault}
+                    className="text-xs"
+                  >
+                    Reset to Default
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          )}
+          
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {widgets
+              .filter(widget => widget.visible)
+              .map((widget) => (
+                <Card 
+                  key={widget.id} 
+                  className={`relative overflow-hidden ${getWidgetSizeClass(widget.size)} ${editMode ? 'border-primary/50 shadow-lg' : ''}`}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <widget.icon className="h-4 w-4 text-primary" />
+                      {widget.title}
+                    </CardTitle>
+                    {editMode && (
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => resizeWidget(widget.id, widget.size === 'small' ? 'medium' : widget.size === 'medium' ? 'large' : 'small')}
+                          className="h-6 w-6 p-0"
+                        >
+                          {widget.size === 'small' ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleWidget(widget.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {renderWidgetContent(widget)}
+                  </CardContent>
+                </Card>
+              ))}
+          </div>
         </div>
 
         {/* Main Content Tabs */}
