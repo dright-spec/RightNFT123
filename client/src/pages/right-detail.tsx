@@ -1,11 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
+import { PurchaseModal } from "@/components/purchase-modal";
 import { useToast } from "@/hooks/use-toast";
+import { useWalletUser } from "@/hooks/use-wallet-user";
 import { formatCurrency } from "@/lib/utils";
 // Removed Hedera NFT card - now using Ethereum
 // Removed auto NFT minter - now using backend Ethereum service
@@ -18,7 +21,9 @@ import {
   Calendar,
   Hash,
   Shield,
-  TrendingUp
+  TrendingUp,
+  Wallet,
+  ShoppingCart
 } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
@@ -26,15 +31,43 @@ import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
 export default function RightDetail() {
   const { id } = useParams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { isConnected, connectWallet } = useWalletUser();
+
+  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
 
   const { data: right, isLoading, error } = useQuery<RightWithCreator>({
     queryKey: [`/api/rights/${id}`],
   });
 
-  const handlePurchase = () => {
+  const handlePurchase = async () => {
+    // Check if wallet is connected first
+    if (!isConnected) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to purchase this right",
+        variant: "destructive",
+      });
+      
+      // Attempt to connect wallet
+      const success = await connectWallet();
+      if (!success) {
+        return; // Exit if wallet connection failed
+      }
+    }
+
+    // Open purchase modal once wallet is connected
+    setIsPurchaseModalOpen(true);
+  };
+
+  const handlePurchaseComplete = () => {
+    // Refresh the right data to show updated ownership
+    queryClient.invalidateQueries({ queryKey: [`/api/rights/${id}`] });
+    queryClient.invalidateQueries({ queryKey: ['/api/rights'] });
+    
     toast({
-      title: "Purchase Initiated",
-      description: "Redirecting to payment gateway...",
+      title: "Purchase Successful!",
+      description: "You now own this right. Check your dashboard to manage it.",
     });
   };
 
@@ -299,8 +332,25 @@ export default function RightDetail() {
                 
                 <Separator />
                 
-                <Button className="w-full" size="lg" onClick={handlePurchase}>
-                  Buy Right
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={handlePurchase}
+                  disabled={!right.isListed}
+                >
+                  {!isConnected ? (
+                    <>
+                      <Wallet className="w-4 h-4 mr-2" />
+                      Connect Wallet to Buy
+                    </>
+                  ) : !right.isListed ? (
+                    'Not Available for Sale'
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Buy for {formatCurrency(parseFloat(right.price || '0'))} {right.currency}
+                    </>
+                  )}
                 </Button>
                 
                 <p className="text-xs text-muted-foreground text-center">
@@ -374,6 +424,16 @@ export default function RightDetail() {
           </div>
         </div>
       </div>
+
+      {/* Purchase Modal */}
+      {right && (
+        <PurchaseModal
+          isOpen={isPurchaseModalOpen}
+          onClose={() => setIsPurchaseModalOpen(false)}
+          right={right}
+          onPurchaseComplete={handlePurchaseComplete}
+        />
+      )}
     </div>
   );
 }

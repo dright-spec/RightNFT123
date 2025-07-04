@@ -2290,6 +2290,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Purchase right endpoint - handles ownership transfer after blockchain transaction
+  app.post("/api/rights/:id/purchase", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const { newOwnerAddress, transactionHash } = req.body;
+
+      if (!rightId || !newOwnerAddress || !transactionHash) {
+        return res.status(400).json({ 
+          error: "Right ID, new owner address, and transaction hash are required" 
+        });
+      }
+
+      // Validate Ethereum address format
+      const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+      if (!addressRegex.test(newOwnerAddress)) {
+        return res.status(400).json({ error: "Invalid Ethereum address format" });
+      }
+
+      // Validate transaction hash format
+      const txHashRegex = /^0x[a-fA-F0-9]{64}$/;
+      if (!txHashRegex.test(transactionHash)) {
+        return res.status(400).json({ error: "Invalid transaction hash format" });
+      }
+
+      // Get current right details
+      const right = await storage.getRight(rightId);
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+
+      // Check if right is available for purchase
+      if (!right.isListed) {
+        return res.status(400).json({ error: "Right is not available for purchase" });
+      }
+
+      // Find or create user for the new owner
+      let newOwner = await storage.getUserByWalletAddress(newOwnerAddress);
+      if (!newOwner) {
+        // Create new user account for the wallet address
+        newOwner = await storage.createUser({
+          username: `user_${newOwnerAddress.slice(0, 8)}`,
+          email: `${newOwnerAddress.toLowerCase()}@wallet.address`,
+          walletAddress: newOwnerAddress,
+        });
+      }
+
+      // Update right ownership
+      const updatedRight = await storage.updateRight(rightId, {
+        ownerId: newOwner.id,
+        isListed: false, // Remove from marketplace after purchase
+        transactionHash: transactionHash,
+      });
+
+      if (!updatedRight) {
+        return res.status(500).json({ error: "Failed to update right ownership" });
+      }
+
+      // Create transaction record
+      await storage.createTransaction({
+        rightId: rightId,
+        buyerId: newOwner.id,
+        sellerId: right.ownerId,
+        amount: parseFloat(right.price || '0'),
+        currency: right.currency || 'ETH',
+        transactionHash: transactionHash,
+        status: 'completed',
+        type: 'purchase',
+      });
+
+      res.json({
+        success: true,
+        message: "Ownership transferred successfully",
+        right: updatedRight,
+        transactionHash: transactionHash,
+      });
+
+    } catch (error) {
+      console.error("Purchase update failed:", error);
+      res.status(500).json({ error: "Failed to update purchase in database" });
+    }
+  });
+
+  // Get purchase breakdown endpoint
+  app.get("/api/purchase/breakdown/:rightId", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.rightId);
+      
+      const right = await storage.getRight(rightId);
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+
+      const itemPrice = parseFloat(right.price || '0');
+      const platformFeePercentage = 2.5; // 2.5% platform fee
+      const royaltyPercentage = 5.0;     // 5% creator royalty
+      const gasFeeBuffer = 0.001;        // 0.001 ETH gas buffer
+
+      const platformFee = (itemPrice * platformFeePercentage) / 100;
+      const royaltyFee = (itemPrice * royaltyPercentage) / 100;
+      const gasFee = gasFeeBuffer;
+      const totalAmount = itemPrice + platformFee + royaltyFee + gasFee;
+
+      res.json({
+        itemPrice,
+        platformFee,
+        royaltyFee,
+        gasFee,
+        totalAmount,
+        currency: right.currency || 'ETH',
+        breakdown: {
+          itemPrice: `${itemPrice} ETH`,
+          platformFee: `${platformFee.toFixed(4)} ETH (${platformFeePercentage}%)`,
+          royaltyFee: `${royaltyFee.toFixed(4)} ETH (${royaltyPercentage}%)`,
+          gasFee: `${gasFee} ETH (estimated)`,
+          totalAmount: `${totalAmount.toFixed(4)} ETH`,
+        }
+      });
+
+    } catch (error) {
+      console.error("Failed to calculate purchase breakdown:", error);
+      res.status(500).json({ error: "Failed to calculate purchase breakdown" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
