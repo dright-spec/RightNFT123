@@ -133,14 +133,8 @@ export function Web3ModalConnectButton() {
   }
 
   const handleConnectClick = () => {
-    // Check if user has completed onboarding before
-    const hasCompletedOnboarding = localStorage.getItem('dright_onboarding_completed');
-    
-    if (!hasCompletedOnboarding) {
-      setShowOnboarding(true);
-    } else {
-      setIsOpen(true);
-    }
+    // Show wallet modal immediately for better conversions
+    setIsOpen(true);
   };
 
   return (

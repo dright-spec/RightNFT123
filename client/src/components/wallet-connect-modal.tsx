@@ -47,34 +47,34 @@ export function WalletConnectModal({
         // fallback defaults (all fields filled)
         setWallets([
           {
-            id: "hashpack",
-            name: "HashPack",
-            description: "Official Hedera wallet with native HTS support",
-            icon: "🟡",
-            isAvailable: Boolean((window as any).hashpack),
-            isRecommended: true,
-            isHederaNative: true,
-            downloadUrl: "https://www.hashpack.app/",
-          },
-          {
             id: "metamask",
             name: "MetaMask",
-            description: "Popular Ethereum wallet",
+            description: "Popular Ethereum wallet with extensive dApp support",
             icon: "🦊",
             isAvailable: Boolean((window as any).ethereum?.isMetaMask),
-            isRecommended: false,
-            isHederaNative: false,
-            downloadUrl: "https://metamask.io/",
+            isRecommended: true,
+            isEthereumNative: true,
+            downloadUrl: "https://metamask.io/download/",
           },
           {
             id: "walletconnect",
             name: "WalletConnect",
-            description: "Connect using WalletConnect protocol",
+            description: "Connect to mobile wallets via QR code",
             icon: "🔗",
             isAvailable: true,
             isRecommended: false,
-            isHederaNative: false,
+            isEthereumNative: true,
             downloadUrl: "https://walletconnect.com/",
+          },
+          {
+            id: "coinbase",
+            name: "Coinbase Wallet",
+            description: "Connect with Coinbase Wallet",
+            icon: "🟦",
+            isAvailable: Boolean((window as any).ethereum?.isCoinbaseWallet),
+            isRecommended: false,
+            isEthereumNative: true,
+            downloadUrl: "https://www.coinbase.com/wallet",
           },
         ]);
       } finally {
@@ -127,7 +127,7 @@ export function WalletConnectModal({
             Connect Wallet
           </DialogTitle>
           <DialogDescription>
-            Choose a wallet. HashPack is recommended for Hedera.
+            Choose your preferred wallet to get started quickly.
           </DialogDescription>
         </DialogHeader>
 
@@ -170,9 +170,9 @@ export function WalletConnectModal({
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {w.description}
                       </p>
-                      {w.isHederaNative && (
-                        <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                          Hedera Native
+                      {w.isEthereumNative && (
+                        <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                          Ethereum Native
                         </span>
                       )}
                     </div>
