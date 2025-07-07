@@ -49,7 +49,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
       videoId: video.id,
       listingType: 'fixed' as const,
       price: "10",
-      currency: "ETH",
+      currency: "HBAR",
       royaltyPercentage: 7.5,
       paysDividends: false,
       startingBid: "1",
@@ -60,7 +60,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkListingType, setBulkListingType] = useState<'fixed' | 'auction'>('fixed');
   const [bulkPrice, setBulkPrice] = useState("10");
-  const [bulkCurrency, setBulkCurrency] = useState("ETH");
+  const [bulkCurrency, setBulkCurrency] = useState("HBAR");
   const [bulkRoyalty, setBulkRoyalty] = useState(7.5);
   const [bulkStartingBid, setBulkStartingBid] = useState("1");
   const [bulkReservePrice, setBulkReservePrice] = useState("5");
@@ -193,7 +193,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ETH">ETH</SelectItem>
+                    <SelectItem value="HBAR">HBAR</SelectItem>
                     <SelectItem value="USD">USD</SelectItem>
                   </SelectContent>
                 </Select>
@@ -354,7 +354,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="ETH">ETH</SelectItem>
+                              <SelectItem value="HBAR">HBAR</SelectItem>
                               <SelectItem value="USD">USD</SelectItem>
                             </SelectContent>
                           </Select>

@@ -36,44 +36,60 @@ export function SleekWalletModal({
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Show wallet options immediately when modal opens
+  // Detect wallets when `open` goes true
   useEffect(() => {
     if (!open) return;
-    
-    // Set wallets immediately without async detection for better UX
-    setWallets([
-      {
-        id: "metamask",
-        name: "MetaMask",
-        description: "Popular Ethereum wallet with extensive dApp support",
-        icon: "🦊",
-        isAvailable: Boolean((window as any).ethereum?.isMetaMask),
-        isRecommended: true,
-        isEthereumNative: true,
-        downloadUrl: "https://metamask.io/download/",
-      },
-      {
-        id: "walletconnect",
-        name: "WalletConnect",
-        description: "Connect to mobile wallets via QR code",
-        icon: "🔗",
-        isAvailable: true,
-        isRecommended: false,
-        isEthereumNative: true,
-        downloadUrl: "https://walletconnect.com/",
-      },
-      {
-        id: "coinbase",
-        name: "Coinbase Wallet",
-        description: "Connect with Coinbase Wallet",
-        icon: "🟦",
-        isAvailable: Boolean((window as any).ethereum?.isCoinbaseWallet),
-        isRecommended: false,
-        isEthereumNative: true,
-        downloadUrl: "https://www.coinbase.com/wallet",
-      },
-    ]);
-    setLoading(false);
+    let active = true;
+    setLoading(true);
+
+    (async () => {
+      try {
+        const detected = await detectAvailableWallets();
+        if (!active) return;
+        setWallets(detected);
+      } catch {
+        if (!active) return;
+        // fallback defaults (all fields filled)
+        setWallets([
+          {
+            id: "metamask",
+            name: "MetaMask",
+            description: "Popular Ethereum wallet with extensive dApp support",
+            icon: "🦊",
+            isAvailable: Boolean((window as any).ethereum?.isMetaMask),
+            isRecommended: true,
+            isEthereumNative: true,
+            downloadUrl: "https://metamask.io/download/",
+          },
+          {
+            id: "walletconnect",
+            name: "WalletConnect",
+            description: "Connect to mobile wallets via QR code",
+            icon: "🔗",
+            isAvailable: true,
+            isRecommended: false,
+            isEthereumNative: true,
+            downloadUrl: "https://walletconnect.com/",
+          },
+          {
+            id: "coinbase",
+            name: "Coinbase Wallet",
+            description: "Connect with Coinbase Wallet",
+            icon: "🟦",
+            isAvailable: Boolean((window as any).ethereum?.isCoinbaseWallet),
+            isRecommended: false,
+            isEthereumNative: true,
+            downloadUrl: "https://www.coinbase.com/wallet",
+          },
+        ]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, [open]);
 
   const handleConnect = useCallback(
@@ -113,10 +129,10 @@ export function SleekWalletModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="text-2xl">🔗</span>
-            Connect Your Wallet
+            Connect Wallet
           </DialogTitle>
           <DialogDescription>
-            Connect in seconds to start buying, selling, and trading rights. MetaMask is most popular.
+            Choose a wallet. MetaMask is recommended for Ethereum.
           </DialogDescription>
         </DialogHeader>
 

@@ -124,7 +124,7 @@ export function RightCard({ right }: RightCardProps) {
               {formatCurrency(parseFloat(right.price || '0'))}
             </div>
             <div className="text-xs text-muted-foreground truncate">
-              {right.currency || 'ETH'}
+              {right.currency || 'HBAR'}
             </div>
           </div>
         </div>

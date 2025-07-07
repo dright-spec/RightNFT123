@@ -15,7 +15,7 @@ import { NFTViewer } from "@/components/nft-viewer";
 import { AdminDocumentViewer } from "@/components/admin-document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { EthereumTestPanel } from "@/components/ethereum-test-panel";
+import { HederaTestPanel } from "@/components/hedera-test-panel";
 import { 
   Users, 
   FileText, 
@@ -267,11 +267,11 @@ export default function Admin() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="h-8 w-8 bg-primary/20 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-bold">Ξ</span>
+                  <span className="text-primary font-bold">ℏ</span>
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 ETH"}</p>
+                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 HBAR"}</p>
                 </div>
               </div>
             </CardContent>
@@ -298,7 +298,7 @@ export default function Admin() {
             <TabsTrigger value="verification">Verification</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="ethereum">Ethereum</TabsTrigger>
+            <TabsTrigger value="hedera">Hedera</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -339,7 +339,7 @@ export default function Admin() {
                       <Badge className="bg-green-100 text-green-800">Healthy</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Ethereum Network</span>
+                      <span className="text-sm text-muted-foreground">Hedera Network</span>
                       <Badge className="bg-green-100 text-green-800">Connected</Badge>
                     </div>
                     <div className="flex justify-between items-center">
@@ -445,7 +445,7 @@ export default function Admin() {
                                   </Badge>
                                   {right.price && (
                                     <Badge variant="secondary" className="bg-green-100 text-green-800">
-                                      {right.price} {right.currency || 'ETH'}
+                                      {right.price} {right.currency || 'HBAR'}
                                     </Badge>
                                   )}
                                   {right.contentSource && (
@@ -620,7 +620,7 @@ export default function Admin() {
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Pricing</div>
-                                                    <div className="text-gray-800">{selectedRight?.price || 'Free'} {selectedRight?.currency || 'ETH'}</div>
+                                                    <div className="text-gray-800">{selectedRight?.price || 'Free'} {selectedRight?.currency || 'HBAR'}</div>
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Current Status</div>
@@ -898,16 +898,16 @@ export default function Admin() {
             <PerformanceDashboard />
           </TabsContent>
 
-          {/* Ethereum Tab */}
-          <TabsContent value="ethereum" className="space-y-6">
+          {/* Hedera Tab */}
+          <TabsContent value="hedera" className="space-y-6">
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold mb-2">Ethereum Network Integration</h2>
+                <h2 className="text-2xl font-bold mb-2">Hedera Testnet Integration</h2>
                 <p className="text-muted-foreground">
-                  Test and monitor the Ethereum blockchain integration for NFT minting
+                  Test and monitor the Hedera blockchain integration for NFT minting
                 </p>
               </div>
-              <EthereumTestPanel />
+              <HederaTestPanel />
             </div>
           </TabsContent>
         </Tabs>

@@ -17,14 +17,14 @@ const chains = [
   {
     chainId: 295,
     name: 'Hedera Mainnet',
-    currency: 'ETH',
+    currency: 'HBAR',
     explorerUrl: 'https://hashscan.io/mainnet',
     rpcUrl: 'https://mainnet.hashio.io/api'
   },
   {
     chainId: 296,
     name: 'Hedera Testnet', 
-    currency: 'ETH',
+    currency: 'HBAR',
     explorerUrl: 'https://hashscan.io/testnet',
     rpcUrl: 'https://testnet.hashio.io/api'
   }

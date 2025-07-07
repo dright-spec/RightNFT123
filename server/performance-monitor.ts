@@ -13,7 +13,7 @@ export interface RealTimeMetrics {
     memoryUsage: number;
     responseTime: number;
   };
-  ethereumNetwork: {
+  hederaNetwork: {
     status: 'healthy' | 'degraded' | 'down';
     lastTransactionTime: Date | null;
     pendingTransactions: number;
@@ -82,8 +82,8 @@ export class PerformanceMonitor {
       // System performance metrics
       const systemLoad = this.getSystemLoad();
       
-      // Ethereum network status
-      const ethereumStatus = await this.checkEthereumStatus();
+      // Hedera network status
+      const hederaStatus = await this.checkHederaStatus();
 
       const metrics: RealTimeMetrics = {
         timestamp: now,
@@ -91,7 +91,7 @@ export class PerformanceMonitor {
         pendingVerifications: pendingVerificationsResult[0]?.count || 0,
         recentTransactions: recentTransactionsResult[0]?.count || 0,
         systemLoad,
-        ethereumNetwork: ethereumStatus,
+        hederaNetwork: hederaStatus,
         verification: verificationStats,
         revenue: {
           todayTotal: Number(todayTransactionsResult[0]?.total || 0),
@@ -167,11 +167,11 @@ export class PerformanceMonitor {
   }
 
   /**
-   * Check Ethereum network status
+   * Check Hedera network status
    */
-  private async checkEthereumStatus() {
+  private async checkHederaStatus() {
     try {
-      // In production, this would check actual Ethereum network status
+      // In production, this would check actual Hedera network status
       const lastTransactionTime = await db
         .select({ createdAt: transactions.createdAt })
         .from(transactions)
@@ -313,7 +313,7 @@ export class PerformanceMonitor {
         activeUsers: latest.activeUsers,
         pendingVerifications: latest.pendingVerifications,
         systemLoad: latest.systemLoad.memoryUsage,
-        ethereumStatus: latest.ethereumNetwork.status
+        hederaStatus: latest.hederaNetwork.status
       } : null
     };
   }

@@ -30,7 +30,7 @@ interface RealTimeMetrics {
     memoryUsage: number;
     responseTime: number;
   };
-  ethereumNetwork: {
+  hederaNetwork: {
     status: 'healthy' | 'degraded' | 'down';
     lastTransactionTime: string | null;
     pendingTransactions: number;
@@ -65,7 +65,7 @@ interface PerformanceSummary {
     activeUsers: number;
     pendingVerifications: number;
     systemLoad: number;
-    ethereumStatus: string;
+    hederaStatus: string;
   } | null;
 }
 
@@ -213,7 +213,7 @@ export function PerformanceDashboard() {
       <Tabs defaultValue="metrics" className="space-y-4">
         <TabsList>
           <TabsTrigger value="metrics">System Metrics</TabsTrigger>
-          <TabsTrigger value="ethereum">Ethereum Network</TabsTrigger>
+          <TabsTrigger value="hedera">Hedera Network</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
@@ -285,11 +285,11 @@ export function PerformanceDashboard() {
                   <p className="text-sm text-muted-foreground">Recent Transactions</p>
                 </div>
                 <div className="text-center p-4 bg-muted/30 rounded">
-                  <div className="text-2xl font-bold">{metrics?.revenue.todayTotal.toFixed(2) || 0} ETH</div>
+                  <div className="text-2xl font-bold">{metrics?.revenue.todayTotal.toFixed(2) || 0} ℏ</div>
                   <p className="text-sm text-muted-foreground">Today's Revenue</p>
                 </div>
                 <div className="text-center p-4 bg-muted/30 rounded">
-                  <div className="text-2xl font-bold">{metrics?.revenue.hourlyRate.toFixed(2) || 0} ETH</div>
+                  <div className="text-2xl font-bold">{metrics?.revenue.hourlyRate.toFixed(2) || 0} ℏ</div>
                   <p className="text-sm text-muted-foreground">Hourly Rate</p>
                 </div>
               </div>
@@ -297,10 +297,10 @@ export function PerformanceDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="ethereum" className="space-y-4">
+        <TabsContent value="hedera" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Ethereum Network Status</CardTitle>
+              <CardTitle>Hedera Network Status</CardTitle>
               <CardDescription>Blockchain connectivity and transaction monitoring</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -308,17 +308,17 @@ export function PerformanceDashboard() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span>Network Status</span>
-                    {getStatusBadge(metrics?.ethereumNetwork.status || 'unknown')}
+                    {getStatusBadge(metrics?.hederaNetwork.status || 'unknown')}
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Pending Transactions</span>
-                    <Badge variant="outline">{metrics?.ethereumNetwork.pendingTransactions || 0}</Badge>
+                    <Badge variant="outline">{metrics?.hederaNetwork.pendingTransactions || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Last Transaction</span>
                     <Badge variant="secondary">
-                      {metrics?.ethereumNetwork.lastTransactionTime 
-                        ? new Date(metrics.ethereumNetwork.lastTransactionTime).toLocaleString()
+                      {metrics?.hederaNetwork.lastTransactionTime 
+                        ? new Date(metrics.hederaNetwork.lastTransactionTime).toLocaleString()
                         : 'Unknown'
                       }
                     </Badge>
@@ -328,13 +328,13 @@ export function PerformanceDashboard() {
                   <div className="p-4 bg-muted/30 rounded">
                     <p className="text-sm font-medium mb-2">Network Health</p>
                     <div className="flex items-center gap-2">
-                      {metrics?.ethereumNetwork.status === 'healthy' ? (
+                      {metrics?.hederaNetwork.status === 'healthy' ? (
                         <CheckCircle className="w-4 h-4 text-green-600" />
                       ) : (
                         <AlertCircle className="w-4 h-4 text-yellow-600" />
                       )}
                       <span className="text-sm">
-                        {metrics?.ethereumNetwork.status === 'healthy' 
+                        {metrics?.hederaNetwork.status === 'healthy' 
                           ? 'All systems operational' 
                           : 'Monitoring for issues'
                         }

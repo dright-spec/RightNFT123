@@ -19,8 +19,6 @@ import {
   type InsertTransaction,
   type InsertCategory,
   type InsertBid,
-  type InsertFavorite,
-  type InsertFollow,
   defaultCategories,
 } from "@shared/schema";
 import { db } from "./db";

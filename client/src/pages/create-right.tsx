@@ -654,7 +654,7 @@ export default function CreateRight() {
       description: "",
       type: "copyright",
       price: "",
-      currency: "ETH",
+      currency: "HBAR",
       paysDividends: false,
       tags: [],
       contentSource: "youtube_video",
@@ -816,7 +816,7 @@ export default function CreateRight() {
               tags: [video.channelTitle, 'YouTube', 'Video Content'],
               listingType: pricing.listingType,
               price: pricing.price,
-              currency: "ETH",
+              currency: "HBAR",
               royaltyPercentage: pricing.royaltyPercentage.toString(),
               paysDividends: pricing.paysDividends,
               startingBid: pricing.startingBid,
@@ -867,7 +867,7 @@ export default function CreateRight() {
           verificationFiles: verificationData?.files || [],
           youtubeData: verificationData?.youtubeData,
           isListed: false, // Non-YouTube content starts unlisted until verified
-          currency: "ETH",
+          currency: "HBAR",
         };
 
         setUploadProgress(90);
@@ -1643,7 +1643,7 @@ export default function CreateRight() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="ETH">ETH</SelectItem>
+                                  <SelectItem value="HBAR">HBAR</SelectItem>
                                   <SelectItem value="USD">USD</SelectItem>
                                 </SelectContent>
                               </Select>

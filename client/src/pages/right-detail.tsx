@@ -1,17 +1,13 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
-import { PurchaseModal } from "@/components/purchase-modal";
 import { useToast } from "@/hooks/use-toast";
-import { useWalletUser } from "@/hooks/use-wallet-user";
-import { formatCurrency } from "@/lib/utils";
-// Removed Hedera NFT card - now using Ethereum
-// Removed auto NFT minter - now using backend Ethereum service
+import { HederaNFTCard } from "@/components/hedera-nft-card";
+import { AutoNFTMinter } from "@/components/auto-nft-minter";
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -21,9 +17,7 @@ import {
   Calendar,
   Hash,
   Shield,
-  TrendingUp,
-  Wallet,
-  ShoppingCart
+  TrendingUp
 } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
@@ -31,43 +25,15 @@ import { rightTypeSymbols, rightTypeLabels } from "@shared/schema";
 export default function RightDetail() {
   const { id } = useParams();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { isConnected, connectWallet } = useWalletUser();
-
-  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
 
   const { data: right, isLoading, error } = useQuery<RightWithCreator>({
     queryKey: [`/api/rights/${id}`],
   });
 
-  const handlePurchase = async () => {
-    // Check if wallet is connected first
-    if (!isConnected) {
-      toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to purchase this right",
-        variant: "destructive",
-      });
-      
-      // Attempt to connect wallet
-      const success = await connectWallet();
-      if (!success) {
-        return; // Exit if wallet connection failed
-      }
-    }
-
-    // Open purchase modal once wallet is connected
-    setIsPurchaseModalOpen(true);
-  };
-
-  const handlePurchaseComplete = () => {
-    // Refresh the right data to show updated ownership
-    queryClient.invalidateQueries({ queryKey: [`/api/rights/${id}`] });
-    queryClient.invalidateQueries({ queryKey: ['/api/rights'] });
-    
+  const handlePurchase = () => {
     toast({
-      title: "Purchase Successful!",
-      description: "You now own this right. Check your dashboard to manage it.",
+      title: "Purchase Initiated",
+      description: "Redirecting to payment gateway...",
     });
   };
 
@@ -143,7 +109,8 @@ export default function RightDetail() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* NFT minting now handled by backend Ethereum service */}
+        {/* Auto NFT Minter - handles automatic minting when right is verified */}
+        <AutoNFTMinter rightId={right.id} />
         
         {/* Title Section */}
         <div className="mb-8">
@@ -240,37 +207,8 @@ export default function RightDetail() {
               </Card>
             )}
 
-            {/* NFT Information - Now on Ethereum */}
-            {right.contractAddress && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Hash className="w-5 h-5" />
-                    NFT Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Contract Address</p>
-                      <p className="font-mono text-sm break-all">{right.contractAddress}</p>
-                    </div>
-                    {right.tokenId && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Token ID</p>
-                        <p className="font-mono text-sm">{right.tokenId}</p>
-                      </div>
-                    )}
-                    {right.transactionHash && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Transaction Hash</p>
-                        <p className="font-mono text-sm break-all">{right.transactionHash}</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Hedera NFT Information */}
+            <HederaNFTCard right={right} />
 
             {/* Technical Details */}
             <Card>
@@ -325,32 +263,15 @@ export default function RightDetail() {
               <CardContent className="space-y-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-primary">
-                    {formatCurrency(parseFloat(right.price || '0'))} {right.currency}
+                    {right.price} {right.currency}
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">Current Price</p>
                 </div>
                 
                 <Separator />
                 
-                <Button 
-                  className="w-full" 
-                  size="lg" 
-                  onClick={handlePurchase}
-                  disabled={!right.isListed}
-                >
-                  {!isConnected ? (
-                    <>
-                      <Wallet className="w-4 h-4 mr-2" />
-                      Connect Wallet to Buy
-                    </>
-                  ) : !right.isListed ? (
-                    'Not Available for Sale'
-                  ) : (
-                    <>
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Buy for {formatCurrency(parseFloat(right.price || '0'))} {right.currency}
-                    </>
-                  )}
+                <Button className="w-full" size="lg" onClick={handlePurchase}>
+                  Buy Right
                 </Button>
                 
                 <p className="text-xs text-muted-foreground text-center">
@@ -424,16 +345,6 @@ export default function RightDetail() {
           </div>
         </div>
       </div>
-
-      {/* Purchase Modal */}
-      {right && (
-        <PurchaseModal
-          isOpen={isPurchaseModalOpen}
-          onClose={() => setIsPurchaseModalOpen(false)}
-          right={right}
-          onPurchaseComplete={handlePurchaseComplete}
-        />
-      )}
     </div>
   );
 }

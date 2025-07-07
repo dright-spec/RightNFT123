@@ -399,47 +399,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Session check endpoint
-  app.get('/api/auth/session', async (req, res) => {
-    try {
-      const userId = req.session?.userId;
-      const walletAddress = req.session?.walletAddress;
-      
-      if (!userId && !walletAddress) {
-        return res.json({ 
-          isAuthenticated: false, 
-          user: null 
-        });
-      }
-      
-      let user = null;
-      if (userId) {
-        user = await storage.getUser(userId);
-      } else if (walletAddress) {
-        user = await storage.getUserByWalletAddress(walletAddress);
-        if (user) {
-          req.session.userId = user.id;
-        }
-      }
-      
-      if (!user) {
-        return res.json({ 
-          isAuthenticated: false, 
-          user: null 
-        });
-      }
-      
-      const { password, ...userWithoutPassword } = user;
-      res.json({ 
-        isAuthenticated: true, 
-        user: userWithoutPassword 
-      });
-    } catch (error) {
-      console.error('Session check error:', error);
-      res.status(500).json({ error: 'Failed to check session' });
-    }
-  });
-
   // Verify email token (optional enhancement)
   app.post('/api/verify-email', async (req, res) => {
     try {
@@ -605,16 +564,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   async function triggerUserControlledNFTMinting(right: any) {
     console.log(`Starting user-controlled NFT minting for right ${right.id}: ${right.title}`);
     
-    // Initialize simplified, user-friendly minting status
+    // Initialize minting status
     mintingStatus.set(right.id, {
       rightId: right.id,
       status: "processing",
       currentStep: 0,
       steps: [
-        { id: "preparing", title: "🎯 Preparing Your NFT", status: "processing" },
-        { id: "certificate", title: "📜 Creating Digital Certificate", status: "pending" },
-        { id: "blockchain", title: "⛓️ Recording on Blockchain", status: "pending" },
-        { id: "marketplace", title: "🏪 Adding to Marketplace", status: "pending" }
+        { id: "verification", title: "Verification Complete", status: "completed" },
+        { id: "metadata", title: "Metadata Preparation", status: "processing" },
+        { id: "ipfs", title: "IPFS Upload", status: "pending" },
+        { id: "token-creation", title: "Hedera Token Creation", status: "pending" },
+        { id: "minting", title: "NFT Minting", status: "pending" },
+        { id: "marketplace", title: "Marketplace Listing", status: "pending" }
       ],
       startedAt: new Date().toISOString()
     });
@@ -636,7 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           { trait_type: "Creator", value: right.creatorId },
           { trait_type: "Listing Type", value: right.listingType || "buy_now" },
           { trait_type: "Price", value: right.price || "0" },
-          { trait_type: "Currency", value: right.currency || "ETH" }
+          { trait_type: "Currency", value: right.currency || "HBAR" }
         ],
         rightDetails: {
           type: right.type,
@@ -651,44 +612,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metadataUri = JSON.stringify(metadata);
       updateMintingStep(right.id, 2, "completed");
       
-      // Step 3: Get creator for comprehensive metadata
+      // Step 3: Create Hedera NFT Token
       updateMintingStep(right.id, 3, "processing");
-      const creator = await storage.getUser(right.creatorId);
-      if (!creator) {
-        throw new Error("Creator information not found");
-      }
+      const { hederaNFTService } = await import("./hedera");
+      
+      const tokenInfo = await hederaNFTService.createNFTToken({
+        name: `Dright ${right.type} #${right.id}`,
+        symbol: `DR${right.type.substring(0, 3).toUpperCase()}`,
+        memo: `Tokenized ${right.type} right: ${right.title}`,
+        maxSupply: 1
+      });
       updateMintingStep(right.id, 3, "completed");
       
-      // Step 4: Mint comprehensive rights NFT on Ethereum
+      // Step 4: Mint NFT on Hedera testnet
       updateMintingStep(right.id, 4, "processing");
-      const { ethereumNFTService } = await import("./ethereum");
-      const mintResult = await ethereumNFTService.mintRightNFT(right, creator);
+      const mintResult = await hederaNFTService.mintNFT({
+        tokenId: tokenInfo.tokenId,
+        metadata: metadataUri
+      });
       updateMintingStep(right.id, 4, "completed");
       
-      // Step 3: Marketplace Listing
-      updateMintingStep(right.id, 3, "processing");
+      // Step 5: Marketplace Listing
+      updateMintingStep(right.id, 5, "processing");
       await storage.updateRight(right.id, {
-        contractAddress: mintResult.contractAddress,
-        tokenId: mintResult.tokenId,
-        transactionHash: mintResult.transactionHash,
-        ownerAddress: creator.walletAddress || mintResult.contractAddress,
+        hederaTokenId: mintResult.tokenId,
+        hederaSerialNumber: mintResult.serialNumber,
+        hederaTransactionId: mintResult.transactionId,
+        hederaAccountId: process.env.HEDERA_ACCOUNT_ID!,
         metadataUri: mintResult.metadataUri,
         mintingStatus: "completed",
         isListed: true
       });
-      updateMintingStep(right.id, 3, "completed");
+      updateMintingStep(right.id, 5, "completed");
 
       const results = {
-        contractAddress: mintResult.contractAddress,
         tokenId: mintResult.tokenId,
-        transactionHash: mintResult.transactionHash,
+        serialNumber: mintResult.serialNumber,
+        transactionId: mintResult.transactionId,
         metadataUri: mintResult.metadataUri,
         explorerUrl: mintResult.explorerUrl,
         mintedAt: new Date().toISOString(),
         status: "completed"
       };
 
-      console.log(`Real NFT minted successfully on Ethereum: ${results.contractAddress}/${results.tokenId}`);
+      console.log(`Real NFT minted successfully on Hedera: ${results.tokenId}/${results.serialNumber}`);
 
       // Mark minting as completed
       const status = mintingStatus.get(right.id);
@@ -765,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting" });
       }
 
-      if (right.contractAddress) {
+      if (right.hederaTokenId) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
@@ -1035,7 +1002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toUserId: mockUserId,
           transactionHash: null, // Will be set when actual Hedera transaction occurs
           price: right.price || "0",
-          currency: right.currency || "ETH",
+          currency: right.currency || "HBAR",
           type: "mint",
         });
       }
@@ -1078,7 +1045,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if right is already verified or has NFT
-      if (right.verificationStatus === "verified" || right.contractAddress) {
+      if (right.verificationStatus === "verified" || right.hederaTokenId) {
         return res.status(400).json({ error: "Right is already verified or has NFT minted" });
       }
 
@@ -1120,13 +1087,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting NFT" });
       }
 
-      if (right.contractAddress) {
+      if (right.hederaTokenId) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
       // Update right with Hedera NFT data
       const updatedRight = await storage.updateRight(id, {
-        contractAddress: hederaData.tokenId,
+        hederaTokenId: hederaData.tokenId,
         hederaSerialNumber: hederaData.serialNumber,
         hederaTransactionId: hederaData.transactionId,
         hederaMetadataUri: hederaData.metadataUri,
@@ -1386,7 +1353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (newBidAmount < minimumBid) {
         return res.status(400).json({ 
-          error: `Bid must be at least ${minimumBid.toFixed(4)} ETH` 
+          error: `Bid must be at least ${minimumBid.toFixed(4)} HBAR` 
         });
       }
       
@@ -1394,7 +1361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rightId,
         bidderId: mockUserId,
         amount,
-        currency: "ETH",
+        currency: "HBAR",
       });
       
       res.status(201).json(bid);
@@ -2271,146 +2238,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Ethereum network status endpoint
-  app.get("/api/ethereum/status", async (req, res) => {
+  // Hedera network status endpoint
+  app.get("/api/hedera/status", async (req, res) => {
     try {
-      const { ethereumNFTService } = await import("./ethereum");
+      const accountId = process.env.HEDERA_ACCOUNT_ID;
+      const network = process.env.HEDERA_NETWORK || "testnet";
+      
+      if (!accountId) {
+        return res.status(500).json({ 
+          status: "error", 
+          message: "Hedera credentials not configured" 
+        });
+      }
+
+      // Try to get account balance to verify connection
+      const { hederaNFTService } = await import("./hedera");
+      const balance = await hederaNFTService.getAccountBalance(accountId);
       
       res.json({
         status: "connected",
-        network: "ethereum",
-        message: "Connected to Ethereum network"
+        network,
+        accountId,
+        balance: balance.hbars,
+        message: `Connected to Hedera ${network}`
       });
     } catch (error) {
-      console.error("Ethereum status check failed:", error);
+      console.error("Hedera status check failed:", error);
       res.status(500).json({
         status: "error",
-        message: "Failed to connect to Ethereum network"
+        message: "Failed to connect to Hedera network"
       });
     }
   });
 
-  // Purchase right endpoint - handles ownership transfer after blockchain transaction
-  app.post("/api/rights/:id/purchase", async (req, res) => {
+  // Test NFT minting endpoint
+  app.post("/api/hedera/test-mint", async (req, res) => {
     try {
-      const rightId = parseInt(req.params.id);
-      const { newOwnerAddress, transactionHash } = req.body;
-
-      if (!rightId || !newOwnerAddress || !transactionHash) {
-        return res.status(400).json({ 
-          error: "Right ID, new owner address, and transaction hash are required" 
-        });
+      const { name, symbol, description } = req.body;
+      
+      if (!name || !symbol) {
+        return res.status(400).json({ error: "Name and symbol are required" });
       }
 
-      // Validate Ethereum address format
-      const addressRegex = /^0x[a-fA-F0-9]{40}$/;
-      if (!addressRegex.test(newOwnerAddress)) {
-        return res.status(400).json({ error: "Invalid Ethereum address format" });
-      }
+      console.log(`[hedera] Testing NFT creation: ${name} (${symbol})`);
 
-      // Validate transaction hash format
-      const txHashRegex = /^0x[a-fA-F0-9]{64}$/;
-      if (!txHashRegex.test(transactionHash)) {
-        return res.status(400).json({ error: "Invalid transaction hash format" });
-      }
-
-      // Get current right details
-      const right = await storage.getRight(rightId);
-      if (!right) {
-        return res.status(404).json({ error: "Right not found" });
-      }
-
-      // Check if right is available for purchase
-      if (!right.isListed) {
-        return res.status(400).json({ error: "Right is not available for purchase" });
-      }
-
-      // Find or create user for the new owner
-      let newOwner = await storage.getUserByWalletAddress(newOwnerAddress);
-      if (!newOwner) {
-        // Create new user account for the wallet address
-        newOwner = await storage.createUser({
-          username: `user_${newOwnerAddress.slice(0, 8)}`,
-          email: `${newOwnerAddress.toLowerCase()}@wallet.address`,
-          walletAddress: newOwnerAddress,
-        });
-      }
-
-      // Update right ownership
-      const updatedRight = await storage.updateRight(rightId, {
-        ownerId: newOwner.id,
-        isListed: false, // Remove from marketplace after purchase
-        transactionHash: transactionHash,
+      // Create test NFT token
+      const { hederaNFTService } = await import("./hedera");
+      const tokenInfo = await hederaNFTService.createNFTToken({
+        name: name,
+        symbol: symbol,
+        memo: description || "Test NFT from Dright platform",
+        maxSupply: 10
       });
 
-      if (!updatedRight) {
-        return res.status(500).json({ error: "Failed to update right ownership" });
-      }
-
-      // Create transaction record
-      await storage.createTransaction({
-        rightId: rightId,
-        buyerId: newOwner.id,
-        sellerId: right.ownerId,
-        amount: parseFloat(right.price || '0'),
-        currency: right.currency || 'ETH',
-        transactionHash: transactionHash,
-        status: 'completed',
-        type: 'purchase',
+      // Mint the NFT
+      const metadata = JSON.stringify({
+        name,
+        description: description || "Test NFT from Dright platform",
+        image: "",
+        attributes: [
+          { trait_type: "Type", value: "test" },
+          { trait_type: "Platform", value: "Dright" },
+          { trait_type: "Created", value: new Date().toISOString() }
+        ]
       });
+
+      const mintResult = await hederaNFTService.mintNFT({
+        tokenId: tokenInfo.tokenId,
+        metadata: metadata
+      });
+
+      console.log(`[hedera] Test NFT minted successfully: ${mintResult.tokenId}/${mintResult.serialNumber}`);
 
       res.json({
         success: true,
-        message: "Ownership transferred successfully",
-        right: updatedRight,
-        transactionHash: transactionHash,
+        message: "Test NFT minted successfully on Hedera testnet",
+        tokenInfo,
+        mintResult
       });
-
-    } catch (error) {
-      console.error("Purchase update failed:", error);
-      res.status(500).json({ error: "Failed to update purchase in database" });
-    }
-  });
-
-  // Get purchase breakdown endpoint
-  app.get("/api/purchase/breakdown/:rightId", async (req, res) => {
-    try {
-      const rightId = parseInt(req.params.rightId);
-      
-      const right = await storage.getRight(rightId);
-      if (!right) {
-        return res.status(404).json({ error: "Right not found" });
-      }
-
-      const itemPrice = parseFloat(right.price || '0');
-      const platformFeePercentage = 2.5; // 2.5% platform fee
-      const royaltyPercentage = 5.0;     // 5% creator royalty
-      const gasFeeBuffer = 0.001;        // 0.001 ETH gas buffer
-
-      const platformFee = (itemPrice * platformFeePercentage) / 100;
-      const royaltyFee = (itemPrice * royaltyPercentage) / 100;
-      const gasFee = gasFeeBuffer;
-      const totalAmount = itemPrice + platformFee + royaltyFee + gasFee;
-
-      res.json({
-        itemPrice,
-        platformFee,
-        royaltyFee,
-        gasFee,
-        totalAmount,
-        currency: right.currency || 'ETH',
-        breakdown: {
-          itemPrice: `${itemPrice} ETH`,
-          platformFee: `${platformFee.toFixed(4)} ETH (${platformFeePercentage}%)`,
-          royaltyFee: `${royaltyFee.toFixed(4)} ETH (${royaltyPercentage}%)`,
-          gasFee: `${gasFee} ETH (estimated)`,
-          totalAmount: `${totalAmount.toFixed(4)} ETH`,
-        }
+    } catch (error: any) {
+      console.error("Test minting failed:", error);
+      res.status(500).json({
+        error: "Test minting failed",
+        details: error?.message || "Unknown error"
       });
-
-    } catch (error) {
-      console.error("Failed to calculate purchase breakdown:", error);
-      res.status(500).json({ error: "Failed to calculate purchase breakdown" });
     }
   });
 

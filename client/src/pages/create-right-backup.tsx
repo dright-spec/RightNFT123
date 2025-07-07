@@ -64,7 +64,7 @@ export default function CreateRight() {
       description: "",
       type: "copyright",
       price: "",
-      currency: "ETH",
+      currency: "HBAR",
       paysDividends: false,
       tags: [],
     },
@@ -597,7 +597,7 @@ export default function CreateRight() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="ETH">ETH</SelectItem>
+                                  <SelectItem value="HBAR">HBAR</SelectItem>
                                   <SelectItem value="USD">USD</SelectItem>
                                 </SelectContent>
                               </Select>

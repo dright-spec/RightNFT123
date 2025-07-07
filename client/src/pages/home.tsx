@@ -6,12 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { WalletDebug } from "@/components/wallet-debug";
-import { useSession } from "@/hooks/use-session";
-import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload, BarChart3 } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Home() {
-  const { isAuthenticated, user } = useSession();
 
   const { data: featuredRights, isLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", { limit: 6, isListed: true }],
@@ -39,16 +37,9 @@ export default function Home() {
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
               </Link>
-              {isAuthenticated ? (
-                <Link href="/dashboard" className="text-muted-foreground hover:text-primary transition-colors font-medium flex items-center gap-1">
-                  <BarChart3 className="w-4 h-4" />
-                  Dashboard
-                </Link>
-              ) : (
-                <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
-                  Live Auctions
-                </Link>
-              )}
+              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Live Auctions
+              </Link>
               <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Docs
               </Link>

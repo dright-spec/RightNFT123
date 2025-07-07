@@ -8,8 +8,8 @@ export const hederaTestnet = {
   name: 'Hedera Testnet',
   nativeCurrency: {
     decimals: 18,
-    name: 'ETH',
-    symbol: 'ETH',
+    name: 'HBAR',
+    symbol: 'HBAR',
   },
   rpcUrls: {
     default: {
@@ -27,8 +27,8 @@ export const hederaMainnet = {
   name: 'Hedera Mainnet',
   nativeCurrency: {
     decimals: 18,
-    name: 'ETH',
-    symbol: 'ETH',
+    name: 'HBAR',
+    symbol: 'HBAR',
   },
   rpcUrls: {
     default: {
