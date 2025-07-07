@@ -7,13 +7,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   detectAvailableWallets,
   connectToWallet,
 } from "@/lib/wallet-manager";
 import type { WalletInfo } from "@/lib/wallet-manager";
+import { performDeepWalletScan } from "@/lib/enhanced-wallet-detection";
 
 interface WalletConnectModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function SleekWalletModal({
   const [wallets, setWallets] = useState<ExtendedWalletInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [isDeepScanning, setIsDeepScanning] = useState(false);
   const { toast } = useToast();
 
   // Detect wallets when `open` goes true
@@ -52,34 +54,34 @@ export function SleekWalletModal({
         // fallback defaults (all fields filled)
         setWallets([
           {
-            id: "metamask",
-            name: "MetaMask",
-            description: "Popular Ethereum wallet with extensive dApp support",
-            icon: "🦊",
-            isAvailable: Boolean((window as any).ethereum?.isMetaMask),
+            id: "hashpack",
+            name: "HashPack",
+            description: "Official Hedera wallet with native HTS support",
+            icon: "🟡",
+            isAvailable: Boolean((window as any).hashpack),
             isRecommended: true,
-            isEthereumNative: true,
-            downloadUrl: "https://metamask.io/download/",
+            isHederaNative: true,
+            downloadUrl: "https://www.hashpack.app/",
           },
           {
-            id: "walletconnect",
-            name: "WalletConnect",
-            description: "Connect to mobile wallets via QR code",
-            icon: "🔗",
-            isAvailable: true,
+            id: "blade",
+            name: "Blade Wallet",
+            description: "Multi-chain wallet with Hedera support",
+            icon: "⚔️",
+            isAvailable: Boolean((window as any).blade),
             isRecommended: false,
-            isEthereumNative: true,
-            downloadUrl: "https://walletconnect.com/",
+            isHederaNative: true,
+            downloadUrl: "https://bladewallet.io/",
           },
           {
-            id: "coinbase",
-            name: "Coinbase Wallet",
-            description: "Connect with Coinbase Wallet",
-            icon: "🟦",
-            isAvailable: Boolean((window as any).ethereum?.isCoinbaseWallet),
+            id: "brave",
+            name: "Brave Wallet",
+            description: "Built-in Brave browser wallet",
+            icon: "🦁",
+            isAvailable: Boolean((window as any).ethereum?.isBraveWallet),
             isRecommended: false,
-            isEthereumNative: true,
-            downloadUrl: "https://www.coinbase.com/wallet",
+            isHederaNative: false,
+            downloadUrl: "https://brave.com/wallet/",
           },
         ]);
       } finally {
@@ -123,16 +125,73 @@ export function SleekWalletModal({
     [connectingId, loading, wallets, onConnect, onOpenChange, toast]
   );
 
+  const handleDeepScan = async () => {
+    setIsDeepScanning(true);
+    try {
+      const scanResult = await performDeepWalletScan();
+      
+      // Update wallet availability based on deep scan results
+      const updatedWallets = wallets.map(wallet => ({
+        ...wallet,
+        isAvailable: scanResult[wallet.id as keyof typeof scanResult] === true
+      }));
+      setWallets(updatedWallets);
+      
+      const foundCount = Object.values(scanResult).filter(v => v === true).length;
+      toast({
+        title: "Deep Scan Complete",
+        description: `Found ${foundCount} available wallets`,
+      });
+      
+      console.log('Deep scan results:', scanResult);
+    } catch (error) {
+      console.error("Deep scan failed:", error);
+      toast({
+        title: "Scan Failed",
+        description: "Could not perform deep wallet scan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeepScanning(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">🔗</span>
-            Connect Wallet
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🔗</span>
+              Connect Wallet
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDeepScan}
+              disabled={isDeepScanning || loading}
+              className="ml-2"
+            >
+              {isDeepScanning ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Scanning...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-1" />
+                  Deep Scan
+                </>
+              )}
+            </Button>
           </DialogTitle>
           <DialogDescription>
-            Choose a wallet. MetaMask is recommended for Ethereum.
+            Choose a wallet. HashPack is recommended for Hedera.
+            {!wallets.some(w => w.isAvailable) && (
+              <span className="block text-amber-600 dark:text-amber-400 mt-1">
+                No wallets detected. Try the Deep Scan button to search thoroughly.
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -175,9 +234,9 @@ export function SleekWalletModal({
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {w.description}
                       </p>
-                      {w.isEthereumNative && (
+                      {w.isHederaNative && (
                         <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                          Ethereum Native
+                          Hedera Native
                         </span>
                       )}
                     </div>
