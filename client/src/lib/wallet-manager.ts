@@ -70,11 +70,24 @@ export async function detectAvailableWallets(): Promise<WalletInfo[]> {
     brave: hasBrave,
     windowObjects: {
       hashpack: !!(window as any).hashpack,
+      onhashconnect: !!(window as any).onhashconnect,
+      hashconnect: !!(window as any).hashconnect,
       blade: !!(window as any).blade,
       ethereum: !!(window as any).ethereum,
-      hashconnect: !!(window as any).hashconnect,
     }
   });
+
+  // Debug: List all window properties that might be wallet-related
+  const win = window as any;
+  const walletProps = Object.keys(win).filter(key => 
+    key.toLowerCase().includes('hash') || 
+    key.toLowerCase().includes('blade') || 
+    key.toLowerCase().includes('connect') ||
+    key.toLowerCase().includes('wallet')
+  );
+  if (walletProps.length > 0) {
+    console.log('Potential wallet-related window properties:', walletProps);
+  }
 
   return wallets;
 }
@@ -89,9 +102,9 @@ function detectHashPack(): boolean {
     return true;
   }
   
-  // Method 2: HashConnect object
-  if (win.hashconnect || win.HashConnect) {
-    console.log('HashPack detected via HashConnect');
+  // Method 2: HashConnect object - correct name is 'onhashconnect'
+  if (win.onhashconnect || win.hashconnect || win.HashConnect) {
+    console.log('HashPack detected via onhashconnect/HashConnect');
     return true;
   }
   
@@ -213,11 +226,11 @@ async function connectHashPack(): Promise<string> {
     }
   }
   
-  // Method 2: HashConnect API
-  if (win.hashconnect || win.HashConnect) {
+  // Method 2: HashConnect API - try onhashconnect first
+  if (win.onhashconnect || win.hashconnect || win.HashConnect) {
     try {
       console.log('Attempting HashPack connection via HashConnect...');
-      const hc = win.hashconnect || win.HashConnect;
+      const hc = win.onhashconnect || win.hashconnect || win.HashConnect;
       
       if (typeof hc.requestAccountInfo === 'function') {
         const response = await hc.requestAccountInfo();

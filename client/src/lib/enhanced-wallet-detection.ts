@@ -73,7 +73,13 @@ async function scanForHashPack(): Promise<boolean> {
     value: win.hashpack
   });
 
-  // Check 2: HashConnect variations
+  // Check 2: HashConnect variations - including onhashconnect
+  checks.push({
+    method: 'window.onhashconnect',
+    result: !!(win.onhashconnect),
+    value: win.onhashconnect
+  });
+
   checks.push({
     method: 'window.hashconnect',
     result: !!(win.hashconnect),
@@ -221,6 +227,7 @@ function getWindowObjects(): any {
   const win = window as any;
   return {
     hashpack: !!win.hashpack,
+    onhashconnect: !!win.onhashconnect,
     hashconnect: !!win.hashconnect,
     HashConnect: !!win.HashConnect,
     blade: !!win.blade,
