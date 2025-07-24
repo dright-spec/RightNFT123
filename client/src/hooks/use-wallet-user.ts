@@ -14,9 +14,22 @@ interface WalletUserState {
 }
 
 export function useWalletUser() {
-  const [walletAddress, setWalletAddress] = useState<string | null>(() => 
-    localStorage.getItem('wallet_address')
-  );
+  const [walletAddress, setWalletAddress] = useState<string | null>(() => {
+    // Check for wallet_connection first (used by Web3ModalConnectButton)
+    const walletConnection = localStorage.getItem('wallet_connection');
+    if (walletConnection) {
+      try {
+        const parsed = JSON.parse(walletConnection);
+        if (parsed.address && parsed.isConnected) {
+          return parsed.address;
+        }
+      } catch (error) {
+        console.error('Error parsing wallet connection:', error);
+      }
+    }
+    // Fallback to wallet_address
+    return localStorage.getItem('wallet_address');
+  });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -24,6 +37,26 @@ export function useWalletUser() {
   // Check if wallet is connected on mount
   useEffect(() => {
     const checkWalletConnection = async () => {
+      // First check for stored wallet connection (from Web3ModalConnectButton)
+      const walletConnection = localStorage.getItem('wallet_connection');
+      if (walletConnection) {
+        try {
+          const parsed = JSON.parse(walletConnection);
+          const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
+          if (parsed.address && parsed.isConnected && isRecent) {
+            setWalletAddress(parsed.address);
+            return; // Exit early if we found a valid stored connection
+          } else {
+            // Clear expired connection
+            localStorage.removeItem('wallet_connection');
+          }
+        } catch (error) {
+          console.error('Error parsing wallet connection:', error);
+          localStorage.removeItem('wallet_connection');
+        }
+      }
+
+      // Fallback to checking ethereum provider
       if (window.ethereum) {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -77,7 +110,10 @@ export function useWalletUser() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ walletAddress }),
+          body: JSON.stringify({ 
+            walletType: 'ethereum', 
+            address: walletAddress 
+          }),
           credentials: 'include', // Important for session cookies
         });
         
@@ -218,6 +254,8 @@ export function useWalletUser() {
   const disconnectWallet = () => {
     setWalletAddress(null);
     localStorage.removeItem('wallet_address');
+    localStorage.removeItem('wallet_connection'); // Also clear Web3Modal connection
+    queryClient.setQueryData(['wallet-auth'], null);
     queryClient.setQueryData(['wallet-user'], null);
     toast({
       title: "Wallet Disconnected",
