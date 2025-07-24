@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "test:contracts": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy:local": "hardhat run scripts/deploy-testnet.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy-testnet.js --network sepolia",
+    "deploy:mumbai": "hardhat run scripts/deploy-testnet.js --network mumbai",
+    "local:start": "node scripts/local-network.js start",
+    "local:deploy": "node scripts/local-network.js deploy",
+    "local:test": "node scripts/local-network.js test",
+    "local:full": "node scripts/local-network.js full",
+    "testnet:setup": "npm run local:full && npm run deploy:local"
+  }
+}

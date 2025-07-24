@@ -19,6 +19,7 @@ import ApiReference from "./pages/api-reference";
 import Settings from "./pages/settings";
 import MintingProgress from "./pages/minting-progress";
 import ErrorDemo from "./pages/error-demo";
+import Testnet from "./pages/testnet";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/google-callback" component={GoogleCallback} />
       <Route path="/minting-progress" component={MintingProgress} />
+      <Route path="/testnet" component={Testnet} />
       <Route path="/error-demo" component={ErrorDemo} />
       <Route component={NotFound} />
     </Switch>
