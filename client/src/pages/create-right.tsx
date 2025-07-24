@@ -1641,7 +1641,7 @@ export default function CreateRight() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="HBAR">HBAR</SelectItem>
+                                  <SelectItem value="ETH">ETH</SelectItem>
                                   <SelectItem value="USD">USD</SelectItem>
                                 </SelectContent>
                               </Select>

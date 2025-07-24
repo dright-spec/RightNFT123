@@ -193,7 +193,7 @@ export function MultiVideoPricing({ videos, onPricingComplete }: MultiVideoPrici
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="HBAR">HBAR</SelectItem>
+                    <SelectItem value="ETH">ETH</SelectItem>
                     <SelectItem value="USD">USD</SelectItem>
                   </SelectContent>
                 </Select>

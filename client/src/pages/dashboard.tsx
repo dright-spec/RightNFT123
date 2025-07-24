@@ -120,7 +120,7 @@ export default function Dashboard() {
     },
     {
       title: "Revenue Generated", 
-      value: statsLoading ? "..." : `${totalRevenue} HBAR`,
+      value: statsLoading ? "..." : `${parseFloat(totalRevenue).toFixed(2)} ETH`,
       description: "From sales & royalties",
       icon: DollarSign,
       change: "+0% this month",
@@ -437,7 +437,7 @@ export default function Dashboard() {
                         <div className="text-right">
                           {activity.amount && (
                             <div className="font-medium text-green-600 dark:text-green-400">
-                              {activity.amount} HBAR
+                              {parseFloat(activity.amount).toFixed(2)} ETH
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground">
@@ -539,7 +539,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex justify-between">
                       <span>Average Sale Price</span>
-                      <span className="font-medium">1.2 ETH</span>
+                      <span className="font-medium">1.20 ETH</span>
                     </div>
                   </div>
                 </CardContent>
