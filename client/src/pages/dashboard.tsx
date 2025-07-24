@@ -54,7 +54,7 @@ export default function Dashboard() {
   
   // Redirect to home if not authenticated
   if (currentUser && !currentUser.isAuthenticated) {
-    setLocation('/');
+    setTimeout(() => setLocation('/'), 100);
     return null;
   }
 
@@ -70,7 +70,7 @@ export default function Dashboard() {
   });
 
   // Show loading state while fetching user data
-  if (userLoading || !currentUser) {
+  if (userLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">

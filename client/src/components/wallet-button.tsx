@@ -39,6 +39,7 @@ export function WalletButton(props: any) {
 
   const handleConnect = async () => {
     const success = await connectWallet();
+    // connectWallet now handles dashboard redirection internally
     if (success && needsProfileSetup) {
       navigateToProfileSetup();
     }

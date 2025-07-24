@@ -231,12 +231,50 @@ export function useWalletUser() {
         setWalletAddress(address);
         localStorage.setItem('wallet_address', address);
         
-        toast({
-          title: "Wallet Connected",
-          description: `Connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
-        });
-        
-        return true;
+        // Authenticate with backend and redirect to dashboard
+        try {
+          const authResponse = await fetch('/api/auth/wallet', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              walletType: 'metamask', 
+              address: address 
+            }),
+            credentials: 'include',
+          });
+          
+          const authResult = await authResponse.json();
+          
+          if (authResult.success && authResult.isAuthenticated) {
+            toast({
+              title: "Welcome!",
+              description: `Successfully connected and logged in`,
+            });
+            
+            // Invalidate auth queries to refresh user state
+            await queryClient.invalidateQueries({ queryKey: ['wallet-auth'] });
+            await queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+            
+            // Redirect to dashboard after successful authentication
+            setTimeout(() => {
+              setLocation('/dashboard');
+            }, 1000);
+            
+            return true;
+          } else {
+            throw new Error(authResult.message || 'Authentication failed');
+          }
+        } catch (authError: any) {
+          console.error('Authentication error:', authError);
+          toast({
+            title: "Authentication Failed",
+            description: authError.message || "Failed to authenticate wallet",
+            variant: "destructive",
+          });
+          return false;
+        }
       }
       return false;
     } catch (error: any) {
