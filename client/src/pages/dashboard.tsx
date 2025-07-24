@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateRightModal } from "@/components/create-right-modal";
 import { WalletButton } from "@/components/wallet-button";
+import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
+import { EmojiErrorDisplay } from "@/components/emoji-error-display";
 import { 
   TrendingUp, 
   DollarSign, 
@@ -33,18 +35,27 @@ import type { RightWithCreator, User } from "@shared/schema";
 
 export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [, setLocation] = useLocation();
+  const uploadErrorHandler = useUploadErrorHandler();
 
-  // Fetch user's rights
+  // Fetch current authenticated user
+  const { data: currentUser, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    retry: false,
+  });
+
+  // Fetch user's rights (only if authenticated)
   const { data: userRights = [], isLoading: rightsLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", "user"],
-    queryFn: () => fetch("/api/rights?creatorId=1").then(res => res.json()),
+    queryFn: () => fetch(`/api/rights?creatorId=${currentUser?.user?.id}`).then(res => res.json()),
+    enabled: !!currentUser?.user?.id,
   });
-
-  // Fetch user profile
-  const { data: userProfile } = useQuery<User>({
-    queryKey: ["/api/users", "profile"],
-    queryFn: () => fetch("/api/users/1").then(res => res.json()),
-  });
+  
+  // Redirect to home if not authenticated
+  if (currentUser && !currentUser.isAuthenticated) {
+    setLocation('/');
+    return null;
+  }
 
   // Get real user stats from API
   const { data: userStats, isLoading: statsLoading } = useQuery({
@@ -56,6 +67,22 @@ export default function Dashboard() {
     queryKey: ['/api/users/activity'], 
     retry: false,
   });
+
+  // Show loading state while fetching user data
+  if (userLoading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="pt-6 text-center">
+            <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p>Loading your dashboard...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const user = currentUser.user;
 
   // Calculate dashboard metrics from real data
   const totalRights = userRights.length;
@@ -163,43 +190,43 @@ export default function Dashboard() {
           </div>
 
         {/* User Profile Card */}
-        {userProfile && (
-          <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={userProfile.profileImageUrl || ""} />
-                  <AvatarFallback className="text-lg">
-                    {userProfile.username?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold">{userProfile.username || "Creator"}</h2>
-                    <VerificationBadge status="verified" size="sm" />
-                  </div>
-                  <p className="text-muted-foreground">Digital Rights Creator</p>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span className="text-sm">0 followers</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Heart className="h-4 w-4" />
-                      <span className="text-sm">0 favorites</span>
-                    </div>
-                  </div>
+        <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={user.profileImageUrl || ""} />
+                <AvatarFallback className="text-lg">
+                  {user.username?.charAt(0).toUpperCase() || user.displayName?.charAt(0).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold">{user.displayName || user.username || "Creator"}</h2>
+                  <VerificationBadge status={user.isVerified ? "verified" : "unverified"} size="sm" />
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {totalRights}
+                <p className="text-muted-foreground">
+                  {user.walletAddress ? `Connected via ${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Digital Rights Creator"}
+                </p>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span className="text-sm">0 followers</span>
                   </div>
-                  <div className="text-sm text-muted-foreground">Rights Created</div>
+                  <div className="flex items-center gap-1">
+                    <Heart className="h-4 w-4" />
+                    <span className="text-sm">0 favorites</span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {totalRights}
+                </div>
+                <div className="text-sm text-muted-foreground">Rights Created</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -274,14 +301,16 @@ export default function Dashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start gap-2">
+                  <Button variant="outline" className="w-full justify-start gap-2" onClick={() => setShowCreateModal(true)}>
                     <Plus className="h-4 w-4" />
                     Create New Right
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    View Analytics
-                  </Button>
+                  <Link href="/marketplace" className="w-full">
+                    <Button variant="outline" className="w-full justify-start gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Browse Marketplace
+                    </Button>
+                  </Link>
                   <Button variant="outline" className="w-full justify-start gap-2">
                     <Download className="h-4 w-4" />
                     Export Portfolio
@@ -293,6 +322,78 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* User Onboarding: What Rights Can Be Tokenized */}
+            {totalRights === 0 && (
+              <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Crown className="h-5 w-5 text-primary" />
+                    Get Started: What Rights Can You Tokenize?
+                  </CardTitle>
+                  <CardDescription>
+                    Transform your intellectual property into tradeable NFTs and unlock new revenue streams
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm">Digital Content</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span>YouTube videos & channel rights</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span>Music tracks & royalty rights</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span>Software & source code</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          <span>Digital artwork & designs</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm">Traditional Assets</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <span>Patents & inventions</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                          <span>Books & written content</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-pink-500 rounded-full"></div>
+                          <span>Brand names & trademarks</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                          <span>Real estate & property rights</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        Ready to tokenize your first right and start earning?
+                      </p>
+                      <Button onClick={() => setShowCreateModal(true)} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Create Your First Right
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Recent Activity */}
             <Card>

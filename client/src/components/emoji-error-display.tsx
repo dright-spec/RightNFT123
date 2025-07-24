@@ -5,7 +5,7 @@ import { RefreshCw, X } from "lucide-react";
 import { useState } from "react";
 
 interface EmojiErrorDisplayProps {
-  error: string | Error | null;
+  error: string | Error | TranslatedError | null;
   context?: string;
   onRetry?: () => void;
   onDismiss?: () => void;

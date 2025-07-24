@@ -4,6 +4,7 @@ import { Wallet, LogOut } from "lucide-react";
 import { SleekWalletModal } from "./sleek-wallet-modal";
 import { getConnectedWallet, disconnectWallet } from "@/lib/wallet-manager";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 export function Web3ModalConnectButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,6 +12,7 @@ export function Web3ModalConnectButton() {
   const [isConnected, setIsConnected] = useState(false);
   const [connectedWallet, setConnectedWallet] = useState<{walletId: string, address: string} | null>(null);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Check for existing connection on component mount
   useEffect(() => {
@@ -51,8 +53,13 @@ export function Web3ModalConnectButton() {
         
         toast({
           title: "Wallet Connected",
-          description: `Successfully connected ${walletId === 'hashpack' ? 'HashPack' : walletId} wallet`,
+          description: `Successfully connected ${walletId} wallet`,
         });
+        
+        // Redirect to dashboard for authenticated users
+        setTimeout(() => {
+          setLocation('/dashboard');
+        }, 1000);
       } else {
         throw new Error(data.message || 'Connection failed');
       }

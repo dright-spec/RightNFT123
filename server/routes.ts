@@ -257,17 +257,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Wallet address required' });
       }
 
-      // Validate Hedera account ID format (0.0.xxxxx)
-      const hederaAccountRegex = /^0\.0\.\d+$/;
-      const isValidHederaAccount = hederaAccountRegex.test(address);
-      
-      // Validate Ethereum address format (0x...)
+      // Validate Ethereum address format only (pure Ethereum blockchain)
       const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
       const isValidEthAddress = ethAddressRegex.test(address);
       
-      if (!isValidHederaAccount && !isValidEthAddress) {
+      if (!isValidEthAddress) {
         return res.status(400).json({ 
-          message: 'Invalid wallet address format. Expected Hedera account ID (0.0.xxxxx) or Ethereum address (0x...)' 
+          message: 'Invalid Ethereum wallet address format. Expected format: 0x...' 
         });
       }
 
@@ -292,12 +288,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create new user for this wallet
       try {
+        const walletDisplayName = walletType || 'Wallet';
+        const shortAddress = address.slice(0, 6) + '...' + address.slice(-4);
+        
         const newUser = await storage.createUser({
-          username: `${walletType}_${address.slice(-8)}`,
-          email: `${address}@dright.com`,
+          username: `${walletType}_${Date.now()}`, // Unique username
+          displayName: `${walletDisplayName} User (${shortAddress})`,
+          email: null, // Optional for wallet users
           walletAddress: address,
-          bio: `User connected via ${walletType || 'wallet'}`,
-          isVerified: walletType === 'hashpack'
+          bio: `User connected via ${walletDisplayName}`,
+          isVerified: false,
+          password: null // No password for wallet users
         });
         
         req.session.userId = newUser.id;
@@ -322,6 +323,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Wallet auth error:', error);
       res.status(500).json({ message: 'Authentication failed' });
+    }
+  });
+
+  // Get current user endpoint
+  app.get('/api/auth/me', async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ 
+          isAuthenticated: false,
+          message: 'Not authenticated' 
+        });
+      }
+
+      const user = await storage.getUser(req.session.userId);
+      
+      if (!user) {
+        req.session.userId = undefined;
+        return res.status(401).json({ 
+          isAuthenticated: false,
+          message: 'User not found' 
+        });
+      }
+      
+      return res.json({
+        isAuthenticated: true,
+        user: user
+      });
+    } catch (error) {
+      console.error('Get current user error:', error);
+      res.status(500).json({ message: 'Failed to get user info' });
     }
   });
 
