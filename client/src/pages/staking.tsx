@@ -201,7 +201,7 @@ export default function StakingPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm">Available Rights</p>
+                  <p className="text-orange-100 text-sm">Your Rights to Stake</p>
                   <p className="text-2xl font-bold">{availableRights.length}</p>
                 </div>
                 <Users className="h-8 w-8 text-orange-200" />
@@ -236,7 +236,7 @@ export default function StakingPage() {
                       <div>
                         <h4 className="font-semibold">Stake Verified Rights</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Choose from your verified rights to stake with our platform team.
+                          Choose from your own verified rights to stake with our platform team.
                         </p>
                       </div>
                     </div>
@@ -433,7 +433,7 @@ export default function StakingPage() {
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="rightId">Select Right to Stake</Label>
+                      <Label htmlFor="rightId">Select Your Right to Stake</Label>
                       <Select
                         value={stakeFormData.rightId.toString()}
                         onValueChange={(value) =>
@@ -441,7 +441,7 @@ export default function StakingPage() {
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Choose a verified right" />
+                          <SelectValue placeholder="Choose one of your verified rights" />
                         </SelectTrigger>
                         <SelectContent>
                           {(availableRights as Right[]).map((right: Right) => (

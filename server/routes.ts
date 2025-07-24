@@ -2359,10 +2359,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Staking API Routes
   
-  // Get verified rights available for staking
+  // Get verified rights available for staking (only user's own rights)
   app.get("/api/stakes/available-rights", async (req, res) => {
     try {
-      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
       
       const verifiedRights = await storage.getRights({
         verificationStatus: "verified",
@@ -2371,12 +2373,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sortOrder: "desc"
       });
       
-      // Filter out rights that are already staked
+      // Filter to only show rights owned by the current user and not already staked
       const availableRights = [];
       for (const right of verifiedRights) {
-        const existingStake = await storage.getActiveStakeByRight(right.id);
-        if (!existingStake) {
-          availableRights.push(right);
+        // Only include rights owned by the current user
+        if (right.ownerId === req.session.userId) {
+          const existingStake = await storage.getActiveStakeByRight(right.id);
+          if (!existingStake) {
+            availableRights.push(right);
+          }
         }
       }
       
