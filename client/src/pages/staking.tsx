@@ -245,9 +245,9 @@ export default function StakingPage() {
                         2
                       </div>
                       <div>
-                        <h4 className="font-semibold">Revenue Exploration</h4>
+                        <h4 className="font-semibold">Professional Rights Management</h4>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Our expert team explores and maximizes revenue opportunities from your rights.
+                          Our team becomes your dedicated rights manager, handling all revenue generation without selling your rights.
                         </p>
                       </div>
                     </div>
@@ -294,6 +294,123 @@ export default function StakingPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Detailed Management Explanation */}
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  How We Manage Your Rights
+                </CardTitle>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                  When you stake your rights, our team takes full management responsibility to maximize profitability while you retain ownership
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center gap-2">
+                        🎵 Music Rights Management
+                      </h4>
+                      <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                        <div className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p><strong>Collect streaming royalties</strong> from Spotify, Apple Music, YouTube, and all major platforms</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p><strong>Pursue sync licensing</strong> opportunities for films, commercials, TV shows, and video games</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p><strong>Negotiate performance royalties</strong> from radio stations, live venues, and public performances</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                          <p><strong>Consolidate all revenue streams</strong> into regular payments to you</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
+                      <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-3 flex items-center gap-2">
+                        📚 Other Rights Management
+                      </h4>
+                      <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                        <div>
+                          <p className="font-medium text-purple-700 dark:text-purple-300">Patents & IP:</p>
+                          <p>License to manufacturers, negotiate royalty rates, handle enforcement and compliance</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-purple-700 dark:text-purple-300">Software & Tech:</p>
+                          <p>Enterprise licensing, API partnerships, usage-based revenue models</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-purple-700 dark:text-purple-300">Creative Works:</p>
+                          <p>Gallery partnerships, print licensing, merchandising opportunities</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-lg p-6">
+                  <h4 className="font-semibold text-green-800 dark:text-green-200 mb-4 flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Our Management Approach
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Users className="h-6 w-6 text-green-700 dark:text-green-200" />
+                      </div>
+                      <h5 className="font-semibold mb-2">Dedicated Team</h5>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Experienced professionals handle your rights as if they were our own
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <TrendingUp className="h-6 w-6 text-blue-700 dark:text-blue-200" />
+                      </div>
+                      <h5 className="font-semibold mb-2">Revenue Maximization</h5>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        We actively seek and negotiate the best possible deals for your rights
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-purple-200 dark:bg-purple-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Clock className="h-6 w-6 text-purple-700 dark:text-purple-200" />
+                      </div>
+                      <h5 className="font-semibold mb-2">Full Service</h5>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Complete administrative handling - contracts, collections, distributions
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-3 flex items-center gap-2">
+                    <ChevronRight className="h-5 w-5" />
+                    The Easy Way to Professional Management
+                  </h4>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                    Instead of spending your time researching licensing opportunities, negotiating contracts, and chasing payments, 
+                    you simply stake your rights and let our professional team handle everything. It's essentially giving us the 
+                    responsibility to manage your rights in the best way possible while you focus on creating new content.
+                  </p>
+                  <div className="flex items-center justify-center bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
+                    <p className="text-green-800 dark:text-green-200 font-medium text-center">
+                      You keep ownership • We maximize revenue • You earn 75% passively
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="stake" className="space-y-6">
