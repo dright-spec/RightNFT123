@@ -144,8 +144,11 @@ export function Web3ModalConnectButton() {
 
       <SleekWalletModal
         open={isOpen}
-        onClose={() => setIsOpen(false)}
-        onConnect={(address) => handleWalletConnect('web3modal', address)}
+        onOpenChange={setIsOpen}
+        onConnect={(walletId: string, address: string) => {
+          console.log(`Modal onConnect called with: walletId=${walletId}, address=${address}`);
+          handleWalletConnect(walletId, address);
+        }}
       />
     </>
   );
