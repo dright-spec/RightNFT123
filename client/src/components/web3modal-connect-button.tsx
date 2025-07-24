@@ -14,6 +14,20 @@ export function Web3ModalConnectButton() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  // Helper functions for wallet connection storage
+  const storeWalletConnection = (walletId: string, address: string) => {
+    localStorage.setItem('wallet_connection', JSON.stringify({
+      walletId,
+      address,
+      isConnected: true,
+      timestamp: Date.now()
+    }));
+  };
+
+  const clearWalletConnection = () => {
+    localStorage.removeItem('wallet_connection');
+  };
+
   // Check for existing connection on component mount
   useEffect(() => {
     const wallet = getConnectedWallet();

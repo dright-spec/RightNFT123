@@ -380,9 +380,6 @@ export function showErrorToast(
     title: `${translated.emoji} ${translated.title}`,
     description: translated.message,
     variant: translated.severity === 'error' ? 'destructive' : 'default',
-    action: translated.action ? {
-      altText: translated.action,
-      children: translated.action
-    } : undefined,
+    // Remove the problematic action object that causes React rendering errors
   });
 }
