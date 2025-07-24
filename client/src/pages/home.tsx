@@ -119,6 +119,12 @@ export default function Home() {
 
             {/* Secondary Navigation */}
             <div className="mt-12 flex flex-wrap justify-center gap-6">
+              <Link href="/staking">
+                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
+                  <Coins className="mr-2 h-5 w-5" />
+                  Staking Platform
+                </Button>
+              </Link>
               <Link href="/docs">
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <FileText className="mr-2 h-5 w-5" />
@@ -129,6 +135,12 @@ export default function Home() {
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <TrendingUp className="mr-2 h-5 w-5" />
                   Live Auctions
+                </Button>
+              </Link>
+              <Link href="/staking">
+                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:hover:border-blue-600 dark:hover:bg-blue-950/20">
+                  <Coins className="mr-2 h-5 w-5" />
+                  Rights Staking
                 </Button>
               </Link>
               <Link href="/docs">
@@ -614,6 +626,20 @@ export default function Home() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Call to Action */}
+          <div className="text-center">
+            <Link href="/staking">
+              <Button size="lg" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-12 py-4 text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 min-w-[300px]">
+                <Coins className="w-6 h-6 mr-4" />
+                Start Staking Your Rights
+                <ArrowRight className="w-6 h-6 ml-4" />
+              </Button>
+            </Link>
+            <p className="text-sm text-muted-foreground mt-4">
+              Available for verified rights holders • No minimum staking amount
+            </p>
           </div>
 
           {/* How Staking Works */}
