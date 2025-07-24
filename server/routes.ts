@@ -2450,15 +2450,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get user's stakes
-  app.get("/api/stakes/user/:userId", async (req, res) => {
+  app.get("/api/stakes/user", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
-      
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user ID" });
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "User not authenticated" });
       }
       
-      const stakes = await storage.getUserStakes(userId);
+      const stakes = await storage.getUserStakes(req.session.userId);
       res.json(stakes);
     } catch (error) {
       console.error("Error fetching user stakes:", error);

@@ -17,8 +17,6 @@ import type { Right, StakeWithDetails } from "@shared/schema";
 
 interface StakeFormData {
   rightId: number;
-  revenueSharePercentage: string;
-  managementFee: string;
   terms: string;
   duration: string;
 }
@@ -30,11 +28,13 @@ export default function StakingPage() {
   const [selectedTab, setSelectedTab] = useState("overview");
   const [stakeFormData, setStakeFormData] = useState<StakeFormData>({
     rightId: 0,
-    revenueSharePercentage: "70",
-    managementFee: "15",
     terms: "",
     duration: "",
   });
+
+  // Fixed platform settings
+  const REVENUE_SHARE_PERCENTAGE = 75; // 75% to user
+  const MANAGEMENT_FEE = 15; // 15% platform fee
 
   // Fetch available rights for staking
   const { data: availableRights = [], isLoading: rightsLoading } = useQuery<Right[]>({
@@ -44,8 +44,8 @@ export default function StakingPage() {
 
   // Fetch user's stakes
   const { data: userStakes = [], isLoading: stakesLoading } = useQuery<StakeWithDetails[]>({
-    queryKey: ["/api/stakes/user", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["/api/stakes/user"],
+    enabled: !!user,
   });
 
   // Create stake mutation
@@ -56,8 +56,8 @@ export default function StakingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           rightId: data.rightId,
-          revenueSharePercentage: parseFloat(data.revenueSharePercentage),
-          managementFee: parseFloat(data.managementFee),
+          revenueSharePercentage: REVENUE_SHARE_PERCENTAGE,
+          managementFee: MANAGEMENT_FEE,
           terms: data.terms,
           duration: data.duration ? parseInt(data.duration) : null,
         }),
@@ -74,11 +74,9 @@ export default function StakingPage() {
         description: "Your right has been successfully staked for revenue sharing.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/stakes/available-rights"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stakes/user", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stakes/user"] });
       setStakeFormData({
         rightId: 0,
-        revenueSharePercentage: "70",
-        managementFee: "15",
         terms: "",
         duration: "",
       });
@@ -176,7 +174,7 @@ export default function StakingPage() {
                   <p className="text-blue-100 text-sm">Total Earnings</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(
-                      userStakes.reduce((sum: number, stake: StakeWithDetails) => sum + parseFloat(stake.stakerEarnings), 0).toString()
+                      userStakes.reduce((sum: number, stake: StakeWithDetails) => sum + parseFloat(stake.stakerEarnings || "0"), 0).toString()
                     )}
                   </p>
                 </div>
@@ -339,36 +337,6 @@ export default function StakingPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="revenueShare">Your Revenue Share (%)</Label>
-                      <Input
-                        id="revenueShare"
-                        type="number"
-                        min="50"
-                        max="90"
-                        value={stakeFormData.revenueSharePercentage}
-                        onChange={(e) =>
-                          setStakeFormData(prev => ({ ...prev, revenueSharePercentage: e.target.value }))
-                        }
-                        placeholder="70"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="managementFee">Management Fee (%)</Label>
-                      <Input
-                        id="managementFee"
-                        type="number"
-                        min="10"
-                        max="25"
-                        value={stakeFormData.managementFee}
-                        onChange={(e) =>
-                          setStakeFormData(prev => ({ ...prev, managementFee: e.target.value }))
-                        }
-                        placeholder="15"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
                       <Label htmlFor="duration">Duration (Months)</Label>
                       <Input
                         id="duration"
@@ -381,6 +349,21 @@ export default function StakingPage() {
                         }
                         placeholder="Leave empty for indefinite"
                       />
+                    </div>
+                  </div>
+
+                  {/* Fixed Platform Terms Display */}
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-purple-800 dark:text-purple-200 mb-3">Platform Terms</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Your Revenue Share:</span>
+                        <span className="font-semibold text-purple-700 dark:text-purple-300">{REVENUE_SHARE_PERCENTAGE}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Platform Management Fee:</span>
+                        <span className="font-semibold text-purple-700 dark:text-purple-300">{MANAGEMENT_FEE}%</span>
+                      </div>
                     </div>
                   </div>
 
@@ -444,7 +427,7 @@ export default function StakingPage() {
                         </Badge>
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {stake.right.type} • Started {new Date(stake.startDate).toLocaleDateString()}
+                        {stake.right.type} • Started {stake.startDate ? new Date(stake.startDate).toLocaleDateString() : 'Pending'}
                       </p>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -477,7 +460,7 @@ export default function StakingPage() {
                                   {distribution.distributionType} • {distribution.processedAt ? new Date(distribution.processedAt).toLocaleDateString() : 'Pending'}
                                 </span>
                                 <span className="font-medium">
-                                  {formatCurrency(distribution.amount)}
+                                  {formatCurrency(distribution.amount || "0")}
                                 </span>
                               </div>
                             ))}
