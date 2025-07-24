@@ -398,10 +398,20 @@ Content-Type: application/json`}
                   </div>
                 </div>
 
-                <Button className="w-full" variant="outline">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View Full API Documentation
-                </Button>
+                <div className="flex gap-2">
+                  <Link href="/api-reference" className="flex-1">
+                    <Button className="w-full">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Complete API Reference
+                    </Button>
+                  </Link>
+                  <Button variant="outline" asChild>
+                    <a href="https://github.com/dright/examples" target="_blank" rel="noopener noreferrer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Examples
+                    </a>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -15,6 +15,7 @@ import Staking from "./pages/staking";
 import GoogleCallback from "./pages/google-callback";
 import Docs from "./pages/docs";
 import About from "./pages/about";
+import ApiReference from "./pages/api-reference";
 import Settings from "./pages/settings";
 import MintingProgress from "./pages/minting-progress";
 import ErrorDemo from "./pages/error-demo";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
       <Route path="/docs" component={Docs} />
+      <Route path="/api-reference" component={ApiReference} />
       <Route path="/about" component={About} />
       <Route path="/settings" component={Settings} />
       <Route path="/google-callback" component={GoogleCallback} />
