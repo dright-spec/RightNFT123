@@ -37,8 +37,8 @@ export default function Home() {
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
               </Link>
-              <Link href="/staking" className="text-muted-foreground hover:text-primary transition-colors font-medium">
-                Staking
+              <Link href="/staking" className="text-blue-600 hover:text-blue-700 transition-colors font-bold">
+                🎯 Staking
               </Link>
               <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Live Auctions
@@ -103,6 +103,13 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 <Upload className="w-8 h-8 mr-4 relative z-10" />
                 <span className="relative z-10">Create Your Right</span>
+                <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              
+              <Link href="/staking" className="group relative bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white px-16 py-8 text-2xl font-black rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 min-w-[280px] border-0 overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                <Coins className="w-8 h-8 mr-4 relative z-10" />
+                <span className="relative z-10">Start Staking</span>
                 <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
               </Link>
               
