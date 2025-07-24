@@ -6,6 +6,8 @@ import {
   bids,
   favorites,
   follows,
+  stakes,
+  revenueDistributions,
   type User,
   type Right,
   type RightWithCreator,
@@ -19,6 +21,11 @@ import {
   type InsertTransaction,
   type InsertCategory,
   type InsertBid,
+  type Stake,
+  type StakeWithDetails,
+  type InsertStake,
+  type RevenueDistribution,
+  type InsertRevenueDistribution,
   defaultCategories,
 } from "@shared/schema";
 import { db } from "./db";
@@ -94,6 +101,23 @@ export interface IMarketplaceStorage {
     filters?: any;
   }): Promise<RightWithCreator[]>;
   getSearchSuggestions(query: string): Promise<string[]>;
+  
+  // Staking operations
+  createStake(stake: InsertStake & { endDate?: Date | null }): Promise<Stake>;
+  getStake(id: number): Promise<Stake | undefined>;
+  getStakeWithDetails(id: number): Promise<StakeWithDetails | undefined>;
+  getUserStakes(userId: number): Promise<StakeWithDetails[]>;
+  getStakes(options?: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+  }): Promise<StakeWithDetails[]>;
+  getActiveStakeByRight(rightId: number): Promise<Stake | undefined>;
+  updateStake(id: number, updates: Partial<Stake>): Promise<Stake | undefined>;
+  
+  // Revenue distribution operations
+  createRevenueDistribution(distribution: InsertRevenueDistribution): Promise<RevenueDistribution>;
+  getRevenueDistributionsByStake(stakeId: number): Promise<RevenueDistribution[]>;
 }
 
 export class DatabaseMarketplaceStorage implements IMarketplaceStorage {
@@ -693,6 +717,138 @@ export class DatabaseMarketplaceStorage implements IMarketplaceStorage {
       .limit(5);
 
     return suggestions.map(s => s.title);
+  }
+
+  // Staking implementations
+  async createStake(stakeData: InsertStake & { endDate?: Date | null }): Promise<Stake> {
+    const [stake] = await db.insert(stakes).values({
+      ...stakeData,
+      endDate: stakeData.endDate || null,
+    }).returning();
+    return stake;
+  }
+
+  async getStake(id: number): Promise<Stake | undefined> {
+    const [stake] = await db.select().from(stakes).where(eq(stakes.id, id));
+    return stake;
+  }
+
+  async getStakeWithDetails(id: number): Promise<StakeWithDetails | undefined> {
+    const results = await db
+      .select({
+        stake: stakes,
+        right: rights,
+        staker: users,
+      })
+      .from(stakes)
+      .leftJoin(rights, eq(stakes.rightId, rights.id))
+      .leftJoin(users, eq(stakes.stakerId, users.id))
+      .where(eq(stakes.id, id));
+
+    if (results.length === 0) return undefined;
+
+    const result = results[0];
+    const distributions = await this.getRevenueDistributionsByStake(id);
+
+    return {
+      ...result.stake,
+      right: result.right!,
+      staker: result.staker!,
+      revenueDistributions: distributions,
+    };
+  }
+
+  async getUserStakes(userId: number): Promise<StakeWithDetails[]> {
+    const results = await db
+      .select({
+        stake: stakes,
+        right: rights,
+        staker: users,
+      })
+      .from(stakes)
+      .leftJoin(rights, eq(stakes.rightId, rights.id))
+      .leftJoin(users, eq(stakes.stakerId, users.id))
+      .where(eq(stakes.stakerId, userId))
+      .orderBy(desc(stakes.createdAt));
+
+    const stakesWithDetails: StakeWithDetails[] = [];
+    for (const result of results) {
+      const distributions = await this.getRevenueDistributionsByStake(result.stake.id);
+      stakesWithDetails.push({
+        ...result.stake,
+        right: result.right!,
+        staker: result.staker!,
+        revenueDistributions: distributions,
+      });
+    }
+
+    return stakesWithDetails;
+  }
+
+  async getStakes(options: {
+    limit?: number;
+    offset?: number;
+    status?: string;
+  } = {}): Promise<StakeWithDetails[]> {
+    const { limit = 20, offset = 0, status = "active" } = options;
+
+    const results = await db
+      .select({
+        stake: stakes,
+        right: rights,
+        staker: users,
+      })
+      .from(stakes)
+      .leftJoin(rights, eq(stakes.rightId, rights.id))
+      .leftJoin(users, eq(stakes.stakerId, users.id))
+      .where(eq(stakes.status, status))
+      .orderBy(desc(stakes.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const stakesWithDetails: StakeWithDetails[] = [];
+    for (const result of results) {
+      const distributions = await this.getRevenueDistributionsByStake(result.stake.id);
+      stakesWithDetails.push({
+        ...result.stake,
+        right: result.right!,
+        staker: result.staker!,
+        revenueDistributions: distributions,
+      });
+    }
+
+    return stakesWithDetails;
+  }
+
+  async getActiveStakeByRight(rightId: number): Promise<Stake | undefined> {
+    const [stake] = await db
+      .select()
+      .from(stakes)
+      .where(and(eq(stakes.rightId, rightId), eq(stakes.status, "active")));
+    return stake;
+  }
+
+  async updateStake(id: number, updates: Partial<Stake>): Promise<Stake | undefined> {
+    const [updatedStake] = await db
+      .update(stakes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(stakes.id, id))
+      .returning();
+    return updatedStake;
+  }
+
+  // Revenue distribution implementations
+  async createRevenueDistribution(distributionData: InsertRevenueDistribution): Promise<RevenueDistribution> {
+    const [distribution] = await db.insert(revenueDistributions).values(distributionData).returning();
+    return distribution;
+  }
+
+  async getRevenueDistributionsByStake(stakeId: number): Promise<RevenueDistribution[]> {
+    return await db
+      .select()
+      .from(revenueDistributions)
+      .where(eq(revenueDistributions.stakeId, stakeId))
+      .orderBy(desc(revenueDistributions.createdAt));
   }
 }
 

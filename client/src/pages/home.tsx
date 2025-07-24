@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { WalletDebug } from "@/components/wallet-debug";
-import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload } from "lucide-react";
+import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload, Coins, Target, Percent } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
 export default function Home() {
@@ -36,6 +36,9 @@ export default function Home() {
             <nav className="hidden md:flex space-x-8">
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
+              </Link>
+              <Link href="/staking" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Staking
               </Link>
               <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Live Auctions
@@ -514,6 +517,201 @@ export default function Home() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Staking Section */}
+      <section className="py-20 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-700 dark:text-purple-300 text-sm font-medium mb-6">
+              <Coins className="w-4 h-4" />
+              New Feature: Rights Staking
+            </div>
+            <h2 className="text-4xl font-bold text-foreground mb-4">Maximize Your Rights Revenue with Expert Management</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Stake your verified rights with our professional team and earn passive income while we explore and maximize revenue opportunities for you.
+            </p>
+          </div>
+
+          {/* Staking Benefits Grid */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <Card className="p-8 bg-gradient-to-br from-white to-purple-50 dark:from-gray-800 dark:to-purple-900/20 border-purple-200 dark:border-purple-800 shadow-xl hover:scale-105 transition-all duration-300">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Target className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4 text-center">Professional Revenue Exploration</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Our expert team actively explores licensing deals, partnerships, and revenue opportunities you might never discover on your own.
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>Industry partnership networks</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>Global licensing opportunities</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>Revenue optimization strategies</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="p-8 bg-gradient-to-br from-white to-green-50 dark:from-gray-800 dark:to-green-900/20 border-green-200 dark:border-green-800 shadow-xl hover:scale-105 transition-all duration-300">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Percent className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4 text-center">Transparent Revenue Sharing</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Keep 70-80% of all revenue generated from your rights while we handle the complex work of monetization and deal management.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span className="font-medium text-sm">Your Share</span>
+                    <span className="text-green-600 font-bold">70-80%</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <span className="font-medium text-sm">Management Fee</span>
+                    <span className="text-blue-600 font-bold">15-20%</span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <span className="font-medium text-sm">Platform Fee</span>
+                    <span className="text-purple-600 font-bold">5-10%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="p-8 bg-gradient-to-br from-white to-blue-50 dark:from-gray-800 dark:to-blue-900/20 border-blue-200 dark:border-blue-800 shadow-xl hover:scale-105 transition-all duration-300">
+              <CardContent className="pt-6">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <TrendingUp className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4 text-center">Passive Income Generation</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Earn consistent passive income without any effort on your part. We handle negotiations, contracts, and revenue collection automatically.
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>Automated revenue distribution</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>Real-time earnings tracking</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>No management overhead</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* How Staking Works */}
+          <div className="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-700 rounded-3xl p-8 md:p-12 mb-16 shadow-2xl">
+            <h3 className="text-2xl font-bold text-center mb-8">How Rights Staking Works</h3>
+            <div className="grid md:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
+                  1
+                </div>
+                <h4 className="font-semibold mb-2">Choose Your Rights</h4>
+                <p className="text-sm text-muted-foreground">
+                  Select from your verified rights to stake with our professional team.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
+                  2
+                </div>
+                <h4 className="font-semibold mb-2">Set Terms</h4>
+                <p className="text-sm text-muted-foreground">
+                  Customize revenue sharing percentage and duration terms that work for you.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
+                  3
+                </div>
+                <h4 className="font-semibold mb-2">We Maximize Revenue</h4>
+                <p className="text-sm text-muted-foreground">
+                  Our experts explore partnerships, licensing deals, and monetization strategies.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold text-lg">
+                  4
+                </div>
+                <h4 className="font-semibold mb-2">Earn Passively</h4>
+                <p className="text-sm text-muted-foreground">
+                  Receive your share of generated revenue automatically, with full transparency.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Example Staking Scenario */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-8 border border-green-200 dark:border-green-800">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold mb-2">Example: Music Rights Staking</h3>
+              <p className="text-muted-foreground">See how staking can transform your music rights into consistent passive income</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6 text-center">
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6">
+                <div className="text-2xl font-bold text-green-600 mb-2">$500</div>
+                <div className="text-sm text-muted-foreground mb-2">Monthly Revenue Generated</div>
+                <div className="text-xs text-gray-500">From licensing deals we secured</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6">
+                <div className="text-2xl font-bold text-blue-600 mb-2">$375</div>
+                <div className="text-sm text-muted-foreground mb-2">Your Earnings (75%)</div>
+                <div className="text-xs text-gray-500">Automatically distributed to you</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6">
+                <div className="text-2xl font-bold text-purple-600 mb-2">$4,500</div>
+                <div className="text-sm text-muted-foreground mb-2">Annual Passive Income</div>
+                <div className="text-xs text-gray-500">Without any work on your part</div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-16">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Link href="/staking">
+                <Button 
+                  size="lg" 
+                  className="px-12 py-6 text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-xl hover:scale-105 transition-all duration-300"
+                >
+                  <Coins className="w-6 h-6 mr-3" />
+                  Start Staking Your Rights
+                  <ArrowRight className="w-6 h-6 ml-3" />
+                </Button>
+              </Link>
+              
+              <Link href="/create-right">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="px-12 py-6 text-xl font-semibold border-2 border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-300"
+                >
+                  <Upload className="w-6 h-6 mr-3" />
+                  Create Rights First
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground mt-4 max-w-2xl mx-auto">
+              Only verified rights can be staked. Create and verify your rights first, then explore the staking platform for passive income opportunities.
+            </p>
           </div>
         </div>
       </section>

@@ -174,6 +174,40 @@ export const abTestChoices = pgTable("ab_test_choices", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const stakes = pgTable("stakes", {
+  id: serial("id").primaryKey(),
+  rightId: integer("right_id").notNull().references(() => rights.id),
+  stakerId: integer("staker_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("active"), // active, completed, cancelled
+  revenueSharePercentage: decimal("revenue_share_percentage", { precision: 5, scale: 2 }).notNull(), // % staker receives
+  totalRevenue: decimal("total_revenue", { precision: 18, scale: 8 }).default("0"), // Total revenue generated
+  stakerEarnings: decimal("staker_earnings", { precision: 18, scale: 8 }).default("0"), // Amount paid to staker
+  managementFee: decimal("management_fee", { precision: 5, scale: 2 }).default("15.00"), // Platform fee %
+  terms: text("terms"), // Custom terms and conditions
+  duration: integer("duration"), // Stake duration in months (null = indefinite)
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date"), // Auto-calculated from duration
+  lastRevenueUpdate: timestamp("last_revenue_update"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("stakes_right_idx").on(table.rightId),
+  index("stakes_staker_idx").on(table.stakerId),
+  index("stakes_status_idx").on(table.status),
+]);
+
+export const revenueDistributions = pgTable("revenue_distributions", {
+  id: serial("id").primaryKey(),
+  stakeId: integer("stake_id").notNull().references(() => stakes.id),
+  amount: decimal("amount", { precision: 18, scale: 8 }).notNull(),
+  currency: text("currency").default("ETH"),
+  distributionType: text("distribution_type").notNull(), // streaming, performance, licensing, etc.
+  description: text("description"), // Description of revenue source
+  transactionHash: text("transaction_hash"), // Blockchain transaction hash
+  processedAt: timestamp("processed_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -254,6 +288,24 @@ export const insertAbTestChoiceSchema = createInsertSchema(abTestChoices).pick({
   converted: true,
 });
 
+export const insertStakeSchema = createInsertSchema(stakes).pick({
+  rightId: true,
+  stakerId: true,
+  revenueSharePercentage: true,
+  managementFee: true,
+  terms: true,
+  duration: true,
+});
+
+export const insertRevenueDistributionSchema = createInsertSchema(revenueDistributions).pick({
+  stakeId: true,
+  amount: true,
+  currency: true,
+  distributionType: true,
+  description: true,
+  transactionHash: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
@@ -268,6 +320,10 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertAbTestChoice = z.infer<typeof insertAbTestChoiceSchema>;
 export type AbTestChoice = typeof abTestChoices.$inferSelect;
+export type InsertStake = z.infer<typeof insertStakeSchema>;
+export type Stake = typeof stakes.$inferSelect;
+export type InsertRevenueDistribution = z.infer<typeof insertRevenueDistributionSchema>;
+export type RevenueDistribution = typeof revenueDistributions.$inferSelect;
 
 // Extended types with relations
 export type RightWithCreator = Right & {
@@ -290,6 +346,12 @@ export type UserProfile = User & {
 
 export type BidWithUser = Bid & {
   bidder: User;
+};
+
+export type StakeWithDetails = Stake & {
+  right: Right;
+  staker: User;
+  revenueDistributions?: RevenueDistribution[];
 };
 
 export type RightType = "copyright" | "royalty" | "access" | "ownership" | "license";
@@ -349,6 +411,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   following: many(follows, { relationName: "follower" }),
   transactionsFrom: many(transactions, { relationName: "fromUser" }),
   transactionsTo: many(transactions, { relationName: "toUser" }),
+  stakes: many(stakes),
 }));
 
 export const categoriesRelations = relations(categories, ({ one, many }) => ({
@@ -383,6 +446,7 @@ export const rightsRelations = relations(rights, ({ one, many }) => ({
   bids: many(bids),
   favorites: many(favorites),
   transactions: many(transactions),
+  stakes: many(stakes),
 }));
 
 export const bidsRelations = relations(bids, ({ one }) => ({
@@ -434,5 +498,24 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
     fields: [transactions.toUserId],
     references: [users.id],
     relationName: "toUser"
+  }),
+}));
+
+export const stakesRelations = relations(stakes, ({ one, many }) => ({
+  right: one(rights, {
+    fields: [stakes.rightId],
+    references: [rights.id],
+  }),
+  staker: one(users, {
+    fields: [stakes.stakerId],
+    references: [users.id],
+  }),
+  revenueDistributions: many(revenueDistributions),
+}));
+
+export const revenueDistributionsRelations = relations(revenueDistributions, ({ one }) => ({
+  stake: one(stakes, {
+    fields: [revenueDistributions.stakeId],
+    references: [stakes.id],
   }),
 }));

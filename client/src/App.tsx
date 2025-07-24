@@ -11,6 +11,7 @@ import RightDetail from "./pages/right-detail";
 import Admin from "./pages/admin";
 import Dashboard from "./pages/dashboard";
 import CreateRight from "./pages/create-right";
+import Staking from "./pages/staking";
 import GoogleCallback from "./pages/google-callback";
 import Docs from "./pages/docs";
 import About from "./pages/about";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/profile-setup" component={ProfileSetup} />
       <Route path="/create-right" component={CreateRight} />
+      <Route path="/staking" component={Staking} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
       <Route path="/docs" component={Docs} />
