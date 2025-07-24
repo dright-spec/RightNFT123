@@ -283,7 +283,12 @@ async function connectMetaMask(): Promise<ConnectedWallet> {
       provider = win.ethereum.providers.find((p: any) => p.isMetaMask) || win.ethereum;
     }
 
-    // Request account access
+    // Always request fresh permission - this ensures user consent
+    // Clear any cached permissions first by checking accounts
+    const existingAccounts = await provider.request({ method: 'eth_accounts' });
+    console.log('Existing MetaMask accounts:', existingAccounts);
+    
+    // Request account access - this will show MetaMask popup for user approval
     const accounts = await provider.request({
       method: 'eth_requestAccounts'
     });
@@ -332,6 +337,11 @@ async function connectPhantom(): Promise<ConnectedWallet> {
       provider = win.ethereum.providers.find((p: any) => p.isPhantom) || provider;
     }
 
+    // Check existing permissions and request fresh approval
+    const existingAccounts = await provider.request({ method: 'eth_accounts' });
+    console.log('Existing Phantom accounts:', existingAccounts);
+
+    // Request account access - this will trigger Phantom's approval dialog
     const accounts = await provider.request({
       method: 'eth_requestAccounts'
     });

@@ -28,12 +28,28 @@ export function Web3ModalConnectButton() {
     localStorage.removeItem('wallet_connection');
   };
 
-  // Check for existing connection on component mount
+  // Check for existing connection on component mount - but don't auto-connect
   useEffect(() => {
-    const wallet = getConnectedWallet();
-    if (wallet && wallet.isConnected) {
-      setIsConnected(true);
-      setConnectedWallet({ walletId: wallet.walletId, address: wallet.address });
+    // Only check if there's a stored session for UI display purposes
+    // Users must explicitly connect through wallet approval each time
+    const stored = localStorage.getItem('wallet_connection');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        // Only restore UI state if session is recent (within 24 hours)
+        const isRecent = Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000;
+        if (isRecent && parsed.isConnected) {
+          // Don't auto-connect, but show as connected if session exists
+          // User will need to approve connection again if they interact with wallet features
+          setIsConnected(true);
+          setConnectedWallet({ walletId: parsed.walletId, address: parsed.address });
+        } else {
+          // Clear expired sessions
+          localStorage.removeItem('wallet_connection');
+        }
+      } catch {
+        localStorage.removeItem('wallet_connection');
+      }
     }
   }, []);
 
@@ -41,9 +57,14 @@ export function Web3ModalConnectButton() {
     try {
       setConnecting(true);
       
-      console.log(`Connecting wallet: ${walletId} - ${address}`);
+      console.log(`User approved wallet connection: ${walletId} - ${address}`);
       
-      // Store wallet info locally
+      // Validate address format for security
+      if (!address || !address.match(/^0x[a-fA-F0-9]{38,40}$/)) {
+        throw new Error('Invalid Ethereum address format');
+      }
+      
+      // Store wallet info locally only after successful connection
       storeWalletConnection(walletId, address);
       
       // Authenticate with backend
