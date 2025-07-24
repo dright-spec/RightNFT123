@@ -8,6 +8,7 @@ import { users, rights } from "@shared/schema";
 import { eq, desc, or, ilike, sql } from "drizzle-orm";
 import { insertRightSchema, insertUserSchema, insertTransactionSchema } from "@shared/schema";
 import { z } from "zod";
+import secureFileRoutes from "./routes-secure-files";
 
 // Import unified API architecture
 import type { 
@@ -24,6 +25,9 @@ import { requireAuth, optionalAuth, requireAdmin, rateLimit, validateBody } from
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply rate limiting to all routes
   app.use('/api/', rateLimit(200, 60000)); // 200 requests per minute
+  
+  // Add secure file routes for document verification
+  app.use('/api/secure-files', secureFileRoutes);
   // YouTube verification endpoint - must be before other routes
   app.post("/api/youtube/verify", async (req, res) => {
     try {

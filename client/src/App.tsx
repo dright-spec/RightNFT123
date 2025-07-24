@@ -20,6 +20,8 @@ import Settings from "./pages/settings";
 import MintingProgress from "./pages/minting-progress";
 import ErrorDemo from "./pages/error-demo";
 import Testnet from "./pages/testnet";
+import AdminFiles from "./pages/admin-files";
+import FileUploadDemo from "./pages/file-upload-demo";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -33,6 +35,8 @@ function Router() {
       <Route path="/staking" component={Staking} />
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/files" component={AdminFiles} />
+      <Route path="/file-upload-demo" component={FileUploadDemo} />
       <Route path="/docs" component={Docs} />
       <Route path="/api-reference" component={ApiReference} />
       <Route path="/about" component={About} />
