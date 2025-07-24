@@ -10,23 +10,23 @@ interface HederaNFTCardProps {
 }
 
 export function HederaNFTCard({ right }: HederaNFTCardProps) {
-  const hasHederaData = right.hederaTokenId && right.hederaSerialNumber;
+  const hasEthereumData = right.tokenId && right.contractAddress;
   
-  const handleViewOnHashscan = () => {
-    if (right.hederaTransactionId) {
-      const url = hederaService.getHederaExplorerUrl(right.hederaTransactionId);
+  const handleViewOnEtherscan = () => {
+    if (right.transactionHash) {
+      const url = `https://etherscan.io/tx/${right.transactionHash}`;
       window.open(url, '_blank');
     }
   };
 
   const handleViewNFT = () => {
-    if (right.hederaTokenId && right.hederaSerialNumber) {
-      const url = hederaService.getTokenExplorerUrl(right.hederaTokenId, right.hederaSerialNumber);
+    if (right.contractAddress && right.tokenId) {
+      const url = `https://etherscan.io/token/${right.contractAddress}?a=${right.tokenId}`;
       window.open(url, '_blank');
     }
   };
 
-  if (!hasHederaData) {
+  if (!hasEthereumData) {
     const isVerified = right.verificationStatus === "verified";
     const isPending = right.verificationStatus === "pending";
     const isRejected = right.verificationStatus === "rejected";
@@ -76,7 +76,7 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
             isRejected ? "text-red-700 dark:text-red-300" :
             "text-gray-700 dark:text-gray-300"
           }`}>
-            {isVerified ? "Right is verified. NFT will be minted automatically on Hedera blockchain." :
+            {isVerified ? "Right is verified. NFT will be minted automatically on Ethereum blockchain." :
              isPending ? "Right is pending admin verification before NFT can be minted." :
              isRejected ? "Right verification was rejected. NFT cannot be minted." :
              "This right was created before verification system implementation."}
@@ -99,10 +99,10 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="border-green-300 text-green-700 bg-green-100">
             <CheckCircle className="w-3 h-3 mr-1" />
-            Minted on Hedera
+            Minted on Ethereum
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            {right.hederaNetwork || 'testnet'}
+            mainnet
           </Badge>
         </div>
 
@@ -111,22 +111,22 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-green-700 dark:text-green-300">Token ID:</span>
             <code className="text-xs bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
-              {right.hederaTokenId}
+              {right.tokenId}
             </code>
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-green-700 dark:text-green-300">Serial #:</span>
+            <span className="text-sm font-medium text-green-700 dark:text-green-300">Contract:</span>
             <code className="text-xs bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
-              {right.hederaSerialNumber}
+              {right.contractAddress?.slice(0, 10)}...
             </code>
           </div>
 
-          {right.hederaAccountId && (
+          {right.ownerAddress && (
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-green-700 dark:text-green-300">Owner:</span>
               <code className="text-xs bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">
-                {right.hederaAccountId}
+                {right.ownerAddress.slice(0, 10)}...
               </code>
             </div>
           )}
@@ -134,11 +134,11 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
 
         {/* Blockchain Links */}
         <div className="flex flex-col gap-2 pt-2">
-          {right.hederaTransactionId && (
+          {right.transactionHash && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleViewOnHashscan}
+              onClick={handleViewOnEtherscan}
               className="w-full justify-between text-green-700 border-green-300 hover:bg-green-100"
             >
               <span className="flex items-center gap-2">
@@ -164,12 +164,12 @@ export function HederaNFTCard({ right }: HederaNFTCardProps) {
         </div>
 
         {/* Metadata Link */}
-        {right.hederaMetadataUri && (
+        {right.metadataUri && (
           <div className="pt-2 border-t border-green-200">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => window.open(right.hederaMetadataUri!, '_blank')}
+              onClick={() => window.open(right.metadataUri!, '_blank')}
               className="w-full text-xs text-green-600 hover:text-green-700"
             >
               View IPFS Metadata

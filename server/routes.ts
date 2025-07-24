@@ -316,8 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: null, // Optional for wallet users
           walletAddress: address,
           bio: `User connected via ${walletDisplayName}`,
-          isVerified: false,
-          password: null // No password for wallet users
+          password: "" // No password for wallet users
         });
         
         req.session.userId = newUser.id;
@@ -406,7 +405,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: email || null,
         walletAddress: req.session.walletAddress,
         password: '', // No password for wallet users
-        emailVerified: false,
       });
 
       req.session.userId = user.id;
@@ -685,10 +683,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Step 5: Marketplace Listing
       updateMintingStep(right.id, 5, "processing");
       await storage.updateRight(right.id, {
-        hederaTokenId: mintResult.tokenId,
-        hederaSerialNumber: mintResult.serialNumber,
-        hederaTransactionId: mintResult.transactionId,
-        hederaAccountId: process.env.HEDERA_ACCOUNT_ID!,
+        contractAddress: mintResult.contractAddress,
+        tokenId: mintResult.tokenId,
+        transactionHash: mintResult.transactionHash,
+        blockNumber: mintResult.blockNumber,
         metadataUri: mintResult.metadataUri,
         mintingStatus: "completed",
         isListed: true
@@ -782,7 +780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting" });
       }
 
-      if (right.hederaTokenId) {
+      if (right.tokenId) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
@@ -1025,8 +1023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             username: `user_${mockUserId}`,
             email: `user_${mockUserId}@dright.com`,
             walletAddress: null,
-            bio: 'Demo user for production testing',
-            isVerified: false
+            bio: 'Demo user for production testing'
           });
           console.log('Created user:', user);
         } catch (createError) {
@@ -1052,7 +1049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toUserId: mockUserId,
           transactionHash: null, // Will be set when actual Hedera transaction occurs
           price: right.price || "0",
-          currency: right.currency || "HBAR",
+          currency: right.currency || "ETH",
           type: "mint",
         });
       }
@@ -1095,7 +1092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if right is already verified or has NFT
-      if (right.verificationStatus === "verified" || right.hederaTokenId) {
+      if (right.verificationStatus === "verified" || right.tokenId) {
         return res.status(400).json({ error: "Right is already verified or has NFT minted" });
       }
 
@@ -1137,22 +1134,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting NFT" });
       }
 
-      if (right.hederaTokenId) {
+      if (right.tokenId) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
-      // Update right with Hedera NFT data
+      // Update right with Ethereum NFT data
       const updatedRight = await storage.updateRight(id, {
-        hederaTokenId: hederaData.tokenId,
-        hederaSerialNumber: hederaData.serialNumber,
-        hederaTransactionId: hederaData.transactionId,
-        hederaMetadataUri: hederaData.metadataUri,
-        hederaAccountId: hederaData.accountId,
-        hederaNetwork: hederaData.network,
-        contentFileHash: hederaData.transactionId,
+        tokenId: hederaData.tokenId,
+        contractAddress: hederaData.contractAddress,
+        transactionHash: hederaData.transactionHash,
+        blockNumber: hederaData.blockNumber,
+        ownerAddress: hederaData.ownerAddress,
+        chainId: 1, // Ethereum mainnet
+        contentFileHash: hederaData.transactionHash,
         contentFileUrl: hederaData.metadataUri,
-        contentFileName: `Hedera NFT ${hederaData.tokenId}:${hederaData.serialNumber}`,
-        contentFileType: "application/hedera-nft",
+        contentFileName: `Ethereum NFT ${hederaData.tokenId}`,
+        contentFileType: "application/ethereum-nft",
       });
 
       res.json({ 
@@ -1276,12 +1273,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Wallet address required" });
       }
       
-      // Validate wallet type and address format
-      const isHederaAddress = walletAddress.match(/^0\.0\.\d+$/);
-      const isEthereumAddress = walletAddress.match(/^0x[a-fA-F0-9]{40}$/);
+      // Validate Ethereum wallet address format
+      const isEthereumAddress = walletAddress.match(/^0x[a-fA-F0-9]{38,40}$/);
       
-      if (!isHederaAddress && !isEthereumAddress) {
-        return res.status(400).json({ error: "Invalid wallet address format" });
+      if (!isEthereumAddress) {
+        return res.status(400).json({ error: "Invalid Ethereum wallet address format" });
       }
       
       // Check if user exists with this wallet address
@@ -1289,9 +1285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!user) {
         // Create new user for this wallet
-        const username = isHederaAddress 
-          ? `hedera_${walletAddress.split('.')[2]}` 
-          : `user_${walletAddress.slice(-6)}`;
+        const username = `user_${walletAddress.slice(-6)}`;
           
         user = await storage.createUser({
           username,
@@ -1311,7 +1305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: true, 
         user: userWithoutPassword,
         walletType: walletType || 'unknown',
-        network: isHederaAddress ? 'hedera' : 'ethereum',
+        network: 'ethereum',
         message: "Wallet connected successfully" 
       });
     } catch (error) {

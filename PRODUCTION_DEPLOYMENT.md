@@ -2,41 +2,39 @@
 
 ## 🚀 Production Configuration Changes
 
-### Hedera Mainnet Integration
-- **Network**: Switched from testnet to mainnet
-- **Currency**: All pricing converted to HBAR
-- **Real Transactions**: Live mainnet NFT minting
+### Ethereum Mainnet Integration
+- **Network**: Ethereum Mainnet (Chain ID: 1)
+- **Currency**: All pricing in ETH
+- **Real Transactions**: Live mainnet NFT minting on Ethereum
 
 ### Production Environment Variables Required
 ```bash
-# Hedera Mainnet (REQUIRED)
-HEDERA_ACCOUNT_ID=0.0.YOUR_MAINNET_ACCOUNT
-HEDERA_PRIVATE_KEY=YOUR_MAINNET_PRIVATE_KEY_ED25519
-
 # Database (REQUIRED)
 DATABASE_URL=postgresql://user:pass@host:port/database
 
-# Firebase for File Storage (OPTIONAL)
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_APP_ID=your_firebase_app_id
-VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-
 # Session Secret (REQUIRED)
 SESSION_SECRET=your_secure_random_string_32_chars_min
+
+# Optional API Keys
+OPENAI_API_KEY=your_openai_api_key
+YOUTUBE_API_KEY=your_youtube_api_key
+
+# Ethereum RPC (Optional - defaults to public RPC)
+ETHEREUM_RPC_URL=https://eth.llamarpc.com
 ```
 
 ### Production Changes Made
 
-#### 1. Hedera Mainnet Configuration
-- ✅ Changed from `Client.forTestnet()` to `Client.forMainnet()`
-- ✅ All NFT transactions now occur on live mainnet
-- ✅ Real HBAR costs for token creation and minting
+#### 1. Ethereum Mainnet Configuration
+- ✅ All wallet connections target Ethereum mainnet (Chain ID: 1)
+- ✅ NFT marketplace operates on Ethereum blockchain
+- ✅ Real ETH costs for gas and transactions
 
 #### 2. Currency Standardization
-- ✅ Default currency changed from ETH to HBAR
-- ✅ All pricing interfaces use HBAR
-- ✅ Bid calculations in HBAR
-- ✅ Revenue distribution in HBAR
+- ✅ Default currency set to ETH across entire platform
+- ✅ All pricing interfaces use ETH with 2 decimal precision
+- ✅ Bid calculations in ETH
+- ✅ Revenue distribution in ETH
 
 #### 3. Data Cleanup
 - ✅ Removed all mock/test data initialization
@@ -51,18 +49,18 @@ SESSION_SECRET=your_secure_random_string_32_chars_min
 - ✅ Genuine notification system
 - ✅ Authentic marketplace transactions
 
-## 💰 HBAR Pricing Considerations
+## 💰 ETH Pricing Considerations
 
 ### Mainnet Costs
-- **Token Creation**: ~1-2 HBAR per NFT collection
-- **NFT Minting**: ~0.1-0.2 HBAR per NFT
-- **Transfers**: ~0.001 HBAR per transaction
+- **NFT Minting**: ~0.01-0.05 ETH in gas fees (depends on network congestion)
+- **Transfers**: ~0.005-0.02 ETH per transaction
+- **Complex Operations**: ~0.02-0.1 ETH depending on contract complexity
 
 ### Recommended Pricing Strategy
-- **Patent Rights**: 100-1000 HBAR
-- **Copyright**: 50-500 HBAR  
-- **License Rights**: 25-250 HBAR
-- **Royalty Shares**: 10-100 HBAR
+- **Patent Rights**: 0.1-2 ETH
+- **Copyright**: 0.05-1 ETH  
+- **License Rights**: 0.025-0.5 ETH
+- **Royalty Shares**: 0.01-0.25 ETH
 
 ## 🔐 Security for Production
 
@@ -73,19 +71,19 @@ SESSION_SECRET=your_secure_random_string_32_chars_min
 4. **Rate Limiting**: Configured for production traffic
 5. **Error Handling**: Production-safe error messages
 
-### Hedera Account Setup
-1. Create mainnet Hedera account at portal.hedera.com
-2. Fund account with sufficient HBAR (recommend 1000+ HBAR)
-3. Generate ED25519 private key for production use
-4. Configure account for token services
+### Ethereum Wallet Setup
+1. Ensure users have Ethereum mainnet wallets (MetaMask, Phantom, Coinbase, etc.)
+2. Platform supports wallet-based authentication and NFT operations
+3. Users pay their own gas fees for minting and transactions
+4. No platform-owned wallets required - fully decentralized approach
 
 ## 📋 Pre-Launch Checklist
 
 ### Technical Verification
-- [ ] Hedera mainnet account funded and operational
+- [ ] Ethereum mainnet wallet connections working
 - [ ] Database migrations completed
 - [ ] All environment variables configured
-- [ ] SSL certificates installed
+- [ ] SSL certificates configured for production domainicates installed
 - [ ] Domain DNS configured
 
 ### Functional Testing
