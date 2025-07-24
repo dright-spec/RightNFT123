@@ -2445,5 +2445,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  // Purchase right endpoint
+  app.post("/api/rights/:id/purchase", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const { transactionHash, amount, currency, buyerAddress } = req.body;
+
+      if (!rightId || !transactionHash || !amount || !buyerAddress) {
+        return res.status(400).json({ error: "Missing required purchase data" });
+      }
+
+      // Validate Ethereum address format
+      const isValidAddress = /^0x[a-fA-F0-9]{38,40}$/.test(buyerAddress);
+      if (!isValidAddress) {
+        return res.status(400).json({ error: "Invalid buyer address format" });
+      }
+
+      // Get the right being purchased
+      const right = await storage.getRight(rightId);
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+
+      // Check if right is available for purchase
+      if (right.ownerId === req.session.userId) {
+        return res.status(400).json({ error: "Cannot purchase your own right" });
+      }
+
+      if (right.isListed !== true) {
+        return res.status(400).json({ error: "Right is not listed for sale" });
+      }
+
+      // Validate purchase amount matches listing price
+      const expectedAmount = parseFloat(right.price || "0");
+      const platformFee = expectedAmount * 0.025; // 2.5% platform fee
+      const totalExpected = expectedAmount + platformFee;
+      
+      if (Math.abs(parseFloat(amount) - totalExpected) > 0.001) {
+        return res.status(400).json({ 
+          error: "Payment amount doesn't match expected total",
+          expected: totalExpected.toString(),
+          received: amount
+        });
+      }
+
+      // Get or create buyer user account
+      let buyer = await storage.getUserByWalletAddress(buyerAddress);
+      if (!buyer) {
+        // Create new user account for buyer
+        buyer = await storage.createUser({
+          username: `buyer_${buyerAddress.slice(-6)}`,
+          password: "secure_password",
+          walletAddress: buyerAddress,
+        });
+      }
+
+      // Record the purchase transaction
+      const transaction = await storage.createTransaction({
+        type: "purchase",
+        rightId,
+        fromUserId: right.ownerId,
+        toUserId: buyer.id,
+        price: amount,
+        currency: currency || "ETH",
+        transactionHash
+      });
+
+      // Transfer ownership
+      await storage.updateRight(rightId, {
+        ownerId: buyer.id,
+        isListed: false,
+        price: null,
+        listingType: null
+      });
+
+      // Update transaction count for seller
+      if (right.ownerId) {
+        await storage.updateUser(right.ownerId, {
+          totalSales: (right.creator?.totalSales || 0) + 1,
+          totalEarnings: ((parseFloat(right.creator?.totalEarnings || "0") + (expectedAmount - platformFee)).toFixed(8))
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Purchase completed successfully",
+        transaction: {
+          id: transaction.id,
+          transactionHash,
+          amount,
+          currency,
+          rightId,
+          newOwnerId: buyer.id
+        },
+        platformFee: platformFee.toString(),
+        sellerAmount: (expectedAmount - platformFee).toString()
+      });
+
+    } catch (error) {
+      console.error("Error processing purchase:", error);
+      res.status(500).json({ error: "Failed to process purchase" });
+    }
+  });
+
   return httpServer;
 }

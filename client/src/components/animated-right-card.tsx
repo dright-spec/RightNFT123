@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Heart, Eye, TrendingUp, Clock, Shield } from "lucide-react";
+import { Heart, Eye, TrendingUp, Clock, Shield, Wallet } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { presets, staggerDelays, specialEffects, animationClasses } from "@/lib/animations";
 import { rightTypeSymbols } from "@shared/schema";
+import { WalletPaymentModal } from "./wallet-payment-modal";
 import type { RightWithCreator } from "@shared/schema";
 
 interface AnimatedRightCardProps {
@@ -23,6 +24,7 @@ export function AnimatedRightCard({
 }: AnimatedRightCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorited, setIsFavorited] = useState(right.isFavorited || false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const typeSymbol = rightTypeSymbols[right.type as keyof typeof rightTypeSymbols] || "📄";
   const isHighValue = parseFloat(right.price || "0") > 10;
@@ -50,6 +52,12 @@ export function AnimatedRightCard({
     const target = e.currentTarget as HTMLElement;
     target.classList.add("animate-pulse");
     setTimeout(() => target.classList.remove("animate-pulse"), 300);
+  };
+
+  const handlePurchaseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowPaymentModal(true);
   };
 
   const cardClasses = `
@@ -196,19 +204,37 @@ export function AnimatedRightCard({
             <Button 
               className={`flex-1 ${presets.button}`} 
               variant={right.listingType === "auction" ? "outline" : "default"}
+              onClick={handlePurchaseClick}
             >
-              {right.listingType === "auction" ? "Place Bid" : "Buy Now"}
+              {right.listingType === "auction" ? "Place Bid" : (
+                <>
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Buy Now
+                </>
+              )}
             </Button>
             <Button 
               variant="outline" 
               size="icon"
               className={animationClasses.iconHover}
+              onClick={handleFavoriteClick}
             >
-              <Heart className="w-4 h-4" />
+              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current text-red-500' : ''}`} />
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Wallet Payment Modal */}
+      <WalletPaymentModal
+        right={right}
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={() => {
+          setShowPaymentModal(false);
+          // Optionally refresh the page or update the card state
+        }}
+      />
     </Link>
   );
 }
