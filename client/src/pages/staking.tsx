@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletUser } from "@/hooks/use-wallet-user";
+import { Link } from "wouter";
+import { WalletButton } from "@/components/wallet-button";
 import { Coins, TrendingUp, Clock, DollarSign, Users, Target, ChevronRight } from "lucide-react";
 import type { Right, StakeWithDetails } from "@shared/schema";
 
@@ -107,14 +109,51 @@ export default function StakingPage() {
 
   if (userLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              ))}
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <Link href="/" className="flex-shrink-0">
+                  <h1 className="text-xl font-bold text-primary">
+                    D<span className="text-accent">right</span>
+                  </h1>
+                </Link>
+              </div>
+              
+              <nav className="hidden md:flex space-x-8">
+                <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  Marketplace
+                </Link>
+                <Link href="/staking" className="text-blue-600 hover:text-blue-700 transition-colors font-bold">
+                  🎯 Staking
+                </Link>
+                <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  Live Auctions
+                </Link>
+                <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  Docs
+                </Link>
+                <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  About
+                </Link>
+              </nav>
+
+              <WalletButton />
+            </div>
+          </div>
+        </header>
+
+        <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="animate-pulse space-y-6">
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -124,27 +163,100 @@ export default function StakingPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center p-6">
-        <Card className="max-w-md w-full">
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2">
-              <Coins className="h-6 w-6 text-purple-600" />
-              Connect Wallet
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600 dark:text-gray-400">
-              Connect your wallet to access the staking platform and start earning passive revenue from verified rights.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center">
+                <Link href="/" className="flex-shrink-0">
+                  <h1 className="text-xl font-bold text-primary">
+                    D<span className="text-accent">right</span>
+                  </h1>
+                </Link>
+              </div>
+              
+              <nav className="hidden md:flex space-x-8">
+                <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  Marketplace
+                </Link>
+                <Link href="/staking" className="text-blue-600 hover:text-blue-700 transition-colors font-bold">
+                  🎯 Staking
+                </Link>
+                <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  Live Auctions
+                </Link>
+                <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  Docs
+                </Link>
+                <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                  About
+                </Link>
+              </nav>
+
+              <WalletButton />
+            </div>
+          </div>
+        </header>
+
+        <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 flex items-center justify-center p-6 min-h-[calc(100vh-4rem)]">
+          <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2">
+                <Coins className="h-6 w-6 text-purple-600" />
+                Connect Wallet
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Connect your wallet to access the staking platform and start earning passive revenue from verified rights.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-background shadow-sm border-b border-border sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex-shrink-0">
+                <h1 className="text-xl font-bold text-primary">
+                  D<span className="text-accent">right</span>
+                </h1>
+              </Link>
+            </div>
+            
+            <nav className="hidden md:flex space-x-8">
+              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Marketplace
+              </Link>
+              <Link href="/staking" className="text-blue-600 hover:text-blue-700 transition-colors font-bold">
+                🎯 Staking
+              </Link>
+              <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Live Auctions
+              </Link>
+              <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Docs
+              </Link>
+              <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                About
+              </Link>
+            </nav>
+
+            <WalletButton />
+          </div>
+        </div>
+      </header>
+
+      <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 p-6">
+        <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
@@ -614,6 +726,7 @@ export default function StakingPage() {
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
