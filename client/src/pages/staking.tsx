@@ -37,13 +37,13 @@ export default function StakingPage() {
   });
 
   // Fetch available rights for staking
-  const { data: availableRights = [], isLoading: rightsLoading } = useQuery({
+  const { data: availableRights = [], isLoading: rightsLoading } = useQuery<Right[]>({
     queryKey: ["/api/stakes/available-rights"],
     enabled: !!user,
   });
 
   // Fetch user's stakes
-  const { data: userStakes = [], isLoading: stakesLoading } = useQuery({
+  const { data: userStakes = [], isLoading: stakesLoading } = useQuery<StakeWithDetails[]>({
     queryKey: ["/api/stakes/user", user?.id],
     enabled: !!user?.id,
   });
@@ -176,7 +176,7 @@ export default function StakingPage() {
                   <p className="text-blue-100 text-sm">Total Earnings</p>
                   <p className="text-2xl font-bold">
                     {formatCurrency(
-                      userStakes.reduce((sum, stake) => sum + parseFloat(stake.stakerEarnings), 0).toString()
+                      userStakes.reduce((sum: number, stake: StakeWithDetails) => sum + parseFloat(stake.stakerEarnings), 0).toString()
                     )}
                   </p>
                 </div>
@@ -191,7 +191,7 @@ export default function StakingPage() {
                 <div>
                   <p className="text-purple-100 text-sm">Active Stakes</p>
                   <p className="text-2xl font-bold">
-                    {userStakes.filter(stake => stake.status === "active").length}
+                    {userStakes.filter((stake: StakeWithDetails) => stake.status === "active").length}
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-purple-200" />
@@ -329,7 +329,7 @@ export default function StakingPage() {
                           <SelectValue placeholder="Choose a verified right" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableRights.map((right: Right) => (
+                          {(availableRights as Right[]).map((right: Right) => (
                             <SelectItem key={right.id} value={right.id.toString()}>
                               {right.title} - {right.type}
                             </SelectItem>
@@ -474,7 +474,7 @@ export default function StakingPage() {
                             {stake.revenueDistributions.slice(0, 3).map((distribution) => (
                               <div key={distribution.id} className="flex justify-between items-center text-sm">
                                 <span className="text-gray-600 dark:text-gray-400">
-                                  {distribution.distributionType} • {new Date(distribution.processedAt).toLocaleDateString()}
+                                  {distribution.distributionType} • {distribution.processedAt ? new Date(distribution.processedAt).toLocaleDateString() : 'Pending'}
                                 </span>
                                 <span className="font-medium">
                                   {formatCurrency(distribution.amount)}
@@ -496,8 +496,8 @@ export default function StakingPage() {
                               stake.endDate
                                 ? Math.min(
                                     100,
-                                    ((Date.now() - new Date(stake.startDate).getTime()) /
-                                      (new Date(stake.endDate).getTime() - new Date(stake.startDate).getTime())) * 100
+                                    ((Date.now() - new Date(stake.startDate || Date.now()).getTime()) /
+                                      (new Date(stake.endDate).getTime() - new Date(stake.startDate || Date.now()).getTime())) * 100
                                   )
                                 : 0
                             }
