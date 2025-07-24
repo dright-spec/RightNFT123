@@ -82,7 +82,12 @@ export class DatabaseStorage implements IStorage {
 
       // Create test rights
       await db.insert(rights).values({
-        tokenId: 906445,
+        tokenId: "906445",
+        contractAddress: "0x1234567890123456789012345678901234567890",
+        transactionHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+        ownerAddress: "0x742d35Cc6C6C4532F14C4b25f6E4d54e7a3c4a5e",
+        blockNumber: 18456789,
+        chainId: 11155111, // Sepolia testnet
         title: "Summer Vibes Music Video",
         type: "copyright",
         description: "Exclusive rights to 'Summer Vibes' music video featuring 2M+ views on YouTube. Includes streaming royalties and sync rights.",
@@ -111,16 +116,16 @@ export class DatabaseStorage implements IStorage {
         verifiedAt: new Date(),
         verifiedBy: "admin",
         verificationNotes: "YouTube channel ownership verified via Google OAuth",
-        ethereumTokenId: "0xDD445",
-        ethereumContractAddress: "0x1234567890123456789012345678901234567890",
-        ethereumTransactionHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-        ethereumMetadataUri: "https://ipfs.io/ipfs/QmX8z5RqGX9H2N4Y3F6K8B1C7J9M5P2A4S8W9Q1E3R6T8Y",
-        ethereumWalletAddress: "0x742d35Cc6C6C4532F14C4b25f6E4d54e7a3c4a5e",
-        ethereumNetwork: "sepolia",
+        metadataUri: "https://ipfs.io/ipfs/QmX8z5RqGX9H2N4Y3F6K8B1C7J9M5P2A4S8W9Q1E3R6T8Y",
       });
 
       await db.insert(rights).values({
-        tokenId: 906446,
+        tokenId: "906446",
+        contractAddress: "0x1234567890123456789012345678901234567890",
+        transactionHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        ownerAddress: "0x8ba1f109551bD432803012645Hac136c30r213Bd",
+        blockNumber: 18456790,
+        chainId: 11155111, // Sepolia testnet
         title: "Test Auction Right",
         type: "royalty",
         description: "Test auction for development",
@@ -143,7 +148,7 @@ export class DatabaseStorage implements IStorage {
         views: 12,
         favorites: 3,
         verificationStatus: "pending",
-        ethereumNetwork: "sepolia",
+        metadataUri: "https://ipfs.io/ipfs/QmY9z6RqGY9H3N5Y4F7K9B2C8J0M6P3A5S9W0Q2E4R7T9Y",
       });
 
       console.log("Test data created successfully");

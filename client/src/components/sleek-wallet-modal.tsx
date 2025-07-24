@@ -12,9 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   detectAvailableWallets,
   connectToWallet,
-} from "@/lib/wallet-manager";
-import type { WalletInfo } from "@/lib/wallet-manager";
-import { performDeepWalletScan } from "@/lib/enhanced-wallet-detection";
+} from "@/lib/ethereum-wallet-manager";
+import type { WalletInfo } from "@/lib/ethereum-wallet-manager";
 
 interface WalletConnectModalProps {
   open: boolean;
@@ -22,20 +21,16 @@ interface WalletConnectModalProps {
   onConnect: (walletId: string, address: string) => void;
 }
 
-// Extend WalletInfo to include Ethereum-specific properties
-interface ExtendedWalletInfo extends WalletInfo {
-  isEthereumNative?: boolean;
-}
+// Use WalletInfo directly from ethereum-wallet-manager
 
 export function SleekWalletModal({
   open,
   onOpenChange,
   onConnect,
 }: WalletConnectModalProps) {
-  const [wallets, setWallets] = useState<ExtendedWalletInfo[]>([]);
+  const [wallets, setWallets] = useState<WalletInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [connectingId, setConnectingId] = useState<string | null>(null);
-  const [isDeepScanning, setIsDeepScanning] = useState(false);
   const { toast } = useToast();
 
   // Detect wallets when `open` goes true
@@ -100,14 +95,14 @@ export function SleekWalletModal({
       setConnectingId(walletId);
 
       try {
-        const address = await connectToWallet(walletId);
-        if (!address) throw new Error("No address returned");
+        const connectedWallet = await connectToWallet(walletId);
+        if (!connectedWallet.address) throw new Error("No address returned");
         const wallet = wallets.find((w) => w.id === walletId)!;
         toast({
           title: "Wallet Connected",
           description: `Connected to ${wallet.name}`,
         });
-        onConnect(walletId, address);
+        onConnect(walletId, connectedWallet.address);
         onOpenChange(false);
       } catch (err: any) {
         const wallet = wallets.find((w) => w.id === walletId);
@@ -125,71 +120,21 @@ export function SleekWalletModal({
     [connectingId, loading, wallets, onConnect, onOpenChange, toast]
   );
 
-  const handleDeepScan = async () => {
-    setIsDeepScanning(true);
-    try {
-      const scanResult = await performDeepWalletScan();
-      
-      // Update wallet availability based on deep scan results
-      const updatedWallets = wallets.map(wallet => ({
-        ...wallet,
-        isAvailable: scanResult[wallet.id as keyof typeof scanResult] === true
-      }));
-      setWallets(updatedWallets);
-      
-      const foundCount = Object.values(scanResult).filter(v => v === true).length;
-      toast({
-        title: "Deep Scan Complete",
-        description: `Found ${foundCount} available wallets`,
-      });
-      
-      console.log('Deep scan results:', scanResult);
-    } catch (error) {
-      console.error("Deep scan failed:", error);
-      toast({
-        title: "Scan Failed",
-        description: "Could not perform deep wallet scan",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeepScanning(false);
-    }
-  };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🔗</span>
-              Connect Wallet
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeepScan}
-              disabled={isDeepScanning || loading}
-              className="ml-2"
-            >
-              {isDeepScanning ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                  Scanning...
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4 mr-1" />
-                  Deep Scan
-                </>
-              )}
-            </Button>
+          <DialogTitle className="flex items-center gap-2">
+            <span className="text-2xl">🔗</span>
+            Connect Wallet
           </DialogTitle>
           <DialogDescription>
-            Choose a wallet. HashPack is recommended for Hedera.
+            Choose a wallet to connect to the Ethereum network. MetaMask is recommended for best experience.
             {!wallets.some(w => w.isAvailable) && (
               <span className="block text-amber-600 dark:text-amber-400 mt-1">
-                No wallets detected. Try the Deep Scan button to search thoroughly.
+                No wallets detected. Please install a wallet extension to continue.
               </span>
             )}
           </DialogDescription>
@@ -234,9 +179,9 @@ export function SleekWalletModal({
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {w.description}
                       </p>
-                      {w.isHederaNative && (
-                        <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                          Hedera Native
+                      {w.isEthereumNative && (
+                        <span className="inline-block mt-1 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                          Ethereum Native
                         </span>
                       )}
                     </div>
