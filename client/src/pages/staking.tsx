@@ -40,12 +40,14 @@ export default function StakingPage() {
   const { data: availableRights = [], isLoading: rightsLoading } = useQuery<Right[]>({
     queryKey: ["/api/stakes/available-rights"],
     enabled: !!user,
+    select: (data: any) => data?.data || [],
   });
 
   // Fetch user's stakes
   const { data: userStakes = [], isLoading: stakesLoading } = useQuery<StakeWithDetails[]>({
     queryKey: ["/api/stakes/user"],
     enabled: !!user,
+    select: (data: any) => data?.data || [],
   });
 
   // Create stake mutation
@@ -444,7 +446,7 @@ export default function StakingPage() {
                           <SelectValue placeholder="Choose one of your verified rights" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(availableRights as Right[]).map((right: Right) => (
+                          {Array.isArray(availableRights) && availableRights.map((right: Right) => (
                             <SelectItem key={right.id} value={right.id.toString()}>
                               {right.title} - {right.type}
                             </SelectItem>
@@ -555,11 +557,11 @@ export default function StakingPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</p>
-                          <p className="font-semibold">{formatCurrency(stake.totalRevenue)}</p>
+                          <p className="font-semibold">{formatCurrency(stake.totalRevenue || "0")}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Your Earnings</p>
-                          <p className="font-semibold text-green-600">{formatCurrency(stake.stakerEarnings)}</p>
+                          <p className="font-semibold text-green-600">{formatCurrency(stake.stakerEarnings || "0")}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Management Fee</p>

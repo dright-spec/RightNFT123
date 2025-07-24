@@ -88,10 +88,10 @@ export class StakingController {
     const stake = await storage.createStake({
       rightId,
       stakerId: req.user.id,
-      revenueSharePercentage: REVENUE_SHARE_PERCENTAGE,
-      managementFee: MANAGEMENT_FEE,
+      revenueSharePercentage: REVENUE_SHARE_PERCENTAGE.toString(),
+      managementFee: MANAGEMENT_FEE.toString(),
       terms: terms || "",
-      duration: duration || null,
+      duration: duration ? parseInt(duration) : null,
       endDate,
       status: 'active',
       startDate: new Date(),
