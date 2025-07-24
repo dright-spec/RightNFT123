@@ -121,7 +121,7 @@ export function Web3ModalConnectButton() {
     
     toast({
       title: "Wallet Disconnected",
-      description: "Successfully disconnected from wallet",
+      description: "Disconnected from Dright. To fully disconnect, also disconnect in your wallet settings.",
     });
   };
 

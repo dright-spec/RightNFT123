@@ -34,8 +34,6 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { hederaService, type RightMetadata, type NFTMintResult } from "@/lib/hederaSimple";
-import { hashConnectService, type HashConnectState } from "@/lib/hashConnectService";
-import { hederaWalletDetector } from "@/lib/hederaWalletDetection";
 import { uploadToIPFS, uploadJSONToIPFS } from "@/lib/ipfs";
 import { initiateGoogleAuth, extractYouTubeVideoId, getYouTubeVideoDetails } from "@/lib/googleAuth";
 import { Upload, FileText, Loader2, Music, Video, Image, File, AlertCircle, Clock, Gavel, CheckCircle, Shield, Youtube, ArrowRight, ArrowLeft, XCircle, Copy, ExternalLink, Wallet } from "lucide-react";
@@ -696,7 +694,9 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         tags: data.tags,
         listingType: data.listingType,
         price: data.price,
-        currency: "HBAR", // Use HBAR for Hedera
+        currency: "ETH", // Use ETH as the platform currency
+        verificationStatus: verificationStatus,
+        contentSource: youtubeUrl ? "youtube" : "upload",
         auctionEndTime: data.listingType === "auction" && data.auctionDuration 
           ? new Date(Date.now() + data.auctionDuration * 60 * 60 * 1000) 
           : undefined,

@@ -283,15 +283,19 @@ async function connectMetaMask(): Promise<ConnectedWallet> {
       provider = win.ethereum.providers.find((p: any) => p.isMetaMask) || win.ethereum;
     }
 
-    // Always request fresh permission - this ensures user consent
-    // Clear any cached permissions first by checking accounts
-    const existingAccounts = await provider.request({ method: 'eth_accounts' });
-    console.log('Existing MetaMask accounts:', existingAccounts);
-    
-    // Request account access - this will show MetaMask popup for user approval
+    // Force user approval by requesting permission explicitly
+    // Note: eth_requestAccounts should always show approval dialog on first connect
+    // If wallet is already connected, we need to request fresh authorization
     const accounts = await provider.request({
       method: 'eth_requestAccounts'
     });
+    
+    // Verify this is a user-initiated connection, not just reading existing permissions
+    if (!accounts || accounts.length === 0) {
+      throw new Error("User denied wallet connection or no accounts available");
+    }
+    
+    console.log('MetaMask connection approved by user:', accounts[0]);
     
     if (!accounts || accounts.length === 0) {
       throw new Error("No accounts found");
@@ -337,14 +341,16 @@ async function connectPhantom(): Promise<ConnectedWallet> {
       provider = win.ethereum.providers.find((p: any) => p.isPhantom) || provider;
     }
 
-    // Check existing permissions and request fresh approval
-    const existingAccounts = await provider.request({ method: 'eth_accounts' });
-    console.log('Existing Phantom accounts:', existingAccounts);
-
-    // Request account access - this will trigger Phantom's approval dialog
+    // Request account access - this should trigger Phantom's approval dialog
     const accounts = await provider.request({
       method: 'eth_requestAccounts'
     });
+    
+    if (!accounts || accounts.length === 0) {
+      throw new Error("User denied wallet connection or no accounts available");
+    }
+    
+    console.log('Phantom connection approved by user:', accounts[0]);
     
     if (!accounts || accounts.length === 0) {
       throw new Error("No accounts found");

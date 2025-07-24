@@ -136,6 +136,13 @@ export function SleekWalletModal({
                 No wallets detected. Please install a wallet extension to continue.
               </span>
             )}
+            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>🔒 Security Notice:</strong> Your wallet will request permission to connect to this site. 
+                If you've connected before, the wallet may connect automatically. 
+                To force a new authorization, disconnect first in your wallet settings.
+              </p>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
