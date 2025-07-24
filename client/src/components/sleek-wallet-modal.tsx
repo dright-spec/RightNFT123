@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Search, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { showErrorToast } from "@/lib/emoji-error-translator";
 import {
   detectAvailableWallets,
   connectToWallet,
@@ -49,34 +50,34 @@ export function SleekWalletModal({
         // fallback defaults (all fields filled)
         setWallets([
           {
-            id: "hashpack",
-            name: "HashPack",
-            description: "Official Hedera wallet with native HTS support",
-            icon: "🟡",
-            isAvailable: Boolean((window as any).hashpack),
+            id: "metamask",
+            name: "MetaMask",
+            description: "Most popular Ethereum wallet with millions of users",
+            icon: "🦊",
+            isAvailable: Boolean((window as any).ethereum?.isMetaMask),
             isRecommended: true,
-            isHederaNative: true,
-            downloadUrl: "https://www.hashpack.app/",
+            isEthereumNative: true,
+            downloadUrl: "https://metamask.io/",
           },
           {
-            id: "blade",
-            name: "Blade Wallet",
-            description: "Multi-chain wallet with Hedera support",
-            icon: "⚔️",
-            isAvailable: Boolean((window as any).blade),
-            isRecommended: false,
-            isHederaNative: true,
-            downloadUrl: "https://bladewallet.io/",
+            id: "phantom",
+            name: "Phantom",
+            description: "Multi-chain wallet supporting Ethereum and Solana",
+            icon: "👻",
+            isAvailable: Boolean((window as any).phantom?.ethereum),
+            isRecommended: true,
+            isEthereumNative: true,
+            downloadUrl: "https://phantom.app/",
           },
           {
-            id: "brave",
-            name: "Brave Wallet",
-            description: "Built-in Brave browser wallet",
-            icon: "🦁",
-            isAvailable: Boolean((window as any).ethereum?.isBraveWallet),
+            id: "coinbase",
+            name: "Coinbase Wallet",
+            description: "Non-custodial wallet from Coinbase",
+            icon: "🔵",
+            isAvailable: Boolean((window as any).ethereum?.isCoinbaseWallet),
             isRecommended: false,
-            isHederaNative: false,
-            downloadUrl: "https://brave.com/wallet/",
+            isEthereumNative: true,
+            downloadUrl: "https://wallet.coinbase.com/",
           },
         ]);
       } finally {
@@ -106,13 +107,11 @@ export function SleekWalletModal({
         onOpenChange(false);
       } catch (err: any) {
         const wallet = wallets.find((w) => w.id === walletId);
-        toast({
-          title: "Connection Failed",
-          description:
-            err?.message ||
-            `Could not connect to ${wallet?.name || walletId}`,
-          variant: "destructive",
-        });
+        showErrorToast(
+          err?.message || `Could not connect to ${wallet?.name || walletId}`,
+          toast,
+          'wallet'
+        );
       } finally {
         setConnectingId(null);
       }

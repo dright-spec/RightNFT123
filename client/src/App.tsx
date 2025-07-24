@@ -16,6 +16,7 @@ import Docs from "./pages/docs";
 import About from "./pages/about";
 import Settings from "./pages/settings";
 import MintingProgress from "./pages/minting-progress";
+import ErrorDemo from "./pages/error-demo";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/google-callback" component={GoogleCallback} />
       <Route path="/minting-progress" component={MintingProgress} />
+      <Route path="/error-demo" component={ErrorDemo} />
       <Route component={NotFound} />
     </Switch>
   );

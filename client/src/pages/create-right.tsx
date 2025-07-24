@@ -13,6 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
+import { EmojiErrorDisplay } from "@/components/emoji-error-display";
 import { insertRightSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { VerificationWorkflow } from "@/components/verification-workflow";
@@ -646,6 +648,7 @@ export default function CreateRight() {
   const ownershipInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const uploadErrorHandler = useUploadErrorHandler();
 
   const form = useForm<CreateRightFormData>({
     resolver: zodResolver(createRightFormSchema),
@@ -692,11 +695,7 @@ export default function CreateRight() {
       setLocation("/dashboard");
     },
     onError: (error) => {
-      toast({
-        title: "Creation Failed",
-        description: error instanceof Error ? error.message : "Failed to create right",
-        variant: "destructive",
-      });
+      uploadErrorHandler.handleError(error instanceof Error ? error : new Error("Failed to create right"));
     },
   });
 
@@ -723,11 +722,7 @@ export default function CreateRight() {
         description: "Video ownership confirmed successfully.",
       });
     } catch (error) {
-      toast({
-        title: "Verification Failed",
-        description: "Could not verify YouTube ownership. Please check the URL and try again.",
-        variant: "destructive",
-      });
+      uploadErrorHandler.handleError(error instanceof Error ? error : new Error("Could not verify YouTube ownership"));
     } finally {
       setIsVerifying(false);
     }
@@ -961,6 +956,9 @@ export default function CreateRight() {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Error Display */}
+            <EmojiErrorDisplay error={uploadErrorHandler.error} />
+            
             {/* Step 1: Content & Details */}
             {currentStep === 1 && (
               <div className="space-y-6 animate-fade-in">

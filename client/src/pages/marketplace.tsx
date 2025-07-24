@@ -15,6 +15,8 @@ import { ActivityFeed } from "@/components/activity-feed";
 import OnboardingTooltip, { marketplaceOnboardingSteps } from "@/components/onboarding-tooltip";
 import WelcomeModal from "@/components/welcome-modal";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
+import { EmojiErrorDisplay } from "@/components/emoji-error-display";
 import { 
   ArrowLeft, 
   Filter, 
@@ -47,6 +49,9 @@ export default function Marketplace() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("explore");
+  
+  // Error handling
+  const uploadErrorHandler = useUploadErrorHandler();
 
   // Onboarding state
   const {
@@ -132,17 +137,12 @@ export default function Marketplace() {
     }
   });
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6">
-            <p className="text-destructive text-center">Failed to load marketplace data</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Handle errors with emoji translator
+  useEffect(() => {
+    if (error) {
+      uploadErrorHandler.handleError(error instanceof Error ? error : new Error("Failed to load marketplace data"));
+    }
+  }, [error, uploadErrorHandler]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -186,6 +186,9 @@ export default function Marketplace() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Display */}
+        <EmojiErrorDisplay error={uploadErrorHandler.error} />
+        
         {/* OpenSea-style Tabs */}
         <Tabs defaultValue="explore" className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-8">
