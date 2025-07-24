@@ -106,13 +106,6 @@ export default function Home() {
                 <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
               </Link>
               
-              <Link href="/staking" className="group relative bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-700 hover:via-purple-700 hover:to-blue-700 text-white px-16 py-8 text-2xl font-black rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 min-w-[280px] border-0 overflow-hidden flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-                <Coins className="w-8 h-8 mr-4 relative z-10" />
-                <span className="relative z-10">Start Staking</span>
-                <ArrowRight className="w-6 h-6 ml-4 relative z-10 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              
               <Button 
                 variant="outline" 
                 size="lg" 
@@ -126,12 +119,6 @@ export default function Home() {
 
             {/* Secondary Navigation */}
             <div className="mt-12 flex flex-wrap justify-center gap-6">
-              <Link href="/staking">
-                <Button variant="ghost" className="text-lg font-semibold text-blue-600 hover:text-blue-700 transition-colors px-8 py-3 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:hover:border-blue-600 dark:hover:bg-blue-950/20 rounded-xl">
-                  <Coins className="mr-2 h-5 w-5" />
-                  Rights Staking
-                </Button>
-              </Link>
               <Link href="/docs">
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <FileText className="mr-2 h-5 w-5" />
