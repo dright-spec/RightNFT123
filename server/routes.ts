@@ -9,7 +9,21 @@ import { eq, desc, or, ilike, sql } from "drizzle-orm";
 import { insertRightSchema, insertUserSchema, insertTransactionSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Import unified API architecture
+import type { 
+  AuthenticatedRequest, 
+  ApiResponse, 
+  CreateRightRequest, 
+  CreateStakeRequest,
+  QueryParams,
+  VerificationRequest 
+} from "./api-types";
+import { ApiResponseHelper, asyncHandler, handleApiError } from "./api-types";
+import { requireAuth, optionalAuth, requireAdmin, rateLimit, validateBody } from "./middleware/auth";
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Apply rate limiting to all routes
+  app.use('/api/', rateLimit(200, 60000)); // 200 requests per minute
   // YouTube verification endpoint - must be before other routes
   app.post("/api/youtube/verify", async (req, res) => {
     try {
@@ -2357,194 +2371,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Staking API Routes
+  // Import controllers
+  const { StakingController } = await import("./controllers/staking-controller");
+  const { AdminController } = await import("./controllers/admin-controller");
+
+  // Staking API Routes with cohesive architecture
+  app.get("/api/stakes/available-rights", requireAuth, StakingController.getAvailableRights);
+  app.post("/api/stakes", requireAuth, StakingController.createStake);
   
-  // Get verified rights available for staking (only user's own rights)
-  app.get("/api/stakes/available-rights", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-      
-      const verifiedRights = await storage.getRights({
-        verificationStatus: "verified",
-        limit: 100,
-        sortBy: "createdAt",
-        sortOrder: "desc"
-      });
-      
-      // Filter to only show rights owned by the current user and not already staked
-      const availableRights = [];
-      for (const right of verifiedRights) {
-        // Only include rights owned by the current user
-        if (right.ownerId === req.session.userId) {
-          const existingStake = await storage.getActiveStakeByRight(right.id);
-          if (!existingStake) {
-            availableRights.push(right);
-          }
-        }
-      }
-      
-      res.json(availableRights);
-    } catch (error) {
-      console.error("Error fetching available rights for staking:", error);
-      res.status(500).json({ error: "Failed to fetch available rights" });
-    }
-  });
+  app.get("/api/stakes/user", requireAuth, StakingController.getUserStakes);
   
-  // Create a new stake
-  app.post("/api/stakes", async (req, res) => {
-    try {
-      if (!req.session.userId) {
-        return res.status(401).json({ error: "Authentication required" });
-      }
-      
-      const { rightId, revenueSharePercentage, managementFee, terms, duration } = req.body;
-      
-      if (!rightId || !revenueSharePercentage) {
-        return res.status(400).json({ error: "Right ID and revenue share percentage are required" });
-      }
-      
-      // Verify the right exists and is verified
-      const right = await storage.getRight(rightId);
-      if (!right) {
-        return res.status(404).json({ error: "Right not found" });
-      }
-      
-      if (right.verificationStatus !== "verified") {
-        return res.status(400).json({ error: "Only verified rights can be staked" });
-      }
-      
-      // Check if user owns the right
-      if (right.ownerId !== req.session.userId) {
-        return res.status(403).json({ error: "You can only stake rights you own" });
-      }
-      
-      // Check if right is already staked
-      const existingStake = await storage.getActiveStakeByRight(rightId);
-      if (existingStake) {
-        return res.status(400).json({ error: "This right is already staked" });
-      }
-      
-      // Calculate end date if duration is specified
-      let endDate = null;
-      if (duration) {
-        const startDate = new Date();
-        endDate = new Date(startDate.getTime() + (duration * 30 * 24 * 60 * 60 * 1000)); // Convert months to milliseconds
-      }
-      
-      const stake = await storage.createStake({
-        rightId,
-        stakerId: req.session.userId,
-        revenueSharePercentage,
-        managementFee: managementFee || 15.00,
-        terms,
-        duration,
-        endDate
-      });
-      
-      res.json({
-        success: true,
-        message: "Stake created successfully",
-        stake
-      });
-    } catch (error) {
-      console.error("Error creating stake:", error);
-      res.status(500).json({ error: "Failed to create stake" });
-    }
-  });
+  app.get("/api/stakes", requireAdmin, AdminController.getAllStakes);
   
-  // Get user's stakes
-  app.get("/api/stakes/user", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
-      
-      const stakes = await storage.getUserStakes(req.session.userId);
-      res.json(stakes);
-    } catch (error) {
-      console.error("Error fetching user stakes:", error);
-      res.status(500).json({ error: "Failed to fetch stakes" });
-    }
-  });
+  app.get("/api/stakes/:id", requireAuth, StakingController.getStake);
   
-  // Get all active stakes (admin view)
-  app.get("/api/stakes", async (req, res) => {
-    try {
-      const limit = parseInt(req.query.limit as string) || 20;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const status = req.query.status as string || "active";
-      
-      const stakes = await storage.getStakes({ limit, offset, status });
-      res.json(stakes);
-    } catch (error) {
-      console.error("Error fetching stakes:", error);
-      res.status(500).json({ error: "Failed to fetch stakes" });
-    }
-  });
-  
-  // Get stake details with revenue history
-  app.get("/api/stakes/:id", async (req, res) => {
-    try {
-      const stakeId = parseInt(req.params.id);
-      
-      if (isNaN(stakeId)) {
-        return res.status(400).json({ error: "Invalid stake ID" });
-      }
-      
-      const stake = await storage.getStakeWithDetails(stakeId);
-      if (!stake) {
-        return res.status(404).json({ error: "Stake not found" });
-      }
-      
-      res.json(stake);
-    } catch (error) {
-      console.error("Error fetching stake details:", error);
-      res.status(500).json({ error: "Failed to fetch stake details" });
-    }
-  });
-  
-  // Update stake status (cancel/complete)
-  app.patch("/api/stakes/:id", async (req, res) => {
-    try {
-      if (!req.session.userId) {
-        return res.status(401).json({ error: "Authentication required" });
-      }
-      
-      const stakeId = parseInt(req.params.id);
-      const { status } = req.body;
-      
-      if (isNaN(stakeId)) {
-        return res.status(400).json({ error: "Invalid stake ID" });
-      }
-      
-      if (!["active", "cancelled", "completed"].includes(status)) {
-        return res.status(400).json({ error: "Invalid status" });
-      }
-      
-      const stake = await storage.getStake(stakeId);
-      if (!stake) {
-        return res.status(404).json({ error: "Stake not found" });
-      }
-      
-      // Only the staker can update their own stake
-      if (stake.stakerId !== req.session.userId) {
-        return res.status(403).json({ error: "You can only update your own stakes" });
-      }
-      
-      const updatedStake = await storage.updateStake(stakeId, { status });
-      
-      res.json({
-        success: true,
-        message: `Stake ${status} successfully`,
-        stake: updatedStake
-      });
-    } catch (error) {
-      console.error("Error updating stake:", error);
-      res.status(500).json({ error: "Failed to update stake" });
-    }
-  });
+  app.put("/api/stakes/:id", requireAuth, StakingController.updateStake);
+  app.delete("/api/stakes/:id", requireAuth, StakingController.endStake);
+  app.get("/api/stakes/stats", requireAuth, StakingController.getStakingStats);
   
   // Add revenue distribution (admin endpoint)
   app.post("/api/stakes/:id/revenue", async (req, res) => {
