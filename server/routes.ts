@@ -257,11 +257,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Wallet address required' });
       }
 
-      // Validate Ethereum address format only (pure Ethereum blockchain)
-      const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
+      // Validate Ethereum address format (accepts both full 40-char and shorter formats)
+      const ethAddressRegex = /^0x[a-fA-F0-9]{38,40}$/;
       const isValidEthAddress = ethAddressRegex.test(address);
       
       if (!isValidEthAddress) {
+        console.log(`Address validation failed for: ${address} (length: ${address.length})`);
         return res.status(400).json({ 
           message: 'Invalid Ethereum wallet address format. Expected format: 0x...' 
         });
