@@ -153,6 +153,7 @@ export class DatabaseMarketplaceStorage implements IMarketplaceStorage {
   async createUser(userData: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values({
       ...userData,
+      password: userData.password || 'wallet-auth-placeholder', // Ensure password is not null
       email: userData.email || null,
       profileImageUrl: userData.profileImageUrl || null,
       coverImageUrl: null,

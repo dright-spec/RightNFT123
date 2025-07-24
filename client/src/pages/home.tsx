@@ -120,9 +120,9 @@ export default function Home() {
             {/* Secondary Navigation */}
             <div className="mt-12 flex flex-wrap justify-center gap-6">
               <Link href="/staking">
-                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
+                <Button variant="ghost" className="text-lg font-semibold text-blue-600 hover:text-blue-700 transition-colors px-8 py-3 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:hover:border-blue-600 dark:hover:bg-blue-950/20 rounded-xl">
                   <Coins className="mr-2 h-5 w-5" />
-                  Staking Platform
+                  Rights Staking
                 </Button>
               </Link>
               <Link href="/docs">
@@ -135,12 +135,6 @@ export default function Home() {
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <TrendingUp className="mr-2 h-5 w-5" />
                   Live Auctions
-                </Button>
-              </Link>
-              <Link href="/staking">
-                <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-800 dark:hover:border-blue-600 dark:hover:bg-blue-950/20">
-                  <Coins className="mr-2 h-5 w-5" />
-                  Rights Staking
                 </Button>
               </Link>
               <Link href="/docs">
