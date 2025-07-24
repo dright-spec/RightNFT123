@@ -37,7 +37,7 @@ export default function Home() {
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
               </Link>
-              <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+              <Link href="/marketplace?tab=auctions" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Live Auctions
               </Link>
               <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors font-medium">
@@ -128,7 +128,7 @@ export default function Home() {
                   Live Auctions
                 </Button>
               </Link>
-              <Link href="/marketplace">
+              <Link href="/docs">
                 <Button variant="ghost" className="text-lg font-semibold text-muted-foreground hover:text-primary transition-colors px-6 py-3">
                   <Shield className="mr-2 h-5 w-5" />
                   Legal Framework

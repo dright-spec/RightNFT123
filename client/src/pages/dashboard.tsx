@@ -35,6 +35,7 @@ import type { RightWithCreator, User } from "@shared/schema";
 
 export default function Dashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [, setLocation] = useLocation();
   const uploadErrorHandler = useUploadErrorHandler();
 
@@ -251,7 +252,7 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="rights">My Rights</TabsTrigger>
@@ -311,14 +312,16 @@ export default function Dashboard() {
                       Browse Marketplace
                     </Button>
                   </Link>
-                  <Button variant="outline" className="w-full justify-start gap-2">
+                  <Button variant="outline" className="w-full justify-start gap-2" onClick={() => setActiveTab("analytics")}>
                     <Download className="h-4 w-4" />
-                    Export Portfolio
+                    View Analytics
                   </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <ExternalLink className="h-4 w-4" />
-                    Share Profile
-                  </Button>
+                  <Link href="/settings" className="w-full">
+                    <Button variant="outline" className="w-full justify-start gap-2">
+                      <ExternalLink className="h-4 w-4" />
+                      Account Settings
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>
@@ -514,7 +517,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       List your rights for sale to start earning revenue
                     </p>
-                    <Button variant="outline">Browse Your Rights</Button>
+                    <Button variant="outline" onClick={() => setActiveTab("rights")}>Browse Your Rights</Button>
                   </div>
                 )}
               </CardContent>

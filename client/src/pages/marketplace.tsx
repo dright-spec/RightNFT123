@@ -48,7 +48,13 @@ export default function Marketplace() {
   const [listingType, setListingType] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("explore");
+  
+  // Handle URL parameters for tab navigation
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    return tabParam === 'auctions' ? 'auctions' : 'explore';
+  });
   
   // Error handling
   const uploadErrorHandler = useUploadErrorHandler();
@@ -190,7 +196,7 @@ export default function Marketplace() {
         <EmojiErrorDisplay error={uploadErrorHandler.error} />
         
         {/* OpenSea-style Tabs */}
-        <Tabs defaultValue="explore" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="explore" className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
