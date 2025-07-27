@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
-import { WalletDebug } from "@/components/wallet-debug";
+// Removed unused WalletDebug import
 import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload, Coins, Target, Percent } from "lucide-react";
 import type { RightWithCreator } from "@shared/schema";
 
@@ -977,7 +977,7 @@ export default function Home() {
       </footer>
       
       {/* Debug Panel - Disabled to prevent performance issues */}
-      {false && process.env.NODE_ENV === 'development' && <WalletDebug />}
+      {/* Removed WalletDebug component */}
     </div>
   );
 }

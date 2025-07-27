@@ -6,8 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { WalletButton } from "@/components/wallet-button";
 import { useToast } from "@/hooks/use-toast";
-import { HederaNFTCard } from "@/components/hedera-nft-card";
-import { AutoNFTMinter } from "@/components/auto-nft-minter";
+// Removed unused Hedera component imports
 import { 
   ArrowLeft, 
   ExternalLink, 
@@ -109,8 +108,7 @@ export default function RightDetail() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Auto NFT Minter - handles automatic minting when right is verified */}
-        <AutoNFTMinter rightId={right.id} />
+        {/* Removed auto NFT minter component */}
         
         {/* Title Section */}
         <div className="mb-8">
@@ -176,39 +174,9 @@ export default function RightDetail() {
               </Card>
             )}
 
-            {/* Legal Documents */}
-            {right.legalDocumentUrl && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Legal Documentation
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Legal Agreement</p>
-                        <p className="text-sm text-muted-foreground">PDF Document</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={right.legalDocumentUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        View
-                      </a>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Legal Documents section removed - field not in schema */}
 
-            {/* Hedera NFT Information */}
-            <HederaNFTCard right={right} />
+            {/* NFT Information removed - component deleted */}
 
             {/* Technical Details */}
             <Card>

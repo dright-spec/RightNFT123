@@ -3,7 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "./components/ui/toaster";
 import { TooltipProvider } from "./components/ui/tooltip";
-import "./lib/clear-cache";
+// Removed clear-cache import
 import Home from "./pages/home";
 import Marketplace from "./pages/marketplace";
 import ProfileSetup from "./pages/profile-setup";
@@ -18,10 +18,7 @@ import About from "./pages/about";
 import ApiReference from "./pages/api-reference";
 import Settings from "./pages/settings";
 import MintingProgress from "./pages/minting-progress";
-import ErrorDemo from "./pages/error-demo";
-import Testnet from "./pages/testnet";
 import AdminFiles from "./pages/admin-files";
-import FileUploadDemo from "./pages/file-upload-demo";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -36,15 +33,12 @@ function Router() {
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/files" component={AdminFiles} />
-      <Route path="/file-upload-demo" component={FileUploadDemo} />
       <Route path="/docs" component={Docs} />
       <Route path="/api-reference" component={ApiReference} />
       <Route path="/about" component={About} />
       <Route path="/settings" component={Settings} />
       <Route path="/google-callback" component={GoogleCallback} />
       <Route path="/minting-progress" component={MintingProgress} />
-      <Route path="/testnet" component={Testnet} />
-      <Route path="/error-demo" component={ErrorDemo} />
       <Route component={NotFound} />
     </Switch>
   );

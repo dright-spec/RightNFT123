@@ -15,7 +15,7 @@ import { NFTViewer } from "@/components/nft-viewer";
 import { AdminDocumentViewer } from "@/components/admin-document-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { HederaTestPanel } from "@/components/hedera-test-panel";
+// Removed unused HederaTestPanel import
 import { 
   Users, 
   FileText, 
@@ -298,7 +298,7 @@ export default function Admin() {
             <TabsTrigger value="verification">Verification</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="hedera">Hedera</TabsTrigger>
+
           </TabsList>
 
           {/* Overview Tab */}
@@ -431,7 +431,7 @@ export default function Admin() {
                                   <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                       <h3 className="text-lg font-bold text-gray-900">{right.title}</h3>
-                                      <VerificationBadge status={right.verificationStatus} />
+                                      <VerificationBadge status={right.verificationStatus || 'pending'} />
                                     </div>
                                     <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
                                       {right.description}
@@ -448,11 +448,7 @@ export default function Admin() {
                                       {right.price} {right.currency || 'HBAR'}
                                     </Badge>
                                   )}
-                                  {right.contentSource && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {right.contentSource.replace('_', ' ')}
-                                    </Badge>
-                                  )}
+                                  {/* contentSource field removed */}
                                   {right.contentFileUrl && (
                                     <a 
                                       href={right.contentFileUrl} 
@@ -476,16 +472,11 @@ export default function Admin() {
                                     </a>
                                   )}
                                   <div className="text-xs text-gray-500">
-                                    {new Date(right.createdAt).toLocaleDateString()}
+                                    {right.createdAt ? new Date(right.createdAt).toLocaleDateString() : 'N/A'}
                                   </div>
                                 </div>
 
-                                {right.contentSource && (
-                                  <div className="bg-white p-3 rounded-lg border border-gray-200">
-                                    <div className="text-xs font-medium text-gray-500 mb-1">Content Source</div>
-                                    <div className="text-sm text-gray-800">{right.contentSource}</div>
-                                  </div>
-                                )}
+                                {/* contentSource section removed */}
                               </div>
                             </div>
 
@@ -628,7 +619,7 @@ export default function Admin() {
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Submitted</div>
-                                                    <div className="text-gray-800">{selectedRight && new Date(selectedRight.createdAt).toLocaleDateString()}</div>
+                                                    <div className="text-gray-800">{selectedRight?.createdAt ? new Date(selectedRight.createdAt).toLocaleDateString() : 'N/A'}</div>
                                                   </div>
                                                 </div>
                                               </CardContent>
@@ -647,21 +638,7 @@ export default function Admin() {
                                             </Card>
 
                                             {/* Content Source */}
-                                            {selectedRight?.contentSource && (
-                                              <Card className="border-purple-200 bg-purple-50">
-                                                <CardHeader className="pb-3">
-                                                  <CardTitle className="text-sm text-purple-800">Content Source</CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                  <div className="text-sm">
-                                                    <div className="font-medium text-gray-600 mb-1">Source Type</div>
-                                                    <div className="text-gray-800 bg-white p-2 rounded border">
-                                                      {selectedRight.contentSource}
-                                                    </div>
-                                                  </div>
-                                                </CardContent>
-                                              </Card>
-                                            )}
+                                            {/* Content source field removed */}
                                           </div>
 
                                           {/* Right Column - Creator & Ownership Info */}
@@ -717,18 +694,7 @@ export default function Admin() {
                                             </Card>
 
                                             {/* Additional Metadata */}
-                                            {selectedRight?.metadata && Object.keys(selectedRight.metadata).length > 0 && (
-                                              <Card className="border-indigo-200 bg-indigo-50">
-                                                <CardHeader className="pb-3">
-                                                  <CardTitle className="text-sm text-indigo-800">Additional Metadata</CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                  <pre className="text-xs bg-white p-2 rounded border overflow-auto text-gray-700">
-                                                    {JSON.stringify(selectedRight.metadata, null, 2)}
-                                                  </pre>
-                                                </CardContent>
-                                              </Card>
-                                            )}
+                                            {/* Metadata field removed */}
                                           </div>
                                         </div>
 
@@ -797,28 +763,7 @@ export default function Admin() {
                             </div>
                           </div>
 
-                            {/* NFT Preview for verified rights */}
-                            {right.verificationStatus === 'verified' && right.hederaTokenId && (
-                              <div className="px-6 pb-6 border-t bg-green-50/30">
-                                <div className="pt-4">
-                                  <div className="text-xs font-medium text-green-700 mb-3 uppercase tracking-wide">✓ Verified & Minted NFT</div>
-                                  <NFTViewer 
-                                    nftData={{
-                                      tokenId: right.hederaTokenId,
-                                      serialNumber: right.hederaSerialNumber || 1,
-                                      transactionId: right.hederaTransactionId || '',
-                                      explorerUrl: `https://hashscan.io/testnet/transaction/${right.hederaTransactionId}`,
-                                      name: right.title,
-                                      symbol: 'DRIGHT',
-                                      metadata: right.metadata || {},
-                                      rightType: right.type,
-                                      contentSource: right.contentSource
-                                    }}
-                                    className="border-green-200"
-                                  />
-                                </div>
-                              </div>
-                            )}
+                            {/* NFT Preview removed - Hedera fields not in schema */}
                         </CardContent>
                       </Card>
                     ))}
@@ -898,18 +843,7 @@ export default function Admin() {
             <PerformanceDashboard />
           </TabsContent>
 
-          {/* Hedera Tab */}
-          <TabsContent value="hedera" className="space-y-6">
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Hedera Testnet Integration</h2>
-                <p className="text-muted-foreground">
-                  Test and monitor the Hedera blockchain integration for NFT minting
-                </p>
-              </div>
-              <HederaTestPanel />
-            </div>
-          </TabsContent>
+          {/* Removed Hedera tab */}
         </Tabs>
       </div>
     </div>

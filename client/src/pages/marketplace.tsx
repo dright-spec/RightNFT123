@@ -12,9 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
 import { ActivityFeed } from "@/components/activity-feed";
-import OnboardingTooltip, { marketplaceOnboardingSteps } from "@/components/onboarding-tooltip";
-import WelcomeModal from "@/components/welcome-modal";
-import { useOnboarding } from "@/hooks/use-onboarding";
+// Removed onboarding-related imports
 import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
 import { EmojiErrorDisplay } from "@/components/emoji-error-display";
 import { 
@@ -59,28 +57,7 @@ export default function Marketplace() {
   // Error handling
   const uploadErrorHandler = useUploadErrorHandler();
 
-  // Onboarding state
-  const {
-    state: onboardingState,
-    startMarketplaceOnboarding,
-    nextStep,
-    prevStep,
-    skipOnboarding,
-    completeMarketplaceOnboarding,
-    shouldShowWelcome,
-    markWelcomeSeen
-  } = useOnboarding();
-
-  // Auto-start welcome for new users
-  useEffect(() => {
-    if (shouldShowWelcome()) {
-      // Small delay to ensure page is loaded
-      const timer = setTimeout(() => {
-        markWelcomeSeen();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldShowWelcome, markWelcomeSeen]);
+  // Removed onboarding state and effects
 
   const { data: allRights, isLoading, error } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", { 
@@ -176,15 +153,7 @@ export default function Marketplace() {
                   className="pl-10 w-80"
                 />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={startMarketplaceOnboarding}
-                className="flex items-center gap-2"
-              >
-                <span className="text-lg">🤓</span>
-                Help Tour
-              </Button>
+              {/* Removed help tour button */}
               <Web3ModalConnectButton />
             </div>
           </div>
@@ -880,22 +849,7 @@ export default function Marketplace() {
         </Tabs>
       </div>
 
-      {/* Onboarding Components */}
-      <WelcomeModal
-        isOpen={shouldShowWelcome()}
-        onClose={markWelcomeSeen}
-        onStartTour={startMarketplaceOnboarding}
-      />
-
-      <OnboardingTooltip
-        steps={marketplaceOnboardingSteps}
-        currentStep={onboardingState.currentStep}
-        onNext={nextStep}
-        onPrev={prevStep}
-        onSkip={skipOnboarding}
-        onComplete={completeMarketplaceOnboarding}
-        visible={onboardingState.isActive}
-      />
+      {/* Removed onboarding components */}
     </div>
   );
 }

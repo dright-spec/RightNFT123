@@ -1,23 +1,0 @@
-What's Wrong with the Code?
-The issue with your React component WalletConnect is that it fails to detect Hedera wallets (specifically HashPack and Blade Wallet), resulting in the "No Wallets Detected" card being displayed even when these wallet extensions are installed. Below, I’ll explain the problem and provide a solution based on an analysis of the code and common wallet detection practices.
-Problem Analysis
-Your component relies on the hederaWallet.detectWallets() method to identify available Hedera wallet extensions in the browser. When this method returns an empty array, the component assumes no wallets are present and renders the "No Wallets Detected" UI. The root cause likely lies in how hederaWallet.detectWallets() is implemented, as it appears not to correctly detect the presence of HashPack or Blade Wallet extensions.
-Here’s why this might be happening:
-Incorrect Global Object Detection:
-Wallet extensions typically inject specific global objects into the window object to signal their presence.
-
-For HashPack, the correct global object is window.hashconnect (used by the HashConnect API).
-
-For Blade Wallet, the correct global object is window.bladeConnect.
-
-If hederaWallet.detectWallets() is checking for incorrect or outdated global variables (e.g., window.hashpack instead of window.hashconnect), it will fail to detect these wallets.
-Timing Issues:
-The detectWallets function includes a 1-second delay (setTimeout(resolve, 1000)) to allow wallet extensions to load. However, if the extensions take longer to initialize or if the page lifecycle affects their availability, this delay might be insufficient.
-Implementation Error in hederaWallet:
-Without seeing the hederaWallet module’s code, it’s possible that its detectWallets method has a bug, such as incorrect logic, missing checks, or failure to handle the wallet providers properly.
-Since you didn’t mention seeing the "Detection Failed" toast (which appears in the catch block), it’s likely that hederaWallet.detectWallets() is resolving successfully with an empty array rather than throwing an error. This reinforces the idea that the detection logic is not finding the wallet extensions.
-Solution
-To fix the issue, we need to ensure that hederaWallet.detectWallets() correctly detects HashPack and Blade Wallet by checking for the appropriate global objects (window.hashconnect and window.bladeConnect). Additionally, we’ll add debugging logs to verify the detection process.
-Step 1: Fix the Detection Logic in hederaWallet
-Assuming hederaWallet is a custom module you control, update its detectWallets method to check for the correct global objects. Here’s an example implementation:
-
