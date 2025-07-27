@@ -431,7 +431,7 @@ export default function Admin() {
                                   <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                       <h3 className="text-lg font-bold text-gray-900">{right.title}</h3>
-                                      <VerificationBadge status={right.verificationStatus || 'pending'} />
+                                      <VerificationBadge status={(right.verificationStatus || 'pending') as "pending" | "verified" | "rejected"} />
                                     </div>
                                     <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
                                       {right.description}
@@ -615,7 +615,7 @@ export default function Admin() {
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Current Status</div>
-                                                    <VerificationBadge status={selectedRight?.verificationStatus} className="mt-1" />
+                                                    <VerificationBadge status={(selectedRight?.verificationStatus || 'pending') as "pending" | "verified" | "rejected"} className="mt-1" />
                                                   </div>
                                                   <div>
                                                     <div className="font-medium text-gray-600">Submitted</div>
