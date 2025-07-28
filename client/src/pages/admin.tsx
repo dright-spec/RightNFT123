@@ -13,6 +13,7 @@ import { AdminLogin } from "@/components/admin-login";
 import { PerformanceDashboard } from "@/components/admin/performance-dashboard";
 import { NFTViewer } from "@/components/nft-viewer";
 import { AdminDocumentViewer } from "@/components/admin-document-viewer";
+import { SecureAdminFileViewer } from "@/components/secure-admin-file-viewer";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 // Removed unused HederaTestPanel import
@@ -339,7 +340,7 @@ export default function Admin() {
                       <Badge className="bg-green-100 text-green-800">Healthy</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Hedera Network</span>
+                      <span className="text-sm text-muted-foreground">Ethereum Network</span>
                       <Badge className="bg-green-100 text-green-800">Connected</Badge>
                     </div>
                     <div className="flex justify-between items-center">

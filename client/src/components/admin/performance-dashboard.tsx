@@ -30,7 +30,7 @@ interface RealTimeMetrics {
     memoryUsage: number;
     responseTime: number;
   };
-  hederaNetwork: {
+  ethereumNetwork: {
     status: 'healthy' | 'degraded' | 'down';
     lastTransactionTime: string | null;
     pendingTransactions: number;
@@ -213,7 +213,7 @@ export function PerformanceDashboard() {
       <Tabs defaultValue="metrics" className="space-y-4">
         <TabsList>
           <TabsTrigger value="metrics">System Metrics</TabsTrigger>
-          <TabsTrigger value="hedera">Hedera Network</TabsTrigger>
+          <TabsTrigger value="ethereum">Ethereum Network</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
@@ -297,10 +297,10 @@ export function PerformanceDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="hedera" className="space-y-4">
+        <TabsContent value="ethereum" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Hedera Network Status</CardTitle>
+              <CardTitle>Ethereum Network Status</CardTitle>
               <CardDescription>Blockchain connectivity and transaction monitoring</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -308,17 +308,17 @@ export function PerformanceDashboard() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span>Network Status</span>
-                    {getStatusBadge(metrics?.hederaNetwork.status || 'unknown')}
+                    {getStatusBadge(metrics?.ethereumNetwork.status || 'unknown')}
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Pending Transactions</span>
-                    <Badge variant="outline">{metrics?.hederaNetwork.pendingTransactions || 0}</Badge>
+                    <Badge variant="outline">{metrics?.ethereumNetwork.pendingTransactions || 0}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Last Transaction</span>
                     <Badge variant="secondary">
-                      {metrics?.hederaNetwork.lastTransactionTime 
-                        ? new Date(metrics.hederaNetwork.lastTransactionTime).toLocaleString()
+                      {metrics?.ethereumNetwork.lastTransactionTime 
+                        ? new Date(metrics.ethereumNetwork.lastTransactionTime).toLocaleString()
                         : 'Unknown'
                       }
                     </Badge>
@@ -328,13 +328,13 @@ export function PerformanceDashboard() {
                   <div className="p-4 bg-muted/30 rounded">
                     <p className="text-sm font-medium mb-2">Network Health</p>
                     <div className="flex items-center gap-2">
-                      {metrics?.hederaNetwork.status === 'healthy' ? (
+                      {metrics?.ethereumNetwork.status === 'healthy' ? (
                         <CheckCircle className="w-4 h-4 text-green-600" />
                       ) : (
                         <AlertCircle className="w-4 h-4 text-yellow-600" />
                       )}
                       <span className="text-sm">
-                        {metrics?.hederaNetwork.status === 'healthy' 
+                        {metrics?.ethereumNetwork.status === 'healthy' 
                           ? 'All systems operational' 
                           : 'Monitoring for issues'
                         }
