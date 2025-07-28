@@ -48,12 +48,12 @@ export default function Dashboard() {
   // Fetch user's rights (only if authenticated)
   const { data: userRights = [], isLoading: rightsLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights", "user"],
-    queryFn: () => fetch(`/api/rights?creatorId=${currentUser?.user?.id}`).then(res => res.json()),
-    enabled: !!currentUser?.user?.id,
+    queryFn: () => fetch(`/api/rights?creatorId=${currentUser?.id}`).then(res => res.json()),
+    enabled: !!currentUser?.id,
   });
   
   // Redirect to home if not authenticated
-  if (currentUser && !currentUser.isAuthenticated) {
+  if (currentUser && currentUser.isAuthenticated === false) {
     setTimeout(() => setLocation('/'), 100);
     return null;
   }
@@ -83,7 +83,20 @@ export default function Dashboard() {
     );
   }
 
-  const user = currentUser.user;
+  // Handle case where user data is not loaded yet
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md mx-4">
+          <CardContent className="pt-6 text-center">
+            <p>Please log in to access your dashboard.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const user = currentUser;
 
   // Calculate dashboard metrics from real data
   const totalRights = userRights.length;
@@ -195,18 +208,18 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={user.profileImageUrl || ""} />
+                <AvatarImage src={user?.profileImageUrl || ""} />
                 <AvatarFallback className="text-lg">
-                  {user.username?.charAt(0).toUpperCase() || user.displayName?.charAt(0).toUpperCase() || "U"}
+                  {user?.username?.charAt(0).toUpperCase() || user?.displayName?.charAt(0).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold">{user.displayName || user.username || "Creator"}</h2>
-                  <VerificationBadge status={user.isVerified ? "verified" : "unverified"} size="sm" />
+                  <h2 className="text-xl font-semibold">{user?.displayName || user?.username || "Creator"}</h2>
+                  <VerificationBadge status={user?.isVerified ? "verified" : "pending"} size="sm" />
                 </div>
                 <p className="text-muted-foreground">
-                  {user.walletAddress ? `Connected via ${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Digital Rights Creator"}
+                  {user?.walletAddress ? `Connected via ${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Digital Rights Creator"}
                 </p>
                 <div className="flex items-center gap-4 mt-2">
                   <div className="flex items-center gap-1">

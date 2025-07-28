@@ -74,7 +74,7 @@ export class PerformanceMonitor {
         db.select({ count: count() }).from(transactions).where(gte(transactions.createdAt, hourAgo)),
         db.select({ 
           count: count(),
-          total: sql`COALESCE(SUM(CAST(amount AS DECIMAL)), 0)`
+          total: sql`COALESCE(SUM(CAST(price AS DECIMAL)), 0)`
         }).from(transactions).where(gte(transactions.createdAt, dayAgo)),
         this.getVerificationStats()
       ]);
@@ -313,7 +313,7 @@ export class PerformanceMonitor {
         activeUsers: latest.activeUsers,
         pendingVerifications: latest.pendingVerifications,
         systemLoad: latest.systemLoad.memoryUsage,
-        hederaStatus: latest.hederaNetwork.status
+        ethereumStatus: latest.ethereumNetwork.status
       } : null
     };
   }
