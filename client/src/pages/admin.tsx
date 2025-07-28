@@ -698,8 +698,23 @@ export default function Admin() {
                                           </div>
                                         </div>
 
-                                        {/* File Attachments Section - Now using AdminDocumentViewer */}
-                                        {selectedRight && <AdminDocumentViewer right={selectedRight} />}
+                                        {/* File Attachments Section - Now using SecureAdminFileViewer */}
+                                        {selectedRight && (
+                                          <Card className="border-2 border-blue-200">
+                                            <CardHeader>
+                                              <CardTitle className="flex items-center gap-2">
+                                                <Shield className="w-5 h-5 text-blue-600" />
+                                                Secure Document Review
+                                              </CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                              <SecureAdminFileViewer 
+                                                rightId={selectedRight.id}
+                                                rightTitle={selectedRight.title}
+                                              />
+                                            </CardContent>
+                                          </Card>
+                                        )}
 
                                         {/* Verification Decision Section */}
                                         <Card className="border-2 border-yellow-300 bg-yellow-50">

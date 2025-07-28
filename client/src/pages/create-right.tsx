@@ -17,7 +17,7 @@ import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
 import { EmojiErrorDisplay } from "@/components/emoji-error-display";
 import { insertRightSchema } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { VerificationWorkflow } from "@/components/verification-workflow";
+import { RedesignedVerificationWorkflow } from "@/components/redesigned-verification-workflow";
 import { MultiVideoPricing } from "@/components/multi-video-pricing";
 import { FeeInfo } from "@/components/fee-info";
 import { YouTubeOwnershipVerifier } from "@/components/youtube-ownership-verifier";
@@ -1557,12 +1557,10 @@ export default function CreateRight() {
                     onBack={() => setCurrentStep(1)}
                   />
                 ) : (
-                  <VerificationWorkflow 
-                    rightType={form.watch("type") || "copyright"}
+                  <RedesignedVerificationWorkflow 
+                    rightId={1} // Temporary ID for demo - will be actual right ID in production
                     contentSource={form.watch("contentSource")}
-                    initialYouTubeUrl={form.watch("youtubeUrl")}
                     onVerificationComplete={handleVerificationComplete}
-                    onCanMintNFT={handleCanMintNFT}
                   />
                 )}
 

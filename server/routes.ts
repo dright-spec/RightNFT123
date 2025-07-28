@@ -8,7 +8,7 @@ import { users, rights } from "@shared/schema";
 import { eq, desc, or, ilike, sql } from "drizzle-orm";
 import { insertRightSchema, insertUserSchema, insertTransactionSchema } from "@shared/schema";
 import { z } from "zod";
-import secureFileRoutes from "./routes-secure-files";
+
 
 // Import unified API architecture
 import type { 
@@ -26,8 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply rate limiting to all routes
   app.use('/api/', rateLimit(200, 60000)); // 200 requests per minute
   
-  // Add secure file routes for document verification
-  app.use('/api/secure-files', secureFileRoutes);
+
   // YouTube verification endpoint - must be before other routes
   app.post("/api/youtube/verify", async (req, res) => {
     try {
@@ -2426,6 +2425,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to add revenue distribution" });
     }
   });
+
+  // Setup secure file routes
+  try {
+    const secureFileModule = await import("./routes-secure-files");
+    if (secureFileModule && typeof secureFileModule.setupSecureFileRoutes === 'function') {
+      secureFileModule.setupSecureFileRoutes(app);
+    }
+  } catch (error) {
+    console.error("Failed to load secure file routes:", error);
+  }
 
   const httpServer = createServer(app);
   // Purchase right endpoint

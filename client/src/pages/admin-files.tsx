@@ -13,7 +13,7 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react';
-import AdminFileViewer from '@/components/admin-file-viewer';
+import { SecureAdminFileViewer } from '@/components/secure-admin-file-viewer';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminFilesPage() {
@@ -168,7 +168,16 @@ export default function AdminFilesPage() {
         </Card>
 
         {/* Main File Viewer */}
-        <AdminFileViewer />
+        <div className="text-center py-8">
+          <Shield className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Secure File System Active</h3>
+          <p className="text-gray-600 mb-4">
+            File viewing is now integrated into the rights verification workflow.
+          </p>
+          <p className="text-sm text-gray-500">
+            Access verification files through the admin rights review process.
+          </p>
+        </div>
       </div>
     </div>
   );
