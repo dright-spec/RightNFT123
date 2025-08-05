@@ -1,51 +1,56 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useWalletUser } from "@/hooks/use-wallet-user";
+import { useMultiWallet } from "@/contexts/MultiWalletContext";
+import { MultiWalletModal } from "@/components/multi-wallet-modal";
 import { Wallet, User, Settings, LogOut, BarChart3, Plus, ArrowRight } from "lucide-react";
 
 export function WalletButton(props: any) {
   const {
-    user,
-    isLoading,
+    walletType,
+    networkType,
     walletAddress,
-    isConnected,
-    needsProfileSetup,
-    connectWallet,
+    hederaAccountId,
+    isConnecting,
+    isAuthenticated,
+    user,
     disconnectWallet,
-    navigateToProfileSetup,
-  } = useWalletUser();
+  } = useMultiWallet();
   
   const [location, setLocation] = useLocation();
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
-  // Auto-navigate to profile setup only on initial wallet connection, not when user skips
-  useEffect(() => {
-    // Only redirect if coming from a fresh wallet connection, not when returning from profile setup
-    if (needsProfileSetup && location === '/marketplace' && !localStorage.getItem('profile_setup_skipped')) {
-      // Small delay to ensure wallet connection is complete
-      const timer = setTimeout(() => {
-        navigateToProfileSetup();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [needsProfileSetup, location, navigateToProfileSetup]);
+  // Get display address based on wallet type
+  const displayAddress = walletType === 'hashpack' ? hederaAccountId : walletAddress;
 
-  const formatDisplayAddress = (address: string) => {
+  const formatDisplayAddress = (address: string | null) => {
     if (!address) return '';
+    // Handle Hedera account format (0.0.12345)
+    if (address.includes('.')) {
+      return address;
+    }
+    // Handle Ethereum address format
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const handleConnect = async () => {
-    const success = await connectWallet();
-    // connectWallet now handles dashboard redirection internally
-    if (success && needsProfileSetup) {
-      navigateToProfileSetup();
+  const getNetworkBadge = () => {
+    if (networkType === 'hedera') {
+      return (
+        <Badge variant="outline" className="mt-1 bg-purple-50 text-purple-700 border-purple-200">
+          Hedera
+        </Badge>
+      );
     }
+    return (
+      <Badge variant="outline" className="mt-1 bg-green-50 text-green-700 border-green-200">
+        Ethereum
+      </Badge>
+    );
   };
 
-  if (isLoading) {
+  if (isConnecting) {
     return (
       <Button variant="outline" disabled {...props}>
         <Wallet className="w-4 h-4 animate-spin" />
@@ -55,7 +60,12 @@ export function WalletButton(props: any) {
 
   return (
     <>
-      {isConnected && user ? (
+      <MultiWalletModal 
+        isOpen={showWalletModal} 
+        onClose={() => setShowWalletModal(false)} 
+      />
+      
+      {isAuthenticated && user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2" {...props}>
@@ -67,11 +77,9 @@ export function WalletButton(props: any) {
           <DropdownMenuContent align="end" className="w-64">
             <div className="px-3 py-2">
               <p className="text-sm text-muted-foreground">Connected Wallet</p>
-              <p className="font-mono text-sm">{formatDisplayAddress(walletAddress || '')}</p>
-              <p className="text-sm font-medium mt-1">@{user.username}</p>
-              <Badge variant="outline" className="mt-1 bg-green-50 text-green-700 border-green-200">
-                Ethereum
-              </Badge>
+              <p className="font-mono text-sm">{formatDisplayAddress(displayAddress)}</p>
+              <p className="text-sm font-medium mt-1">@{user?.username || 'User'}</p>
+              {getNetworkBadge()}
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
@@ -105,13 +113,8 @@ export function WalletButton(props: any) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      ) : isConnected && needsProfileSetup ? (
-        <Button onClick={navigateToProfileSetup} className="gap-2" {...props}>
-          Complete Setup
-          <ArrowRight className="w-4 h-4" />
-        </Button>
       ) : (
-        <Button variant="default" onClick={handleConnect} {...props}>
+        <Button variant="default" onClick={() => setShowWalletModal(true)} {...props}>
           <Wallet className="w-4 h-4 mr-2" />
           Connect Wallet
         </Button>

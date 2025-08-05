@@ -9,6 +9,9 @@ export const users = pgTable("users", {
   displayName: text("display_name"), // Full name for display
   password: text("password").notNull(),
   walletAddress: text("wallet_address").unique(),
+  hederaAccountId: text("hedera_account_id"), // Format: 0.0.12345
+  walletType: text("wallet_type"), // 'metamask' or 'hashpack'
+  networkType: text("network_type"), // 'ethereum' or 'hedera'
   email: text("email").unique(),
   emailVerified: boolean("email_verified").default(false),
   emailVerificationToken: text("email_verification_token"),
@@ -42,13 +45,16 @@ export const categories = pgTable("categories", {
 
 export const rights = pgTable("rights", {
   id: serial("id").primaryKey(),
-  // Ethereum blockchain fields
-  contractAddress: text("contract_address"), // NFT contract address
+  // Blockchain fields (Ethereum/Hedera)
+  contractAddress: text("contract_address"), // NFT contract address (Ethereum) or Token ID (Hedera)
   tokenId: text("token_id").unique(), // NFT token ID
   transactionHash: text("transaction_hash"), // Mint transaction hash
-  ownerAddress: text("owner_address"), // Current owner's Ethereum address
-  blockNumber: integer("block_number"), // Block number where NFT was minted
-  chainId: integer("chain_id").default(1), // Ethereum mainnet = 1, others for testnets
+  ownerAddress: text("owner_address"), // Current owner's address (Ethereum or Hedera)
+  hederaTokenId: text("hedera_token_id"), // Hedera Token Service ID (e.g., 0.0.12345)
+  hederaSerialNumber: text("hedera_serial_number"), // Hedera NFT serial number
+  blockNumber: integer("block_number"), // Block number (Ethereum) or consensus timestamp (Hedera)
+  chainId: integer("chain_id").default(1), // 1 = Ethereum mainnet, 295 = Hedera mainnet
+  networkType: text("network_type").default("ethereum"), // 'ethereum' or 'hedera'
   
   title: text("title").notNull(),
   type: text("type").notNull(), // copyright, royalty, access, ownership, license

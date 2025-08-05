@@ -36,6 +36,7 @@ export interface IMarketplaceStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByWalletAddress(walletAddress: string): Promise<User | undefined>;
+  getUserByHederaAccountId(hederaAccountId: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByEmailVerificationToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -137,6 +138,11 @@ export class DatabaseMarketplaceStorage implements IMarketplaceStorage {
 
   async getUserByWalletAddress(walletAddress: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.walletAddress, walletAddress));
+    return user;
+  }
+
+  async getUserByHederaAccountId(hederaAccountId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.hederaAccountId, hederaAccountId));
     return user;
   }
 

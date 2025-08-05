@@ -1317,29 +1317,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { walletAddress, walletType } = req.body;
       
-      if (!walletAddress) {
-        return res.status(400).json({ error: "Wallet address required" });
+      const { hederaAccountId } = req.body;
+      
+      if (!walletAddress && !hederaAccountId) {
+        return res.status(400).json({ error: "Wallet address or Hedera account ID required" });
       }
       
-      // Validate Ethereum wallet address format
-      const isEthereumAddress = walletAddress.match(/^0x[a-fA-F0-9]{38,40}$/);
+      // Validate wallet address format based on type
+      let isValidAddress = false;
       
-      if (!isEthereumAddress) {
-        return res.status(400).json({ error: "Invalid Ethereum wallet address format" });
+      if (walletType === 'metamask' && walletAddress) {
+        // Ethereum address format
+        isValidAddress = !!walletAddress.match(/^0x[a-fA-F0-9]{38,40}$/);
+      } else if (walletType === 'hashpack' && req.body.hederaAccountId) {
+        // Hedera account ID format (e.g., 0.0.12345)
+        isValidAddress = !!req.body.hederaAccountId.match(/^\d+\.\d+\.\d+$/);
       }
       
-      // Check if user exists with this wallet address
-      let user = await storage.getUserByWalletAddress(walletAddress);
+      if (!isValidAddress) {
+        return res.status(400).json({ error: "Invalid wallet address format" });
+      }
       
-      if (!user) {
-        // Create new user for this wallet
-        const username = `user_${walletAddress.slice(-6)}`;
-          
-        user = await storage.createUser({
-          username,
-          password: "secure_password",
-          walletAddress,
-        });
+      // Check if user exists with this wallet address or Hedera account
+      let user;
+      
+      if (walletType === 'metamask' && walletAddress) {
+        user = await storage.getUserByWalletAddress(walletAddress);
+        
+        if (!user) {
+          // Create new user for Ethereum wallet
+          const username = `eth_${walletAddress.slice(-6)}`;
+          user = await storage.createUser({
+            username,
+            password: "secure_password",
+            walletAddress,
+            walletType: 'metamask',
+            networkType: 'ethereum'
+          });
+        }
+      } else if (walletType === 'hashpack' && hederaAccountId) {
+        // For Hedera, search by Hedera account ID
+        user = await storage.getUserByHederaAccountId(hederaAccountId);
+        
+        if (!user) {
+          // Create new user for Hedera wallet
+          const username = `hedera_${hederaAccountId.replace(/\./g, '_')}`;
+          user = await storage.createUser({
+            username,
+            password: "secure_password",
+            hederaAccountId,
+            walletType: 'hashpack',
+            networkType: 'hedera'
+          });
+        }
       }
       
       // Store wallet type in session if needed
