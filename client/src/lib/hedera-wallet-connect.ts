@@ -7,17 +7,12 @@ import {
 } from '@hashgraph/hedera-wallet-connect';
 import { LedgerId } from '@hashgraph/sdk';
 import { SignClient } from '@walletconnect/sign-client';
-
-// Get WalletConnect project ID from environment
-const WALLETCONNECT_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
-
-// DApp metadata for wallet connection
-const metadata = {
-  name: 'Dright',
-  description: 'NFT Rights Marketplace on Hedera',
-  url: window.location.origin,
-  icons: [`${window.location.origin}/logo.png`],
-};
+import { 
+  WALLETCONNECT_PROJECT_ID, 
+  DAPP_METADATA as metadata,
+  configureWalletConnectForHashPack,
+  HEDERA_REQUIRED_NAMESPACES
+} from './walletconnect-config';
 
 // Singleton instance of DAppConnector
 let dAppConnector: DAppConnector | null = null;
@@ -54,9 +49,14 @@ export class HederaWalletService {
       throw new Error('WalletConnect Project ID is not configured');
     }
 
+    // Get WalletConnect configuration optimized for HashPack
+    const config = configureWalletConnectForHashPack();
+    console.log('WalletConnect configuration:', config);
+
     const ledgerId = network === 'mainnet' ? LedgerId.MAINNET : LedgerId.TESTNET;
     const chainId = network === 'mainnet' ? HederaChainId.Mainnet : HederaChainId.Testnet;
 
+    // Create DAppConnector with proper configuration
     this.connector = new DAppConnector(
       metadata,
       ledgerId,
@@ -66,12 +66,20 @@ export class HederaWalletService {
       [chainId]
     );
 
-    // Initialize the connector
-    console.log('Initializing DAppConnector...');
+    // Initialize the connector with enhanced logging
+    console.log('Initializing DAppConnector with enhanced configuration...');
     try {
-      await this.connector.init({ logger: 'debug' });
+      await this.connector.init({ 
+        logger: 'debug',
+        relayUrl: 'wss://relay.walletconnect.org' 
+      });
       console.log('DAppConnector initialized successfully');
       console.log('WalletConnect client:', this.connector.walletConnectClient ? 'Created' : 'Not created');
+      
+      // Log available wallets
+      if (this.connector.walletConnectClient) {
+        console.log('WalletConnect ready for HashPack connection');
+      }
     } catch (error) {
       console.error('Failed to initialize DAppConnector:', error);
       throw error;
@@ -88,17 +96,78 @@ export class HederaWalletService {
     // The DAppConnector doesn't support .on() method directly
   }
 
+  private async cleanupStaleSessions(): Promise<void> {
+    try {
+      const sessions = this.connector?.walletConnectClient?.session.getAll();
+      if (sessions && sessions.length > 0) {
+        console.log(`Found ${sessions.length} existing sessions, checking validity...`);
+        for (const session of sessions) {
+          try {
+            // Check if session is expired
+            const expiryDate = new Date(session.expiry * 1000);
+            if (expiryDate < new Date()) {
+              console.log(`Removing expired session: ${session.topic}`);
+              await this.connector?.walletConnectClient?.session.delete(session.topic, {
+                code: 6000,
+                message: 'Session expired'
+              });
+            }
+          } catch (error) {
+            console.error('Error cleaning up session:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error during session cleanup:', error);
+    }
+  }
+
+  private async detectHashPackExtension(): Promise<boolean> {
+    // Check multiple ways HashPack might be exposed
+    const win = window as any;
+    const checks = [
+      typeof win.hashpack !== 'undefined',
+      typeof win.HashPackExtension !== 'undefined',
+      typeof win.hashconnect !== 'undefined',
+      // Check for HashPack in navigator
+      navigator.userAgent.includes('HashPack')
+    ];
+    
+    const detected = checks.some(check => check);
+    console.log('HashPack extension detection:', { detected, checks });
+    return detected;
+  }
+
+  private updateSessionInfo(accountString: string): void {
+    // Parse the account string format: "hedera:mainnet:0.0.123456"
+    const parts = accountString.split(':');
+    const accountId = parts[parts.length - 1];
+    const network = parts.includes('testnet') ? 'testnet' : 'mainnet';
+    
+    this.sessionInfo = {
+      accountId,
+      network: network as 'mainnet' | 'testnet'
+    };
+    
+    console.log('Session info updated:', this.sessionInfo);
+  }
+
   async connect(): Promise<HederaWalletInfo> {
     if (!this.connector) {
       throw new Error('HederaWalletService not initialized');
     }
 
     console.log('Starting HashPack connection...');
+    console.log('DApp URL:', window.location.origin);
+    console.log('DApp Metadata:', metadata);
 
     try {
-      // Check if already connected
+      // Clean up any stale sessions first
+      await this.cleanupStaleSessions();
+      
+      // Check if already connected with a valid session
       const sessions = this.connector.walletConnectClient?.session.getAll();
-      console.log('Existing sessions:', sessions?.length || 0);
+      console.log('Active sessions after cleanup:', sessions?.length || 0);
       
       if (sessions && sessions.length > 0) {
         const session = sessions[0];
@@ -106,35 +175,62 @@ export class HederaWalletService {
         const hederaNamespace = namespaces['hedera'];
         
         if (hederaNamespace && hederaNamespace.accounts && hederaNamespace.accounts.length > 0) {
-          console.log('Found existing Hedera session');
-          const accountId = hederaNamespace.accounts[0].split(':').pop() || '';
+          console.log('Found existing valid Hedera session');
           this.updateSessionInfo(hederaNamespace.accounts[0]);
           return this.sessionInfo!;
         }
       }
 
+      // Detect if HashPack extension is available
+      const hashPackDetected = await this.detectHashPackExtension();
+      console.log('HashPack extension detected:', hashPackDetected);
+
+      // Clear any existing modal state
+      if (this.connector.modal) {
+        this.connector.modal.closeModal();
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
       // Open the WalletConnect modal for new connection
-      console.log('Opening WalletConnect modal...');
+      console.log('Opening WalletConnect modal with HashPack support...');
       
-      // The DAppConnector should automatically show HashPack in the modal
-      // when properly initialized with WalletConnect Project ID
       try {
+        // The DAppConnector should show HashPack in the modal
         await this.connector.openModal();
-        console.log('WalletConnect modal opened');
+        console.log('WalletConnect modal opened successfully');
+        
+        // Provide guidance if HashPack isn't detected
+        if (!hashPackDetected) {
+          console.warn('HashPack extension not detected. User may need to install it.');
+        }
       } catch (error) {
         console.error('Failed to open WalletConnect modal:', error);
-        throw new Error('Failed to open wallet connection modal. Please ensure HashPack is installed.');
+        
+        if (!hashPackDetected) {
+          throw new Error('HashPack wallet not detected. Please install the HashPack browser extension from https://www.hashpack.app/download and refresh the page.');
+        } else {
+          throw new Error('Failed to open wallet connection modal. Please ensure HashPack is unlocked and try again.');
+        }
       }
 
       // Return a promise that resolves when connection is established
       return new Promise((resolve, reject) => {
         let attempts = 0;
-        const maxAttempts = 60; // 60 seconds timeout
+        const maxAttempts = 120; // 2 minutes timeout
+        let modalClosed = false;
         
         const checkConnection = async () => {
           attempts++;
           
           try {
+            // Check if modal was closed by user
+            if (this.connector?.modal && !this.connector.modal.getIsOpen() && attempts > 3) {
+              modalClosed = true;
+              console.log('WalletConnect modal was closed by user');
+              reject(new Error('Connection cancelled by user'));
+              return;
+            }
+            
             const newSessions = this.connector?.walletConnectClient?.session.getAll();
             if (newSessions && newSessions.length > 0) {
               console.log('New session detected');
@@ -146,6 +242,12 @@ export class HederaWalletService {
                 console.log('HashPack connected successfully');
                 const accountString = hederaNamespace.accounts[0];
                 this.updateSessionInfo(accountString);
+                
+                // Close the modal
+                if (this.connector.modal) {
+                  this.connector.modal.closeModal();
+                }
+                
                 resolve(this.sessionInfo!);
                 return;
               }
@@ -156,12 +258,17 @@ export class HederaWalletService {
           
           if (attempts >= maxAttempts) {
             console.error('Connection timeout');
-            reject(new Error('Connection timeout - please try again'));
+            if (this.connector.modal) {
+              this.connector.modal.closeModal();
+            }
+            reject(new Error('Connection timeout. Please ensure HashPack is unlocked and try again.'));
             return;
           }
           
-          // Continue checking
-          setTimeout(checkConnection, 1000);
+          // Continue checking if modal is still open
+          if (!modalClosed) {
+            setTimeout(checkConnection, 1000);
+          }
         };
         
         // Start checking after a short delay
@@ -216,16 +323,7 @@ export class HederaWalletService {
     }
   }
 
-  private updateSessionInfo(accountString: string): void {
-    // Parse the account string format: "hedera:mainnet:0.0.12345"
-    const parts = accountString.split(':');
-    if (parts.length >= 3) {
-      this.sessionInfo = {
-        accountId: parts[2],
-        network: parts[1] === 'mainnet' ? 'mainnet' : 'testnet',
-      };
-    }
-  }
+
 
   getSessionInfo(): HederaWalletInfo | null {
     return this.sessionInfo;
