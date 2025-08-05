@@ -39,7 +39,7 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     retry: false,
   });
 
-  const isAuthenticated = authData && authData.isAuthenticated === true;
+  const isAuthenticated = Boolean(authData && (authData as any).isAuthenticated === true);
   const user = isAuthenticated && authData ? authData : null;
 
   // Mutation for wallet connection

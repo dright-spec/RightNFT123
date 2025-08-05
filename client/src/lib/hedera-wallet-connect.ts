@@ -77,19 +77,61 @@ export class HederaWalletService {
     }
 
     try {
-      // Open the WalletConnect modal
-      await this.connector.openModal();
-
-      // Get the connected accounts
-      const accounts = await this.getAccounts();
-      if (accounts.length === 0) {
-        throw new Error('No accounts connected');
+      // Check if already connected
+      const sessions = this.connector.walletConnectClient?.session.getAll();
+      if (sessions && sessions.length > 0) {
+        const session = sessions[0];
+        const namespaces = session.namespaces;
+        const hederaNamespace = namespaces['hedera'];
+        
+        if (hederaNamespace && hederaNamespace.accounts && hederaNamespace.accounts.length > 0) {
+          const accountId = hederaNamespace.accounts[0].split(':').pop() || '';
+          this.updateSessionInfo(hederaNamespace.accounts[0]);
+          return this.sessionInfo!;
+        }
       }
 
-      // Update session info with the first account
-      this.updateSessionInfo(accounts[0]);
+      // Open the WalletConnect modal for new connection
+      await this.connector.openModal();
 
-      return this.sessionInfo!;
+      // Return a promise that resolves when connection is established
+      return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 60; // 60 seconds timeout
+        
+        const checkConnection = async () => {
+          attempts++;
+          
+          try {
+            const newSessions = this.connector?.walletConnectClient?.session.getAll();
+            if (newSessions && newSessions.length > 0) {
+              const session = newSessions[0];
+              const namespaces = session.namespaces;
+              const hederaNamespace = namespaces['hedera'];
+              
+              if (hederaNamespace && hederaNamespace.accounts && hederaNamespace.accounts.length > 0) {
+                const accountString = hederaNamespace.accounts[0];
+                this.updateSessionInfo(accountString);
+                resolve(this.sessionInfo!);
+                return;
+              }
+            }
+          } catch (error) {
+            console.warn('Error checking connection:', error);
+          }
+          
+          if (attempts >= maxAttempts) {
+            reject(new Error('Connection timeout - please try again'));
+            return;
+          }
+          
+          // Continue checking
+          setTimeout(checkConnection, 1000);
+        };
+        
+        // Start checking after a short delay
+        setTimeout(checkConnection, 1000);
+      });
     } catch (error) {
       console.error('Failed to connect HashPack:', error);
       throw error;
@@ -100,7 +142,15 @@ export class HederaWalletService {
     if (!this.connector) return;
 
     try {
-      await this.connector.disconnect();
+      const sessions = this.connector.walletConnectClient?.session.getAll();
+      if (sessions && sessions.length > 0) {
+        for (const session of sessions) {
+          await this.connector.walletConnectClient?.session.delete(session.topic, {
+            code: 6000,
+            message: 'User disconnected'
+          });
+        }
+      }
       this.sessionInfo = null;
     } catch (error) {
       console.error('Failed to disconnect:', error);
@@ -114,8 +164,17 @@ export class HederaWalletService {
 
     try {
       // Get accounts from the active session
-      const accounts = await this.connector.getAccountIds();
-      return accounts || [];
+      const sessions = this.connector.walletConnectClient?.session.getAll();
+      if (sessions && sessions.length > 0) {
+        const session = sessions[0];
+        const namespaces = session.namespaces;
+        const hederaNamespace = namespaces['hedera'];
+        
+        if (hederaNamespace && hederaNamespace.accounts) {
+          return hederaNamespace.accounts;
+        }
+      }
+      return [];
     } catch (error) {
       console.error('Failed to get accounts:', error);
       return [];
