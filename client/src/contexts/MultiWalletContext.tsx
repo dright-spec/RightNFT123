@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
+import { hederaWalletManager } from '@/lib/hedera-wallet-manager';
 import { hederaWalletService, HederaWalletInfo } from '@/lib/hedera-wallet-connect';
 import { connectHashPackDirect, checkHashPackAvailability } from '@/lib/hashpack-direct';
 
-export type WalletType = 'metamask' | 'hashpack' | null;
-export type NetworkType = 'ethereum' | 'hedera' | null;
+export type WalletType = 'hashpack' | 'metamask' | null;
+export type NetworkType = 'hedera' | 'ethereum' | null;
 
 interface MultiWalletContextType {
   // Wallet connection state
@@ -74,10 +75,46 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Connect MetaMask
+  // Connect HashPack (PRIMARY HEDERA WALLET)
+  const connectHashPack = async () => {
+    try {
+      console.log('Starting HashPack connection process...');
+      
+      // Use the new Hedera wallet manager
+      await hederaWalletManager.initialize('mainnet');
+      console.log('Hedera wallet manager initialized');
+      
+      // Connect to HashPack using the new manager
+      const accountId = await hederaWalletManager.connectHashPack();
+      console.log('HashPack connected with account:', accountId);
+      
+      // Update state
+      setHederaAccountId(accountId);
+      setWalletType('hashpack');
+      setNetworkType('hedera');
+      setWalletAddress(null); // Clear Ethereum address
+      
+      // Authenticate with backend using Hedera account
+      await connectWalletMutation.mutateAsync({
+        hederaId: accountId,
+        type: 'hashpack',
+        network: 'hedera'
+      });
+      
+      console.log('HashPack wallet connected and authenticated successfully');
+      
+    } catch (error) {
+      console.error('HashPack connection error:', error);
+      throw error;
+    }
+  };
+
+  // Connect MetaMask (LEGACY ETHEREUM SUPPORT)
   const connectMetaMask = async () => {
+    console.warn('MetaMask connection deprecated - Hedera/HashPack is now the primary wallet');
+    
     if (!window.ethereum) {
-      throw new Error('MetaMask not installed');
+      throw new Error('MetaMask not installed. Please use HashPack for the best experience on Hedera.');
     }
 
     try {
@@ -107,66 +144,16 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Connect HashPack
-  const connectHashPack = async () => {
-    try {
-      console.log('Starting HashPack connection process...');
-      
-      // Check HashPack availability first
-      const { installed, mobile } = checkHashPackAvailability();
-      console.log('HashPack availability:', { installed, mobile });
-      
-      // Initialize Hedera wallet service
-      await hederaWalletService.initialize('mainnet');
-      console.log('Hedera wallet service initialized');
-      
-      // Try to connect to HashPack
-      let walletInfo: HederaWalletInfo;
-      try {
-        walletInfo = await hederaWalletService.connect();
-        console.log('HashPack wallet connected:', walletInfo);
-      } catch (walletError) {
-        console.error('WalletConnect failed, trying direct connection:', walletError);
-        
-        // If WalletConnect fails, try direct connection approach
-        if (!installed && !mobile) {
-          await connectHashPackDirect();
-          throw new Error('HashPack not installed');
-        }
-        
-        // If installed but connection failed, provide guidance
-        throw new Error('Please ensure HashPack is unlocked and try again. You may need to manually connect from the HashPack extension.');
-      }
-      
-      setHederaAccountId(walletInfo.accountId);
-      setWalletType('hashpack');
-      setNetworkType('hedera');
-      setWalletAddress(null);
-
-      // Authenticate with backend
-      await connectWalletMutation.mutateAsync({
-        hederaId: walletInfo.accountId,
-        type: 'hashpack',
-        network: 'hedera'
-      });
-      
-      console.log('HashPack authentication complete');
-    } catch (error) {
-      console.error('HashPack connection error:', error);
-      throw error;
-    }
-  };
-
   // Main connect wallet function
   const connectWallet = async (type: WalletType) => {
     if (!type) return;
     
     setIsConnecting(true);
     try {
-      if (type === 'metamask') {
-        await connectMetaMask();
-      } else if (type === 'hashpack') {
+      if (type === 'hashpack') {
         await connectHashPack();
+      } else if (type === 'metamask') {
+        await connectMetaMask();
       }
     } finally {
       setIsConnecting(false);
@@ -177,7 +164,7 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
   const disconnectWallet = async () => {
     try {
       if (walletType === 'hashpack') {
-        await hederaWalletService.disconnect();
+        await hederaWalletManager.disconnect();
       }
       
       // Clear local state
@@ -194,37 +181,32 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Switch network (future implementation)
+  // Switch network (for Hedera mainnet/testnet)
   const switchNetwork = async (network: NetworkType) => {
-    // This would handle switching between networks
-    console.log('Network switching not yet implemented');
+    console.log('Network switching:', network);
+    setNetworkType(network);
   };
 
-  // Listen for MetaMask account changes
+  // Listen for MetaMask account changes (legacy support)
   useEffect(() => {
     if (!window.ethereum) return;
 
     const handleAccountsChanged = (accounts: string[]) => {
       if (accounts.length === 0) {
         disconnectWallet();
-      } else if (walletType === 'metamask' && accounts[0] !== walletAddress) {
+      } else if (walletType === 'metamask') {
         setWalletAddress(accounts[0]);
-        // Re-authenticate with new address
-        connectWalletMutation.mutate({
-          address: accounts[0],
-          type: 'metamask',
-          network: 'ethereum'
-        });
       }
     };
 
-    window.ethereum?.on('accountsChanged', handleAccountsChanged);
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
     return () => {
-      window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
     };
-  }, [walletType, walletAddress]);
+  }, [walletType]);
 
-  const contextValue: MultiWalletContextType = {
+  // Context value with Hedera as primary blockchain
+  const value: MultiWalletContextType = {
     walletType,
     networkType,
     walletAddress,
@@ -238,7 +220,7 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <MultiWalletContext.Provider value={contextValue}>
+    <MultiWalletContext.Provider value={value}>
       {children}
     </MultiWalletContext.Provider>
   );
@@ -246,15 +228,8 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
 
 export function useMultiWallet() {
   const context = useContext(MultiWalletContext);
-  if (!context) {
-    throw new Error('useMultiWallet must be used within MultiWalletProvider');
+  if (context === undefined) {
+    throw new Error('useMultiWallet must be used within a MultiWalletProvider');
   }
   return context;
-}
-
-// Ethereum type declarations
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
 }

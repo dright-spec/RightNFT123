@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
-import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
+import { HederaWalletButton } from "@/components/hedera-wallet-button";
 import { ActivityFeed } from "@/components/activity-feed";
 // Removed onboarding-related imports
 import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
@@ -401,7 +401,7 @@ export default function Marketplace() {
                       <div className="text-white/80">Available Rights</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-emerald-300">847.3 ETH</div>
+                      <div className="text-4xl font-bold text-emerald-300">5,247 ℏ</div>
                       <div className="text-white/80">Total Volume</div>
                     </div>
                     <div className="text-center">

@@ -7,6 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { hederaPaymentService } from "@/lib/hedera-payment-service";
+import { useMultiWallet } from "@/contexts/MultiWalletContext";
 import { 
   Wallet, 
   CreditCard, 
@@ -38,78 +40,80 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
   const [transactionHash, setTransactionHash] = useState<string>("");
   const [paymentSteps, setPaymentSteps] = useState<PaymentStep[]>([
     {
-      id: "wallet-connect",
-      title: "Wallet Connection",
-      description: "Connecting to your wallet",
+      id: "hashpack-connect",
+      title: "HashPack Connection",
+      description: "Connecting to your HashPack wallet",
       status: "active"
     },
     {
       id: "payment-approval",
-      title: "Payment Approval", 
-      description: "Approve the transaction in your wallet",
+      title: "HBAR Payment Approval", 
+      description: "Approve the HBAR transaction in HashPack",
       status: "pending"
     },
     {
-      id: "blockchain-confirmation",
-      title: "Blockchain Confirmation",
-      description: "Waiting for blockchain confirmation",
+      id: "hedera-confirmation",
+      title: "Hedera Network Confirmation",
+      description: "Waiting for Hedera consensus confirmation",
       status: "pending"
     },
     {
-      id: "ownership-transfer",
-      title: "Ownership Transfer",
-      description: "Transferring right ownership to you",
+      id: "nft-transfer",
+      title: "HTS NFT Transfer",
+      description: "Transferring Hedera Token Service NFT to you",
       status: "pending"
     }
   ]);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hederaAccountId, walletType } = useMultiWallet();
 
-  // Calculate fees and totals
+  // Calculate fees and totals (in HBAR)
   const price = parseFloat(right.price || "0");
   const platformFee = price * 0.025; // 2.5% platform fee
-  const total = price + platformFee;
+  const hederaNetworkFee = 0.001; // ~0.001 HBAR for standard transactions
+  const total = price + platformFee + hederaNetworkFee;
 
   // Purchase mutation
   const purchaseMutation = useMutation({
     mutationFn: async () => {
-      // Check wallet connection
-      const walletConnection = localStorage.getItem('walletConnection');
-      if (!walletConnection) {
-        throw new Error("Wallet not connected");
+      // Check Hedera wallet connection
+      if (!hederaAccountId || walletType !== 'hashpack') {
+        throw new Error("HashPack wallet not connected");
       }
 
-      const walletData = JSON.parse(walletConnection);
-      if (!walletData.address) {
-        throw new Error("No wallet address found");
-      }
-
-      // Step 1: Connect wallet (already done)
+      // Step 1: HashPack connection (already done)
       updateStepStatus(0, "completed");
       setCurrentStep(1);
       updateStepStatus(1, "active");
 
-      // Step 2: Simulate payment transaction
-      const mockTransactionHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-      setTransactionHash(mockTransactionHash);
+      // Step 2: Process HBAR payment through Hedera network
+      const paymentResult = await hederaPaymentService.processPayment({
+        to: right.creatorWallet || right.creatorHederaAccount || '', 
+        amount: price.toString(),
+        currency: 'HBAR',
+        rightId: right.id
+      });
+
+      setTransactionHash(paymentResult.transactionHash);
 
       updateStepStatus(1, "completed");
       setCurrentStep(2);
       updateStepStatus(2, "active");
 
-      // Step 3: Wait for blockchain confirmation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Step 3: Wait for Hedera consensus confirmation
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Hedera consensus is ~3 seconds
       updateStepStatus(2, "completed");
       setCurrentStep(3);
       updateStepStatus(3, "active");
 
-      // Step 4: Process purchase on backend
+      // Step 4: Process HTS NFT transfer on backend
       const purchaseResult = await apiRequest("POST", `/api/rights/${right.id}/purchase`, {
-        transactionHash: mockTransactionHash,
+        transactionHash: paymentResult.transactionHash,
         amount: total.toString(),
-        currency: "ETH",
-        buyerAddress: walletData.address
+        currency: "HBAR",
+        buyerHederaAccount: hederaAccountId
       });
 
       updateStepStatus(3, "completed");
@@ -144,12 +148,11 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
 
   const handlePurchase = async () => {
     try {
-      // Check wallet connection
-      const walletConnection = localStorage.getItem('walletConnection');
-      if (!walletConnection) {
+      // Check Hedera wallet connection
+      if (!hederaAccountId || walletType !== 'hashpack') {
         toast({
-          title: "Wallet Not Connected",
-          description: "Please connect your wallet first to make a purchase.",
+          title: "HashPack Not Connected",
+          description: "Please connect your HashPack wallet first to make a purchase.",
           variant: "destructive",
         });
         return;
@@ -222,16 +225,20 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Right Price</span>
-                <span>{price.toFixed(4)} ETH</span>
+                <span>{price.toFixed(4)} ℏ</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Platform Fee (2.5%)</span>
-                <span>{platformFee.toFixed(4)} ETH</span>
+                <span>{platformFee.toFixed(4)} ℏ</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Network Fee</span>
+                <span>{hederaNetworkFee.toFixed(6)} ℏ</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>{total.toFixed(4)} ETH</span>
+                <span>{total.toFixed(4)} ℏ</span>
               </div>
             </div>
           </div>
@@ -271,7 +278,7 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => window.open(`https://etherscan.io/tx/${transactionHash}`, '_blank')}
+                      onClick={() => window.open(`https://hashscan.io/mainnet/transaction/${transactionHash}`, '_blank')}
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
                       View
@@ -308,7 +315,7 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
               ) : (
                 <>
                   <Wallet className="w-4 h-4 mr-2" />
-                  Pay {total.toFixed(4)} ETH
+                  Pay {total.toFixed(4)} ℏ
                 </>
               )}
             </Button>
@@ -318,7 +325,7 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Shield className="w-3 h-3" />
-              <span>Secure payment powered by Ethereum blockchain</span>
+              <span>Secure payment powered by Hedera Hashgraph</span>
             </div>
           </div>
         </div>

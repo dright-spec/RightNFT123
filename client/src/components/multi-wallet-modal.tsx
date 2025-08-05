@@ -21,20 +21,20 @@ interface WalletOption {
 
 const walletOptions: WalletOption[] = [
   {
-    id: 'metamask',
-    name: 'MetaMask',
-    description: 'Connect with MetaMask wallet for Ethereum',
-    network: 'Ethereum Network',
-    icon: '/metamask-icon.svg',
-    installUrl: 'https://metamask.io/download/'
-  },
-  {
     id: 'hashpack',
     name: 'HashPack',
-    description: 'Connect with HashPack wallet for Hedera',
+    description: 'The premier wallet for Hedera network - Recommended',
     network: 'Hedera Network',
-    icon: '/hashpack-icon.svg',
-    installUrl: 'https://www.hashpack.app/download'
+    icon: '🟣',
+    installUrl: 'https://www.hashpack.app/'
+  },
+  {
+    id: 'metamask',
+    name: 'MetaMask',
+    description: 'Legacy Ethereum support (deprecated)',
+    network: 'Ethereum Network',
+    icon: '🦊',
+    installUrl: 'https://metamask.io/download/'
   }
 ];
 
@@ -59,20 +59,23 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
   };
 
   const checkWalletInstalled = (walletId: string): boolean => {
+    if (walletId === 'hashpack') {
+      // HashPack is always available via WalletConnect
+      return true;
+    }
     if (walletId === 'metamask') {
       return typeof window.ethereum !== 'undefined';
     }
-    // HashPack uses WalletConnect, so it's always "available"
-    return true;
+    return false;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Connect Wallet</DialogTitle>
+          <DialogTitle>Connect to Hedera Network</DialogTitle>
           <DialogDescription>
-            Choose a wallet to connect to Dright marketplace
+            Choose a wallet to connect to Dright - Digital Rights Marketplace on Hedera
           </DialogDescription>
         </DialogHeader>
 
@@ -86,6 +89,8 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
                 key={wallet.id}
                 className={`p-4 cursor-pointer transition-all hover:border-primary ${
                   selectedWallet === wallet.id ? 'border-primary' : ''
+                } ${wallet.id === 'hashpack' ? 'border-2 border-purple-200 bg-purple-50/30' : ''} ${
+                  wallet.id === 'metamask' ? 'opacity-60' : ''
                 }`}
                 onClick={() => isInstalled && handleWalletConnect(wallet.id)}
               >
