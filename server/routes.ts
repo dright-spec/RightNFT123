@@ -1378,6 +1378,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.walletAddress = walletAddress;
       }
       
+      if (!user) {
+        return res.status(500).json({ error: "Failed to create or find user" });
+      }
+      
       const { password, ...userWithoutPassword } = user;
       res.json({ 
         success: true, 
