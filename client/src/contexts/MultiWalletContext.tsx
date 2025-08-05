@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { hederaWalletService, HederaWalletInfo } from '@/lib/hedera-wallet-connect';
+import { connectHashPackDirect, checkHashPackAvailability } from '@/lib/hashpack-direct';
 
 export type WalletType = 'metamask' | 'hashpack' | null;
 export type NetworkType = 'ethereum' | 'hedera' | null;
@@ -109,11 +110,33 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
   // Connect HashPack
   const connectHashPack = async () => {
     try {
+      console.log('Starting HashPack connection process...');
+      
+      // Check HashPack availability first
+      const { installed, mobile } = checkHashPackAvailability();
+      console.log('HashPack availability:', { installed, mobile });
+      
       // Initialize Hedera wallet service
       await hederaWalletService.initialize('mainnet');
+      console.log('Hedera wallet service initialized');
       
-      // Connect to HashPack
-      const walletInfo = await hederaWalletService.connect();
+      // Try to connect to HashPack
+      let walletInfo: HederaWalletInfo;
+      try {
+        walletInfo = await hederaWalletService.connect();
+        console.log('HashPack wallet connected:', walletInfo);
+      } catch (walletError) {
+        console.error('WalletConnect failed, trying direct connection:', walletError);
+        
+        // If WalletConnect fails, try direct connection approach
+        if (!installed && !mobile) {
+          await connectHashPackDirect();
+          throw new Error('HashPack not installed');
+        }
+        
+        // If installed but connection failed, provide guidance
+        throw new Error('Please ensure HashPack is unlocked and try again. You may need to manually connect from the HashPack extension.');
+      }
       
       setHederaAccountId(walletInfo.accountId);
       setWalletType('hashpack');
@@ -126,6 +149,8 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
         type: 'hashpack',
         network: 'hedera'
       });
+      
+      console.log('HashPack authentication complete');
     } catch (error) {
       console.error('HashPack connection error:', error);
       throw error;
@@ -230,10 +255,6 @@ export function useMultiWallet() {
 // Ethereum type declarations
 declare global {
   interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>;
-      on: (event: string, callback: (...args: any[]) => void) => void;
-      removeListener: (event: string, callback: (...args: any[]) => void) => void;
-    };
+    ethereum?: any;
   }
 }

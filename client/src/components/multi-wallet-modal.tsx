@@ -44,6 +44,7 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
   const [error, setError] = React.useState<string | null>(null);
 
   const handleWalletConnect = async (walletId: 'metamask' | 'hashpack') => {
+    console.log(`Attempting to connect to ${walletId}...`);
     setSelectedWallet(walletId);
     setError(null);
 
@@ -51,6 +52,7 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
       await connectWallet(walletId);
       onClose();
     } catch (err: any) {
+      console.error(`${walletId} connection error:`, err);
       setError(err.message || 'Failed to connect wallet');
       setSelectedWallet(null);
     }

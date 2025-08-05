@@ -11,7 +11,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "@hashgraph/hedera-wallet-connect": "^1.5.1",
+    "@hashgraph/hedera-wallet-connect": "^2.0.0-canary.811af2f.0",
     "@hashgraph/sdk": "^2.69.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
@@ -55,6 +55,7 @@
     "@walletconnect/client": "^1.8.0",
     "@walletconnect/ethereum-provider": "^2.21.3",
     "@walletconnect/modal": "^2.7.0",
+    "@walletconnect/sign-client": "^2.21.6",
     "@walletconnect/universal-provider": "^2.21.6",
     "@walletconnect/utils": "^2.21.3",
     "@web3modal/ethers": "^5.1.11",

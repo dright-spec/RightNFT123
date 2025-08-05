@@ -3,8 +3,10 @@ import {
   HederaJsonRpcMethod,
   DAppConnector,
   HederaChainId,
+  ExtensionData,
 } from '@hashgraph/hedera-wallet-connect';
 import { LedgerId } from '@hashgraph/sdk';
+import { SignClient } from '@walletconnect/sign-client';
 
 // Get WalletConnect project ID from environment
 const WALLETCONNECT_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '';
@@ -45,6 +47,13 @@ export class HederaWalletService {
       return; // Already initialized
     }
 
+    console.log('Initializing Hedera wallet service...');
+    console.log('WalletConnect Project ID:', WALLETCONNECT_PROJECT_ID ? 'Present' : 'Missing');
+
+    if (!WALLETCONNECT_PROJECT_ID) {
+      throw new Error('WalletConnect Project ID is not configured');
+    }
+
     const ledgerId = network === 'mainnet' ? LedgerId.MAINNET : LedgerId.TESTNET;
     const chainId = network === 'mainnet' ? HederaChainId.Mainnet : HederaChainId.Testnet;
 
@@ -58,7 +67,15 @@ export class HederaWalletService {
     );
 
     // Initialize the connector
-    await this.connector.init({ logger: 'error' });
+    console.log('Initializing DAppConnector...');
+    try {
+      await this.connector.init({ logger: 'debug' });
+      console.log('DAppConnector initialized successfully');
+      console.log('WalletConnect client:', this.connector.walletConnectClient ? 'Created' : 'Not created');
+    } catch (error) {
+      console.error('Failed to initialize DAppConnector:', error);
+      throw error;
+    }
 
     // Set up event listeners
     this.setupEventListeners();
@@ -76,15 +93,20 @@ export class HederaWalletService {
       throw new Error('HederaWalletService not initialized');
     }
 
+    console.log('Starting HashPack connection...');
+
     try {
       // Check if already connected
       const sessions = this.connector.walletConnectClient?.session.getAll();
+      console.log('Existing sessions:', sessions?.length || 0);
+      
       if (sessions && sessions.length > 0) {
         const session = sessions[0];
         const namespaces = session.namespaces;
         const hederaNamespace = namespaces['hedera'];
         
         if (hederaNamespace && hederaNamespace.accounts && hederaNamespace.accounts.length > 0) {
+          console.log('Found existing Hedera session');
           const accountId = hederaNamespace.accounts[0].split(':').pop() || '';
           this.updateSessionInfo(hederaNamespace.accounts[0]);
           return this.sessionInfo!;
@@ -92,7 +114,17 @@ export class HederaWalletService {
       }
 
       // Open the WalletConnect modal for new connection
-      await this.connector.openModal();
+      console.log('Opening WalletConnect modal...');
+      
+      // The DAppConnector should automatically show HashPack in the modal
+      // when properly initialized with WalletConnect Project ID
+      try {
+        await this.connector.openModal();
+        console.log('WalletConnect modal opened');
+      } catch (error) {
+        console.error('Failed to open WalletConnect modal:', error);
+        throw new Error('Failed to open wallet connection modal. Please ensure HashPack is installed.');
+      }
 
       // Return a promise that resolves when connection is established
       return new Promise((resolve, reject) => {
@@ -105,11 +137,13 @@ export class HederaWalletService {
           try {
             const newSessions = this.connector?.walletConnectClient?.session.getAll();
             if (newSessions && newSessions.length > 0) {
+              console.log('New session detected');
               const session = newSessions[0];
               const namespaces = session.namespaces;
               const hederaNamespace = namespaces['hedera'];
               
               if (hederaNamespace && hederaNamespace.accounts && hederaNamespace.accounts.length > 0) {
+                console.log('HashPack connected successfully');
                 const accountString = hederaNamespace.accounts[0];
                 this.updateSessionInfo(accountString);
                 resolve(this.sessionInfo!);
@@ -121,6 +155,7 @@ export class HederaWalletService {
           }
           
           if (attempts >= maxAttempts) {
+            console.error('Connection timeout');
             reject(new Error('Connection timeout - please try again'));
             return;
           }
