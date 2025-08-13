@@ -79,8 +79,8 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
   const purchaseMutation = useMutation({
     mutationFn: async () => {
       // Check Hedera wallet connection
-      if (!hederaAccountId || walletType !== 'hashpack') {
-        throw new Error("HashPack wallet not connected");
+      if (!hederaAccountId || walletType !== 'walletconnect') {
+        throw new Error("WalletConnect wallet not connected");
       }
 
       // Step 1: HashPack connection (already done)
@@ -90,7 +90,7 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
 
       // Step 2: Process HBAR payment through Hedera network
       const paymentResult = await hederaPaymentService.processPayment({
-        to: right.creatorWallet || right.creatorHederaAccount || '', 
+        to: right.creator?.hederaAccountId || right.creator?.walletAddress || '', 
         amount: price.toString(),
         currency: 'HBAR',
         rightId: right.id
@@ -149,10 +149,10 @@ export function WalletPaymentModal({ right, isOpen, onClose, onSuccess }: Wallet
   const handlePurchase = async () => {
     try {
       // Check Hedera wallet connection
-      if (!hederaAccountId || walletType !== 'hashpack') {
+      if (!hederaAccountId || walletType !== 'walletconnect') {
         toast({
-          title: "HashPack Not Connected",
-          description: "Please connect your HashPack wallet first to make a purchase.",
+          title: "WalletConnect Not Connected", 
+          description: "Please connect your Hedera wallet via WalletConnect first to make a purchase.",
           variant: "destructive",
         });
         return;

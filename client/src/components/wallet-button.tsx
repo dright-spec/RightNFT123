@@ -22,8 +22,8 @@ export function WalletButton(props: any) {
   const [location, setLocation] = useLocation();
   const [showWalletModal, setShowWalletModal] = useState(false);
 
-  // Get display address based on wallet type
-  const displayAddress = walletType === 'hashpack' ? hederaAccountId : walletAddress;
+  // Get display address based on wallet type  
+  const displayAddress = walletType === 'walletconnect' ? hederaAccountId : walletAddress;
 
   const formatDisplayAddress = (address: string | null) => {
     if (!address) return '';

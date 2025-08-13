@@ -11,7 +11,7 @@ interface MultiWalletModalProps {
 }
 
 interface WalletOption {
-  id: 'metamask' | 'hashpack';
+  id: 'metamask' | 'walletconnect';
   name: string;
   description: string;
   network: string;
@@ -21,12 +21,12 @@ interface WalletOption {
 
 const walletOptions: WalletOption[] = [
   {
-    id: 'hashpack',
-    name: 'HashPack',
-    description: 'The premier wallet for Hedera network - Recommended',
+    id: 'walletconnect',
+    name: 'WalletConnect',
+    description: 'Connect to Hedera wallets via WalletConnect - Recommended',
     network: 'Hedera Network',
-    icon: '🟣',
-    installUrl: 'https://www.hashpack.app/'
+    icon: '🔗',
+    installUrl: 'https://walletconnect.com/'
   },
   {
     id: 'metamask',
@@ -43,7 +43,7 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
   const [selectedWallet, setSelectedWallet] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  const handleWalletConnect = async (walletId: 'metamask' | 'hashpack') => {
+  const handleWalletConnect = async (walletId: 'metamask' | 'walletconnect') => {
     console.log(`Attempting to connect to ${walletId}...`);
     setSelectedWallet(walletId);
     setError(null);
@@ -59,8 +59,8 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
   };
 
   const checkWalletInstalled = (walletId: string): boolean => {
-    if (walletId === 'hashpack') {
-      // HashPack is always available via WalletConnect
+    if (walletId === 'walletconnect') {
+      // WalletConnect is always available
       return true;
     }
     if (walletId === 'metamask') {
@@ -89,7 +89,7 @@ export function MultiWalletModal({ isOpen, onClose }: MultiWalletModalProps) {
                 key={wallet.id}
                 className={`p-4 cursor-pointer transition-all hover:border-primary ${
                   selectedWallet === wallet.id ? 'border-primary' : ''
-                } ${wallet.id === 'hashpack' ? 'border-2 border-purple-200 bg-purple-50/30' : ''} ${
+                } ${wallet.id === 'walletconnect' ? 'border-2 border-blue-200 bg-blue-50/30' : ''} ${
                   wallet.id === 'metamask' ? 'opacity-60' : ''
                 }`}
                 onClick={() => isInstalled && handleWalletConnect(wallet.id)}

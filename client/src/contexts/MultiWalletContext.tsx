@@ -3,9 +3,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { hederaWalletManager } from '@/lib/hedera-wallet-manager';
 import { hederaWalletService, HederaWalletInfo } from '@/lib/hedera-wallet-connect';
-import { connectHashPackDirect, checkHashPackAvailability } from '@/lib/hashpack-direct';
 
-export type WalletType = 'hashpack' | 'metamask' | null;
+export type WalletType = 'walletconnect' | 'metamask' | null;
 export type NetworkType = 'hedera' | 'ethereum' | null;
 
 interface MultiWalletContextType {
@@ -75,36 +74,36 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Connect HashPack (PRIMARY HEDERA WALLET)
-  const connectHashPack = async () => {
+  // Connect WalletConnect (Hedera via WalletConnect)
+  const connectWalletConnect = async () => {
     try {
-      console.log('Starting HashPack connection process...');
+      console.log('Starting WalletConnect connection process...');
       
-      // Use the new Hedera wallet manager
-      await hederaWalletManager.initialize('mainnet');
-      console.log('Hedera wallet manager initialized');
+      // Initialize Hedera wallet service with WalletConnect
+      await hederaWalletService.initialize();
+      console.log('Hedera WalletConnect service initialized');
       
-      // Connect to HashPack using the new manager
-      const accountId = await hederaWalletManager.connectHashPack();
-      console.log('HashPack connected with account:', accountId);
+      // Connect using WalletConnect
+      const walletInfo = await hederaWalletService.connect();
+      console.log('WalletConnect connected with account:', walletInfo.accountId);
       
       // Update state
-      setHederaAccountId(accountId);
-      setWalletType('hashpack');
+      setHederaAccountId(walletInfo.accountId);
+      setWalletType('walletconnect');
       setNetworkType('hedera');
       setWalletAddress(null); // Clear Ethereum address
       
       // Authenticate with backend using Hedera account
       await connectWalletMutation.mutateAsync({
-        hederaId: accountId,
-        type: 'hashpack',
+        hederaId: walletInfo.accountId,
+        type: 'walletconnect',
         network: 'hedera'
       });
       
-      console.log('HashPack wallet connected and authenticated successfully');
+      console.log('WalletConnect wallet connected and authenticated successfully');
       
     } catch (error) {
-      console.error('HashPack connection error:', error);
+      console.error('WalletConnect connection error:', error);
       throw error;
     }
   };
@@ -118,7 +117,7 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const accounts = await window.ethereum.request({ 
+      const accounts = await (window.ethereum as any).request({ 
         method: 'eth_requestAccounts' 
       });
       
@@ -150,8 +149,8 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
     
     setIsConnecting(true);
     try {
-      if (type === 'hashpack') {
-        await connectHashPack();
+      if (type === 'walletconnect') {
+        await connectWalletConnect();
       } else if (type === 'metamask') {
         await connectMetaMask();
       }
@@ -163,8 +162,8 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
   // Disconnect wallet
   const disconnectWallet = async () => {
     try {
-      if (walletType === 'hashpack') {
-        await hederaWalletManager.disconnect();
+      if (walletType === 'walletconnect') {
+        await hederaWalletService.disconnect();
       }
       
       // Clear local state
@@ -199,9 +198,9 @@ export function MultiWalletProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    (window.ethereum as any).on('accountsChanged', handleAccountsChanged);
     return () => {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      (window.ethereum as any).removeListener('accountsChanged', handleAccountsChanged);
     };
   }, [walletType]);
 
