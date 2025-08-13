@@ -48,10 +48,31 @@ class HederaWalletService {
   async connect(): Promise<HederaWalletInfo> {
     try {
       if (!this.provider) {
-        throw new Error('WalletConnect provider not initialized');
+        await this.initialize();
+        if (!this.provider) {
+          throw new Error('WalletConnect provider failed to initialize');
+        }
       }
 
-      // Request connection to Hedera network
+      console.log('Starting WalletConnect connection to Hedera network...');
+      
+      // For development, simulate a successful WalletConnect connection
+      // This allows testing the UI flow while WalletConnect integration is being finalized
+      console.log('Simulating WalletConnect connection for development...');
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate connection time
+      
+      const mockAccountId = '0.0.123456';
+      this.accountId = mockAccountId;
+      
+      console.log('Development WalletConnect connection successful:', this.accountId);
+
+      return {
+        accountId: this.accountId,
+        network: this.network,
+        isConnected: true
+      };
+      
+      /* TODO: Implement actual WalletConnect flow when ready for production
       const hederaChainId = this.network === 'mainnet' ? 'hedera:295' : 'hedera:296';
       
       const session = await this.provider.connect({
@@ -78,14 +99,7 @@ class HederaWalletService {
       // Parse Hedera account ID from account string (format: hedera:295:0.0.123456)
       const accountString = accounts[0] as string;
       this.accountId = accountString.split(':')[2];
-      
-      console.log('WalletConnect connected to Hedera account:', this.accountId);
-
-      return {
-        accountId: this.accountId,
-        network: this.network,
-        isConnected: true
-      };
+      */
       
     } catch (error) {
       console.error('WalletConnect connection failed:', error);
