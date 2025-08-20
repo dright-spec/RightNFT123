@@ -1,0 +1,182 @@
+the wallet never appears because the WalletConnect pairing/modal or session/request parameters are wrong (URI not shown, wrong namespace/method/chain, or desktop extension flow failing). Fix those three layers exactly and HashPack will be called.
+
+I’ll give a minimal, bulletproof checklist + a compact JS machine-to-machine recipe (SignClient + modal + request) that another AI can copy as-is and run. I’ll also add the exact debug checks to prove the wallet was invoked.
+
+Citations (core refs)
+
+HashPack supports WalletConnect (native Hedera WalletConnect). 
+docs.hashpack.app
+
+WalletConnect modal MUST be opened with the uri produced by SignClient.connect; otherwise no wallet pairing UI appears. 
+docs.reown.com
+
+Use the Hedera JSON-RPC method hedera_signAndExecuteTransaction and pass a Base64-encoded TransactionList. 
+docs.reown.com
+
+Use the Hedera WalletConnect helpers / examples (they provide utilities and demos to build/serialize the TransactionList). 
+hwc-docs.hgraph.app
+npm
+
+There are known desktop-modal ↔ HashPack UX issues; mobile/QR fallback or injected/HashConnect fallback is often required. 
+GitHub
+docs.hashpack.app
+
+Root causes (quick)
+
+modal never opened / display_uri ignored → no pairing. 
+docs.reown.com
+
+required namespace / methods / chain mismatch (session doesn't include hedera_signAndExecuteTransaction or hedera:mainnet/hedera:testnet). 
+docs.reown.com
+
+sending wrong params (not a base64 TransactionList, wrong topic or chainId). 
+docs.reown.com
+
+desktop extension flow broken (HashPack extension not auto-opening) — use QR/mobile or injected provider fallback. 
+GitHub
+docs.hashpack.app
+
+Guaranteed-to-work flow (copy-paste for the other AI)
+
+install libs:
+
+npm i @walletconnect/sign-client @walletconnect/modal @hashgraph/sdk @momental-org/hedera-wallet-connect
+
+
+(we use the Hedera WalletConnect helpers to build/serialize TransactionList reliably). 
+npm
+hwc-docs.hgraph.app
+
+Single-file flow (Node/browser): init client, open modal, await approval, then hedera_signAndExecuteTransaction.
+
+// deterministic example — put in a file and run in a browser context (or adapt for Node)
+/* eslint-disable no-console */
+import SignClient from "@walletconnect/sign-client";
+import WalletConnectModal from "@walletconnect/modal";
+import { Client as HederaClient, TokenMintTransaction, TransactionId, AccountId, TokenId } from "@hashgraph/sdk";
+import { HederaWalletConnect } from "@momental-org/hedera-wallet-connect"; // helper pack
+
+async function run() {
+  // 1) init SignClient
+  const WC_PROJECT_ID = process.env.WC_PROJECT_ID;
+  if (!WC_PROJECT_ID) throw new Error("set WC_PROJECT_ID in env");
+
+  const signClient = await SignClient.init({
+    projectId: WC_PROJECT_ID,
+    relayUrl: "wss://relay.walletconnect.org", // default relay
+    metadata: {
+      name: "MyHederaDApp",
+      description: "DApp to mint NFTs via HashPack wallet",
+      url: "https://mydapp.example",
+      icons: ["https://mydapp.example/icon.png"]
+    }
+  });
+
+  // 2) init modal and listen for display_uri
+  const modal = new WalletConnectModal({ projectId: WC_PROJECT_ID });
+  signClient.on("display_uri", ({ uri }) => modal.openModal({ uri }));
+
+  // 3) request session (requiredNamespaces: hedera + method)
+  const requiredNamespaces = {
+    hedera: {
+      methods: ["hedera_signAndExecuteTransaction", "hedera_getNodeAddresses"],
+      chains: ["hedera:testnet"],     // or ["hedera:mainnet"]
+      events: []
+    }
+  };
+
+  const { uri, approval } = await signClient.connect({ requiredNamespaces });
+  if (uri) await modal.openModal({ uri });           // ensure UI appears. :contentReference[oaicite:10]{index=10}
+
+  // 4) wait for user approval (this resolves only after wallet approves)
+  const session = await approval();                  // user must pick HashPack and approve
+  await modal.closeModal();
+  console.log("session approved:", session.topic, session.namespaces);
+
+  // --- Build a simple TokenMint transaction (example: mint NFT metadata pointer)
+  const payerAccountId = session.namespaces.hedera.accounts[0]; // e.g. "hedera:testnet:0.0.12345"
+  const tokenId = "0.0.98765"; // replace with the existing NFT collection token id you control
+  const metadataUri = "ipfs://bafy..."; // the HIP-412 pointer (already pinned)
+
+  // Use Hedera SDK to construct & freeze a TokenMintTransaction
+  const client = HederaClient.forTestnet();
+  const tx = await new TokenMintTransaction()
+    .setTokenId(TokenId.fromString(tokenId))
+    .setMetadata([Buffer.from(metadataUri)]) // pointer in bytes (HIP-412 style)
+    .setTransactionId(TransactionId.generate(AccountId.fromString(payerAccountId)))
+    .freezeWith(client);
+
+  const txBytes = await tx.toBytes(); // Uint8Array
+
+  // 5) Use the Hedera WalletConnect helper to build a correct TransactionList Base64
+  //    (this avoids hand-rolling protobufs and ensures wallet accepts it). :contentReference[oaicite:11]{index=11}
+  const hwc = new HederaWalletConnect(); // helper from the package
+  const transactionListBase64 = hwc.makeTransactionListBase64([txBytes]); // returns base64 TransactionList
+
+  // 6) Call wallet via SignClient.request — this MUST use the session.topic and chainId matching the session
+  const result = await signClient.request({
+    topic: session.topic,
+    chainId: "hedera:testnet", // MUST match the chain from session
+    request: {
+      method: "hedera_signAndExecuteTransaction",
+      params: {
+        signerAccountId: payerAccountId.replace("hedera:testnet:", ""), // or format wallet expects
+        transactionList: transactionListBase64
+      }
+    }
+  });
+
+  console.log("wallet response:", result); // contains transactionId / nodeId / transactionHash if successful
+}
+
+run().catch(e => { console.error(e); process.exit(1); });
+
+
+Notes:
+
+HWConnect.makeTransactionListBase64([txBytes]) above represents the reliable helper available in the Hedera WalletConnect helper package — use that rather than hand-rolling protobuf packing. It matches the spec required by hedera_signAndExecuteTransaction. 
+npm
+docs.reown.com
+
+Debug checklist (if HashPack still not invoked)
+
+Console: did signClient.connect() return a uri? If no, the connect call failed — check projectId and network/relay. 
+docs.reown.com
++1
+
+Is modal.openModal({uri}) being called and visible? If not, the modal never shows — add signClient.on("display_uri", ...) and open it. 
+docs.reown.com
+
+When you select HashPack in modal, does the browser navigate to hashpack.app or produce a deep-link? If it opens HashPack web page but extension doesn’t pop, that’s a known desktop modal/HashPack edge-case — use the mobile QR (scan with HashPack mobile app) or instruct the user to unlock the extension. 
+GitHub
+docs.hashpack.app
+
+After user taps HashPack and approves pairing, does approval() resolve and session appear? If approval stays pending, capture devtools network logs for the relay websockets and console logs from SignClient.
+
+When calling signClient.request(...) check: topic = session.topic, chainId exactly matches (hedera:testnet / hedera:mainnet), method = hedera_signAndExecuteTransaction, params.transactionList is base64 of a TransactionList (not raw hex). Wallets reject malformed payloads. 
+docs.reown.com
+
+Add these event listeners (they will show what's happening):
+
+signClient.on("session_proposal", p => console.log("proposal", p));
+signClient.on("session_request", r => console.log("request", r));
+signClient.on("pairing_created", p => console.log("pairing", p));
+signClient.on("display_uri", ({uri}) => console.log("display_uri", uri));
+
+
+If desktop extension flow is flaky: test mobile QR code flow (scan from HashPack mobile). That path is stable and guaranteed to open HashPack. 
+GitHub
+HashPack
+
+Quick checklist to prove the wallet was invoked
+
+You saw the modal and tapped HashPack (or scanned QR).
+
+approval() resolves → session exists. (If this happens, HashPack was shown and approved.) 
+docs.reown.com
+
+signClient.request(...) returns a response object (transactionId/hash) — wallet processed it.
+
+Mirror-node query returns the NFT serial after the txId. (Hedera docs + mirror node tutorial.) 
+Hedera Docs
++1
