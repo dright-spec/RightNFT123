@@ -1050,11 +1050,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ]
         };
 
-        // Return transaction details for client-side minting with HashPack
+        // Return transaction details for HashPack minting
         const mintingData = {
           metadata,
           transactionParams: {
-            type: "createNonFungibleToken",
+            type: "TokenCreateTransaction", 
             name: right.title || `Right #${rightId}`,
             symbol: right.symbol || `DRIGHT${rightId}`,
             memo: `Dright NFT - ${right.title || 'Digital Rights'}`,

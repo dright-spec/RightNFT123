@@ -105,48 +105,53 @@ function RightCard({ right }: RightCardProps) {
           
           console.log('Sending transaction to HashPack:', hederaTransaction);
           
-          // Call HashPack using the WalletConnect provider directly
+          // Use HashPack's native Hedera transaction methods
           try {
-            // Get the connected wallet provider
-            const provider = (window as any).ethereum;
+            // Check if HashPack is available via extension
+            const hashPack = (window as any).hashpack || (window as any).HashPack;
             
-            if (!provider) {
-              throw new Error('No wallet provider found');
+            if (!hashPack) {
+              throw new Error('HashPack extension not found. Please install HashPack wallet.');
             }
             
-            console.log('Provider details:', {
-              isHashPack: provider.isHashPack,
-              name: provider.name,
-              connected: provider.connected
-            });
+            console.log('HashPack extension found:', hashPack);
             
-            // Create transaction request for HashPack
-            const transactionRequest = {
-              method: 'wallet_sendTransaction',
-              params: [{
-                from: account?.walletAddress,
-                to: account?.hederaAccountId, // Send to user's own account for token creation
-                value: '0xa968163f0a57b400000', // 10 HBAR in hex wei
-                data: JSON.stringify({
-                  type: 'TOKEN_CREATE',
-                  name: hederaTransaction.name,
-                  symbol: hederaTransaction.symbol,
-                  memo: hederaTransaction.metadata,
-                  tokenType: 'NON_FUNGIBLE_UNIQUE',
-                  supplyType: 'FINITE',
-                  maxSupply: 1,
-                  initialSupply: 0,
-                  treasuryAccountId: account?.hederaAccountId
-                })
-              }]
+            // Create Hedera Token Create transaction for HashPack
+            const hederaTransactionBytes = {
+              type: 'token-create',
+              accountId: account?.hederaAccountId,
+              network: 'mainnet',
+              transaction: {
+                type: 'TokenCreateTransaction',
+                tokenName: hederaTransaction.name,
+                tokenSymbol: hederaTransaction.symbol,
+                tokenMemo: hederaTransaction.metadata,
+                tokenType: 'NON_FUNGIBLE_UNIQUE',
+                supplyType: 'FINITE',
+                maxSupply: 1,
+                initialSupply: 0,
+                treasuryAccountId: account?.hederaAccountId,
+                adminKey: account?.hederaAccountId,
+                supplyKey: account?.hederaAccountId,
+                maxTransactionFee: 1000000000 // 10 HBAR
+              }
             };
             
-            console.log('Sending transaction request:', transactionRequest);
+            console.log('Sending Hedera transaction to HashPack:', hederaTransactionBytes);
             
-            // Request transaction approval from HashPack
-            const txHash = await provider.request(transactionRequest);
+            // Request HashPack to sign and execute the transaction
+            const txResponse = await hashPack.requestTransaction({
+              topic: 'token-create',
+              ...hederaTransactionBytes
+            });
             
-            console.log('Transaction hash received:', txHash);
+            console.log('HashPack transaction response:', txResponse);
+            
+            if (!txResponse.success) {
+              throw new Error('Transaction was rejected or failed in HashPack');
+            }
+            
+            const txHash = txResponse.response?.transactionId || txResponse.transactionId;
             
             // Record the successful transaction
             const completeResponse = await fetch(`/api/rights/${data.rightId}/mint-complete`, {
@@ -172,11 +177,39 @@ function RightCard({ right }: RightCardProps) {
           } catch (hashPackError) {
             console.error('HashPack execution error:', hashPackError);
             
-            toast({
-              title: "HashPack Transaction",
-              description: "Please approve the NFT creation transaction in HashPack (10 HBAR fee)",
-              variant: "default"
-            });
+            // Fallback: Try using WalletConnect modal for HashPack
+            try {
+              const { createModal } = await import('@reown/appkit');
+              const modal = createModal({
+                adapters: [],
+                networks: [],
+                projectId: 'dright',
+                metadata: {
+                  name: 'Dright',
+                  description: 'Digital Rights Marketplace',
+                  url: 'https://dright.com',
+                  icons: ['https://dright.com/favicon.ico']
+                }
+              });
+              
+              // Show modal to trigger HashPack interaction
+              modal.open();
+              
+              toast({
+                title: "HashPack Required",
+                description: "Please approve the NFT creation in HashPack wallet (10 HBAR fee)",
+                variant: "default"
+              });
+              
+            } catch (modalError) {
+              console.error('Modal fallback error:', modalError);
+              
+              toast({
+                title: "Manual HashPack Action Required",
+                description: "Please check HashPack wallet to approve the NFT transaction",
+                variant: "default"
+              });
+            }
           }
           
           return data;
