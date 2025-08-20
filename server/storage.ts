@@ -269,6 +269,7 @@ export class MemStorage implements IStorage {
 }
 
 import { db } from "./db";
+import { users, rights, transactions } from "@shared/schema";
 import { eq, desc, asc, like, and, or, isNull, isNotNull } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
@@ -445,6 +446,21 @@ export class DatabaseStorage implements IStorage {
       .values(insertTransaction)
       .returning();
     return transaction;
+  }
+
+  // Mock notification methods (for now)
+  async createNotification(notification: any): Promise<any> {
+    console.log('Notification created:', notification);
+    return { id: Date.now(), ...notification };
+  }
+
+  async getUserNotifications(userId: number): Promise<any[]> {
+    // Production: Return empty array - notifications will be created as users interact
+    return [];
+  }
+
+  async markNotificationAsRead(notificationId: number): Promise<void> {
+    console.log('Notification marked as read:', notificationId);
   }
 }
 

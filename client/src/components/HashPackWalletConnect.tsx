@@ -30,13 +30,19 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
       hederaAccountId?: string;
       walletType?: string;
     }) => {
-      return await apiRequest('/api/auth/wallet-connect', {
+      const response = await fetch('/api/auth/wallet-connect', {
         method: 'POST',
-        body: JSON.stringify(userData),
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(userData)
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: (data) => {
       console.log('User registered successfully:', data);
