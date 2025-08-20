@@ -25,6 +25,7 @@ import SecureMusicVerifier from "@/components/secure-music-verifier";
 import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube, Link2, Music, Film, Image, FileVideo, Zap, Star, Crown, AlertCircle, Clock } from "lucide-react";
 import { z } from "zod";
 import { getDefaultNFTImage } from "@/lib/image-utils";
+import { WalletButton } from "@/components/WalletButton";
 
 // Extended form schema for the create right page
 const createRightFormSchema = insertRightSchema.extend({

@@ -13,6 +13,14 @@ export default function Home() {
 
   const { data: featuredRights, isLoading } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/rights?limit=6&isListed=true"],
+    queryFn: async () => {
+      const response = await fetch("/api/rights?limit=6&isListed=true");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      return result.data || [];
+    },
   });
 
   const scrollToMarketplace = () => {
