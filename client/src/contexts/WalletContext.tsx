@@ -135,8 +135,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         });
         console.log('User registered/logged in successfully:', data.data.user.username);
         
-        // Force refresh session query to update UI state immediately
-        await queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
+              // Force refresh session query to update UI state immediately
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       } else {
         console.error('Wallet connection failed:', data.message);
       }

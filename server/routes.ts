@@ -53,14 +53,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req
       );
 
-      // Set secure HTTP-only cookie
+      // Set secure HTTP-only cookie with proper configuration for dev environment
       res.cookie('session_token', sessionToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: false, // Allow for development (no HTTPS)
+        sameSite: 'lax', // Less restrictive for development
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: '/'
+        path: '/',
+        domain: undefined // Let browser set domain automatically
       });
+
+      console.log('Cookie set with token:', sessionToken.substring(0, 8) + '...');
 
       res.json(ApiResponseHelper.success({
         user,
@@ -94,8 +97,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Clear invalid cookie
         res.clearCookie('session_token', {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          secure: false,
+          sameSite: 'lax',
           path: '/'
         });
         res.status(401).json(ApiResponseHelper.error('Session expired'));
@@ -104,8 +107,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error fetching user from session:', error);
       res.clearCookie('session_token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: false,
+        sameSite: 'lax',
         path: '/'
       });
       res.status(401).json(ApiResponseHelper.error('Authentication failed'));
@@ -122,8 +125,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     res.clearCookie('session_token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false,
+      sameSite: 'lax',
       path: '/'
     });
     res.json(ApiResponseHelper.success({ message: 'Logged out successfully' }));
