@@ -92,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(rights.createdAt));
 
       // Get user's owned rights (includes all created rights regardless of minting status)
-      const ownedRights = createdRights;
+      const ownedRights = [...createdRights];
       
       res.json(ApiResponseHelper.success({
         user,

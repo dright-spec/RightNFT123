@@ -492,11 +492,10 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Rights grid will be populated when API returns data */}
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Owned rights grid coming soon...
-                    </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {ownedRights.map((right: any) => (
+                      <RightCard key={right.id} right={right} />
+                    ))}
                   </div>
                 )}
               </CardContent>
