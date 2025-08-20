@@ -146,13 +146,20 @@ function RightCard({ right }: RightCardProps) {
           {right.description}
         </p>
         
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-semibold">
-            {parseFloat(right.price).toFixed(2)} {right.currency}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold">
+              {parseFloat(right.price).toFixed(2)} {right.currency}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {new Date(right.createdAt).toLocaleDateString()}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            {new Date(right.createdAt).toLocaleDateString()}
-          </div>
+          {right.hederaTokenId && (
+            <div className="text-xs text-muted-foreground font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+              Token: {right.hederaTokenId}/{right.hederaSerialNumber || 1}
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2">
@@ -176,13 +183,25 @@ function RightCard({ right }: RightCardProps) {
             </Button>
           )}
           {right.mintingStatus === "completed" && (
-            <Button 
-              onClick={() => setLocation(`/rights/${right.id}`)}
-              className="flex-1"
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View NFT
-            </Button>
+            <div className="flex gap-2 flex-1">
+              <Button 
+                onClick={() => setLocation(`/rights/${right.id}`)}
+                className="flex-1"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View NFT
+              </Button>
+              {right.hederaTokenId && (
+                <Button 
+                  variant="outline"
+                  onClick={() => window.open(`https://hashscan.io/mainnet/token/${right.hederaTokenId}/${right.hederaSerialNumber || 1}`, '_blank')}
+                  className="flex-1"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Hedera Explorer
+                </Button>
+              )}
+            </div>
           )}
           {right.verificationStatus === "pending" && (
             <Button variant="outline" className="flex-1" disabled>
