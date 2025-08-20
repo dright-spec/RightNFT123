@@ -21,6 +21,11 @@ export function AdminCredentialsBanner() {
 
   const { data: credentials } = useQuery<TestCredentials>({
     queryKey: ["/api/admin/test-credentials"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/test-credentials");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return response.json();
+    },
     retry: false,
   });
 

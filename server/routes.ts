@@ -911,7 +911,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         options.userId = parseInt(req.query.creatorId as string);
       }
       
-      const rights = await storage.getRights(options);
+      const rights = await storage.getRights(
+        options.limit,
+        options.offset,
+        options.type,
+        undefined // isListed parameter
+      );
       res.json(rights);
     } catch (error) {
       console.error("Error fetching rights:", error);
@@ -1639,8 +1644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get('/api/admin/stats', async (req, res) => {
     try {
-      // Use the existing storage to get stats
-      const allRights = await storage.getRights({ limit: 1000 });
+      // Direct database query to avoid parameter issues
+      const allRights = await db.select().from(rights);
       const pendingRights = allRights.filter(r => r.verificationStatus === 'pending');
       
       const stats = {
@@ -1648,11 +1653,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalRights: allRights.length,
         pendingVerifications: pendingRights.length,
         bannedUsers: 0,
-        totalRevenue: "15.7 ETH",
+        totalRevenue: "15.7 HBAR",
         monthlyGrowth: 24.5
       };
 
-      res.json(stats);
+      res.json({ data: stats });
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch admin stats" });
@@ -1663,19 +1668,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status, search } = req.query;
       
-      const options: any = { limit: 100 };
-      if (search) {
-        options.search = search as string;
-      }
+      // Direct database query with creator info
+      let query = db.select().from(rights)
+        .leftJoin(users, eq(rights.creatorId, users.id))
+        .limit(100)
+        .orderBy(desc(rights.createdAt));
       
-      let rightsData = await storage.getRights(options);
+      const result = await query;
       
+      let rightsData = result.map(row => ({
+        ...row.rights,
+        creator: row.users!,
+      }));
+
       // Filter by verification status if specified
       if (status && status !== 'all') {
         rightsData = rightsData.filter(right => right.verificationStatus === status);
       }
 
-      res.json(rightsData);
+      res.json({ data: rightsData });
     } catch (error) {
       console.error("Error fetching rights for admin:", error);
       res.status(500).json({ error: "Failed to fetch rights" });
@@ -2325,32 +2336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/rights", async (req, res) => {
-    try {
-      const status = req.query.status as string;
-      const search = req.query.search as string;
-      
-      const options = {
-        limit: 50,
-        offset: 0,
-        search,
-        sortBy: "createdAt",
-        sortOrder: "desc" as const
-      };
-
-      let rights = await storage.getRights(options);
-      
-      // Filter by status if specified
-      if (status && status !== "all") {
-        rights = rights.filter(right => right.verificationStatus === status);
-      }
-
-      res.json(rights);
-    } catch (error) {
-      console.error("Error fetching admin rights:", error);
-      res.status(500).json({ error: "Failed to fetch rights for admin" });
-    }
-  });
+  // Removed duplicate admin rights route - using the one above with direct database queries
 
   app.get("/api/admin/users", async (req, res) => {
     try {
