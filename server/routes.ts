@@ -1009,9 +1009,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting" });
       }
 
-      // Allow re-minting if no actual blockchain transaction exists
-      // (tokenId might be set from simulation but no real transaction)
-      if (right.tokenId && right.transactionHash && right.transactionHash.length > 10) {
+      // Allow re-minting if no actual Hedera blockchain transaction exists
+      // Real Hedera transaction hashes are longer and have different format than simulated ones
+      const hasRealTransaction = right.transactionHash && 
+                                right.transactionHash.length > 20 && 
+                                !right.transactionHash.startsWith('0x') && 
+                                right.transactionHash.includes('@');
+      
+      if (hasRealTransaction) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 

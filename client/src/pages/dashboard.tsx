@@ -192,7 +192,7 @@ function RightCard({ right }: RightCardProps) {
         </Badge>
       );
     }
-    if (right.verificationStatus === "verified" && (right.mintingStatus === "not_started" || !right.mintingStatus) && !right.tokenId) {
+    if (canMint) {
       return (
         <Badge className="bg-green-500 hover:bg-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
@@ -208,7 +208,7 @@ function RightCard({ right }: RightCardProps) {
         </Badge>
       );
     }
-    if (right.mintingStatus === "completed" || right.tokenId) {
+    if (hasRealTransaction) {
       return (
         <Badge className="bg-purple-500 hover:bg-purple-600">
           <Coins className="h-3 w-3 mr-1" />
@@ -227,9 +227,15 @@ function RightCard({ right }: RightCardProps) {
     return null;
   };
 
+  // Check if this is a real Hedera transaction (proper length and format)
+  const hasRealTransaction = right.transactionHash && 
+                            right.transactionHash.length > 20 && 
+                            !right.transactionHash.startsWith('0x') && // Hedera uses different format
+                            right.transactionHash.includes('@');
+
   const canMint = right.verificationStatus === "verified" && 
-                  (right.mintingStatus === "not_started" || !right.mintingStatus) && 
-                  (!right.tokenId || !right.transactionHash || right.transactionHash.length <= 10);
+                  (right.mintingStatus === "not_started" || right.mintingStatus === "completed") && 
+                  !hasRealTransaction;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -289,7 +295,7 @@ function RightCard({ right }: RightCardProps) {
               )}
             </Button>
           )}
-          {right.mintingStatus === "completed" && (
+          {hasRealTransaction && (
             <div className="flex gap-2 flex-1">
               <Button 
                 onClick={() => setLocation(`/rights/${right.id}`)}
