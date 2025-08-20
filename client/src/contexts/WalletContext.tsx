@@ -23,6 +23,12 @@ interface WalletContextType {
   // Account info
   balance: string | undefined
   isBalanceLoading: boolean
+  account?: {
+    id: number;
+    username: string;
+    walletAddress: string;
+    hederaAccountId?: string;
+  }
   
   // Network info
   isHedera: boolean

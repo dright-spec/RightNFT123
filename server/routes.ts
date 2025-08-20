@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { marketplaceStorage as storage } from "./marketplaceStorage";
+import { storage } from "./storage";
 import { AdminOperations } from "./admin-operations";
 import { PerformanceMonitor } from "./performance-monitor";
 import { db } from "./db";
@@ -25,6 +25,85 @@ import { requireAuth, optionalAuth, requireAdmin, rateLimit, validateBody } from
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply rate limiting to all routes
   app.use('/api/', rateLimit(200, 60000)); // 200 requests per minute
+
+  // ============ WALLET AUTHENTICATION ROUTES ============
+  
+  // Wallet connection and user registration/login
+  app.post('/api/auth/wallet-connect', asyncHandler(async (req: any, res: any) => {
+    const { walletAddress, hederaAccountId, walletType, sessionTopic } = req.body;
+    
+    if (!walletAddress) {
+      return res.status(400).json(ApiResponseHelper.error('Wallet address is required'));
+    }
+
+    try {
+      const user = await storage.upsertUser({
+        walletAddress,
+        hederaAccountId,
+        walletType: walletType || 'hashpack'
+      });
+
+      res.json(ApiResponseHelper.success({
+        user,
+        message: 'Wallet connected successfully'
+      }));
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to connect wallet'));
+    }
+  }));
+
+  // Get user by wallet address (for checking if user exists)
+  app.get('/api/auth/user/:walletAddress', asyncHandler(async (req: any, res: any) => {
+    const { walletAddress } = req.params;
+    
+    try {
+      const user = await storage.getUserByWalletAddress(walletAddress);
+      
+      if (user) {
+        res.json(ApiResponseHelper.success({ user }));
+      } else {
+        res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to fetch user'));
+    }
+  }));
+
+  // Get user dashboard data
+  app.get('/api/users/:userId/dashboard', asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+
+      const userRights = await storage.getRightsByCreator(userId);
+      const ownedRights = await storage.getRightsByOwner(userId);
+      
+      res.json(ApiResponseHelper.success({
+        user,
+        createdRights: userRights,
+        ownedRights: ownedRights,
+        stats: {
+          totalCreated: userRights.length,
+          totalOwned: ownedRights.length,
+          totalEarnings: user.totalEarnings || '0',
+          totalSales: user.totalSales || 0
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to fetch dashboard data'));
+    }
+  }));
   
 
   // YouTube verification endpoint - must be before other routes

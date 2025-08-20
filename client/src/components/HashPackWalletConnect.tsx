@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Wallet, LogOut, Copy, MessageSquare, AlertCircle } from "lucide-react";
 import { connectHashPack, signMessage, disconnect, WCSession, getHederaAccountId, isHashPackWallet } from "@/lib/wc-hedera";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 interface HashPackWalletConnectProps {
   onConnect?: (session: WCSession, accountId: string) => void;
@@ -18,6 +21,44 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  // User registration mutation
+  const registerUserMutation = useMutation({
+    mutationFn: async (userData: {
+      walletAddress: string;
+      hederaAccountId?: string;
+      walletType?: string;
+    }) => {
+      return await apiRequest('/api/auth/wallet-connect', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    },
+    onSuccess: (data) => {
+      console.log('User registered successfully:', data);
+      toast({
+        title: "Welcome to Dright!",
+        description: "Your account has been created. Redirecting to your dashboard...",
+      });
+      
+      // Redirect to dashboard after successful registration
+      setTimeout(() => {
+        setLocation('/dashboard');
+      }, 1500);
+    },
+    onError: (error) => {
+      console.error('User registration failed:', error);
+      toast({
+        title: "Registration Error",
+        description: "Failed to create your account. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -38,6 +79,14 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
       toast({
         title: "HashPack Connected!",
         description: `Connected with account ${hederaAccount.split(':')[2]}`,
+      });
+
+      // Register user in database
+      const hederaAccountId = hederaAccount.split(':')[2]; // Extract account ID from hedera:mainnet:0.0.123456
+      registerUserMutation.mutate({
+        walletAddress: hederaAccount, // Full address with namespace
+        hederaAccountId: hederaAccountId, // Just the account ID (0.0.123456)
+        walletType: 'hashpack'
       });
 
       onConnect?.(session, hederaAccount);

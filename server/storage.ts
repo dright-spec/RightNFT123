@@ -6,6 +6,12 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByWalletAddress(walletAddress: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  upsertUser(userData: {
+    walletAddress: string;
+    hederaAccountId?: string;
+    walletType?: string;
+    username?: string;
+  }): Promise<User>;
   
   // Right methods
   getRight(id: number): Promise<Right | undefined>;
@@ -291,6 +297,48 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async upsertUser(userData: {
+    walletAddress: string;
+    hederaAccountId?: string;
+    walletType?: string;
+    username?: string;
+  }): Promise<User> {
+    // Check if user exists by wallet address or Hedera account ID
+    let existingUser = await this.getUserByWalletAddress(userData.walletAddress);
+    
+    if (!existingUser && userData.hederaAccountId) {
+      const [user] = await db.select().from(users).where(eq(users.hederaAccountId, userData.hederaAccountId));
+      existingUser = user || undefined;
+    }
+
+    if (existingUser) {
+      // Update existing user's login timestamp
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          walletAddress: userData.walletAddress,
+          hederaAccountId: userData.hederaAccountId,
+          walletType: userData.walletType || 'hashpack',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, existingUser.id))
+        .returning();
+      return updatedUser;
+    } else {
+      // Create new user
+      const newUser = await this.createUser({
+        walletAddress: userData.walletAddress,
+        hederaAccountId: userData.hederaAccountId,
+        walletType: userData.walletType || 'hashpack',
+        networkType: 'hedera',
+        username: userData.username || `hedera_${userData.hederaAccountId?.replace(/\./g, '_') || Date.now()}`,
+        password: 'wallet_auth', // Placeholder for wallet-authenticated users
+        displayName: `Hedera User ${userData.hederaAccountId || ''}`,
+      });
+      return newUser;
+    }
   }
 
   async getRight(id: number): Promise<Right | undefined> {
