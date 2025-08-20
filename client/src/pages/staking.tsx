@@ -1,3 +1,4 @@
+import { useWallet } from "@/contexts/WalletContext";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { useWalletUser } from "@/hooks/use-wallet-user";
 import { Link } from "wouter";
-import { WalletButton } from "@/components/wallet-button";
+import { WalletButton } from "@/components/WalletButton";
 import { Coins, TrendingUp, Clock, DollarSign, Users, Target, ChevronRight } from "lucide-react";
 import type { Right, StakeWithDetails } from "@shared/schema";
 
@@ -24,7 +24,9 @@ interface StakeFormData {
 }
 
 export default function StakingPage() {
-  const { user, isLoading: userLoading } = useWalletUser();
+  const { isConnected, address } = useWallet();
+  const user = { address }; // Simple user mock for compatibility
+  const userLoading = false;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedTab, setSelectedTab] = useState("overview");

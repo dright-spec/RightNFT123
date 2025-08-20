@@ -1,9 +1,9 @@
+import { WalletButton } from "@/components/WalletButton";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Web3ModalConnectButton } from "@/components/web3modal-connect-button";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
 // Removed unused WalletDebug import
 import { Plus, Search, FileText, DollarSign, Shield, Check, X, Music, TrendingUp, Zap, Users, Globe, ArrowRight, Sparkles, Star, Upload, Coins, Target, Percent } from "lucide-react";
@@ -12,7 +12,7 @@ import type { RightWithCreator } from "@shared/schema";
 export default function Home() {
 
   const { data: featuredRights, isLoading } = useQuery<RightWithCreator[]>({
-    queryKey: ["/api/rights", { limit: 6, isListed: true }],
+    queryKey: ["/api/rights?limit=6&isListed=true"],
   });
 
   const scrollToMarketplace = () => {
@@ -51,7 +51,7 @@ export default function Home() {
               </Link>
             </nav>
 
-            <Web3ModalConnectButton />
+            <WalletButton />
           </div>
         </div>
       </header>

@@ -1,3 +1,4 @@
+import { useWallet } from "@/contexts/WalletContext";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
@@ -11,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useWalletUser } from "@/hooks/use-wallet-user";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -27,7 +27,6 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function ProfileSetup() {
   const [, setLocation] = useLocation();
-  const { user, walletAddress, isLoading } = useWalletUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);

@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import { useState } from "react";
 import { presets, staggerDelays, specialEffects, animationClasses } from "@/lib/animations";
 import { rightTypeSymbols } from "@shared/schema";
-import { WalletPaymentModal } from "./wallet-payment-modal";
+import { WalletPaymentModal } from "./WalletPaymentModal";
 import type { RightWithCreator } from "@shared/schema";
 
 interface AnimatedRightCardProps {

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { WalletButton } from "@/components/wallet-button";
+import { WalletButton } from "@/components/WalletButton";
 import { useToast } from "@/hooks/use-toast";
 // Removed unused Hedera component imports
 import { 

@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedRightGrid } from "@/components/animated-right-card";
-import { HederaWalletButton } from "@/components/hedera-wallet-button";
+import { WalletButton } from "@/components/WalletButton";
 import { ActivityFeed } from "@/components/activity-feed";
 // Removed onboarding-related imports
 import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";

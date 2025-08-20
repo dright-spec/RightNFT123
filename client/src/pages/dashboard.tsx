@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateRightModal } from "@/components/create-right-modal";
-import { WalletButton } from "@/components/wallet-button";
+import { WalletButton } from "@/components/WalletButton";
 import { useUploadErrorHandler } from "@/hooks/use-emoji-error-handler";
 import { EmojiErrorDisplay } from "@/components/emoji-error-display";
 import { 
