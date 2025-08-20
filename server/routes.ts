@@ -1013,24 +1013,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
-      // Start real Hedera minting process - user initiated
-      console.log(`User initiated NFT minting for right ${rightId}: ${right.title}`);
+      // Start Hedera NFT minting process - return transaction data for client-side signing
+      console.log(`Preparing NFT minting for right ${rightId}: ${right.title}`);
       
       try {
-        const mintingResult = await triggerUserControlledNFTMinting(right);
+        // Mark as minting started
+        await storage.updateRight(rightId, { mintingStatus: "minting" });
+        
+        // Create metadata for HIP-412 standard
+        const metadata = {
+          name: right.title,
+          description: right.description,
+          image: right.imageUrl || "",
+          type: right.type,
+          creator: `User ${right.creatorId}`,
+          attributes: [
+            { trait_type: "Right Type", value: right.type },
+            { trait_type: "Verification Status", value: right.verificationStatus },
+            { trait_type: "Platform", value: "Dright" },
+            { trait_type: "Created", value: right.createdAt }
+          ]
+        };
+
+        // Return transaction details for client-side minting with HashPack
+        const mintingData = {
+          metadata,
+          transactionParams: {
+            type: "createNonFungibleToken",
+            name: right.title,
+            symbol: right.symbol || `DRIGHT${rightId}`,
+            memo: `Dright NFT - ${right.title}`,
+            initialSupply: 1,
+            decimals: 0,
+            treasuryAccountId: "0.0.9266917", // Platform treasury account
+            adminKeys: ["0.0.9266917"],
+            metadata: JSON.stringify(metadata)
+          }
+        };
         
         res.json({
           success: true,
-          message: "NFT minting completed successfully",
-          minting: mintingResult
+          message: "Ready for NFT minting - please confirm transaction in HashPack",
+          data: mintingData,
+          rightId: rightId
         });
       } catch (mintingError) {
-        console.error(`Minting failed for right ${rightId}:`, mintingError);
+        console.error(`Minting preparation failed for right ${rightId}:`, mintingError);
         
         // Update minting status to failed
         await storage.updateRight(rightId, { mintingStatus: "failed" });
         
-        throw mintingError;
+        res.status(500).json({
+          success: false,
+          error: "Failed to prepare NFT minting",
+          details: mintingError.message
+        });
       }
 
     } catch (error) {
