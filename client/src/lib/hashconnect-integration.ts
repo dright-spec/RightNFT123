@@ -1,6 +1,5 @@
-// HashConnect integration for proper HashPack wallet interaction
+// Simplified HashConnect integration for HashPack wallet interaction
 import { HashConnect } from 'hashconnect';
-import { AccountId, TokenCreateTransaction, TokenType, TokenSupplyType, Hbar } from '@hashgraph/sdk';
 
 export interface HashConnectMintResult {
   tokenId: string;
@@ -11,7 +10,7 @@ export interface HashConnectMintResult {
 export class HashConnectService {
   private hashconnect: HashConnect;
   private topic: string = '';
-  private pairingKey: string = '';
+  private accountId: string = '';
 
   constructor() {
     this.hashconnect = new HashConnect();
@@ -26,26 +25,41 @@ export class HashConnectService {
       url: "https://dright.com"
     };
 
-    // Initialize with mainnet
-    await this.hashconnect.init(appMetadata, "mainnet");
+    // Set up event listeners first
+    this.hashconnect.foundExtensionEvent.on((data) => {
+      console.log('HashPack extension found:', data);
+    });
+
+    this.hashconnect.pairingEvent.on((data) => {
+      console.log('HashPack paired:', data);
+      if (data.accountIds && data.accountIds.length > 0) {
+        this.accountId = data.accountIds[0];
+      }
+    });
+
+    // Initialize
+    await this.hashconnect.init(appMetadata, "mainnet", false);
     
-    // Generate pairing key
-    this.pairingKey = this.hashconnect.generatePairingKey();
-    
-    // Connect to extension if available
     this.topic = await this.hashconnect.connect();
     
-    console.log('HashConnect initialized:', {
-      topic: this.topic,
-      pairingKey: this.pairingKey
-    });
+    console.log('HashConnect initialized with topic:', this.topic);
   }
 
-  async waitForPairing(): Promise<void> {
-    return new Promise((resolve) => {
+  async waitForPairing(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Pairing timeout - please ensure HashPack is installed and try again'));
+      }, 30000); // 30 second timeout
+
       this.hashconnect.pairingEvent.once((pairingData) => {
-        console.log('HashPack paired:', pairingData);
-        resolve();
+        clearTimeout(timeout);
+        console.log('HashPack paired successfully:', pairingData);
+        if (pairingData.accountIds && pairingData.accountIds.length > 0) {
+          this.accountId = pairingData.accountIds[0];
+          resolve(this.accountId);
+        } else {
+          reject(new Error('No account IDs received from HashPack'));
+        }
       });
     });
   }
@@ -57,51 +71,54 @@ export class HashConnectService {
     treasuryAccountId: string;
   }): Promise<HashConnectMintResult> {
     try {
-      // Create the token creation transaction
-      const transaction = new TokenCreateTransaction()
-        .setTokenName(params.name)
-        .setTokenSymbol(params.symbol)
-        .setTokenType(TokenType.NonFungibleUnique)
-        .setSupplyType(TokenSupplyType.Finite)
-        .setInitialSupply(0)
-        .setMaxSupply(1)
-        .setTreasuryAccountId(AccountId.fromString(params.treasuryAccountId))
-        .setTokenMemo(params.metadata)
-        .setMaxTransactionFee(new Hbar(10))
-        .freezeWith(this.hashconnect.getProvider().getClient());
+      if (!this.accountId) {
+        throw new Error('No connected account. Please pair with HashPack first.');
+      }
 
-      // Get transaction bytes for signing
-      const transactionBytes = transaction.toBytes();
+      console.log('Creating NFT token via HashConnect:', params);
 
-      console.log('Sending transaction to HashPack via HashConnect...');
+      // Create transaction object that HashConnect expects
+      const transaction = {
+        topic: this.topic,
+        byteArray: null, // Will be populated by HashConnect
+        metadata: {
+          accountToSign: this.accountId,
+          returnTransaction: false,
+          hideNft: false
+        },
+        // Hedera transaction data
+        transactionType: 'TokenCreateTransaction',
+        tokenName: params.name,
+        tokenSymbol: params.symbol,
+        tokenType: 'NON_FUNGIBLE_UNIQUE',
+        supplyType: 'FINITE',
+        initialSupply: 0,
+        maxSupply: 1,
+        treasuryAccountId: this.accountId,
+        tokenMemo: params.metadata,
+        maxTransactionFee: 1000000000 // 10 HBAR in tinybars
+      };
 
-      // Request transaction signing from HashPack
-      const response = await this.hashconnect.sendTransaction(
-        this.topic,
-        {
-          topic: this.topic,
-          byteArray: transactionBytes,
-          metadata: {
-            accountToSign: params.treasuryAccountId,
-            returnTransaction: false,
-            hideNft: false
-          }
-        }
-      );
+      console.log('Sending transaction to HashPack:', transaction);
+
+      // Send transaction to HashPack
+      const response = await this.hashconnect.sendTransaction(this.topic, transaction);
 
       console.log('HashConnect transaction response:', response);
 
-      if (response.success && response.receipt) {
-        const tokenId = response.receipt.tokenId?.toString() || '';
-        const transactionId = response.response?.transactionId || '';
+      // Check if transaction was successful
+      if (response && typeof response === 'object') {
+        // Extract transaction ID and token ID from response
+        const transactionId = response.transactionId || response.response?.transactionId || 'pending';
+        const tokenId = response.tokenId || response.receipt?.tokenId || 'pending';
         
         return {
-          tokenId,
-          transactionId,
+          tokenId: tokenId.toString(),
+          transactionId: transactionId.toString(),
           success: true
         };
       } else {
-        throw new Error('Transaction failed or was rejected');
+        throw new Error('Invalid response from HashPack');
       }
 
     } catch (error) {
@@ -110,17 +127,15 @@ export class HashConnectService {
     }
   }
 
-  getPairingString(): string {
-    return this.hashconnect.generatePairingString(this.topic, "mainnet", false);
-  }
-
   isConnected(): boolean {
-    return this.hashconnect.hcData.pairingData.length > 0;
+    return this.accountId !== '';
   }
 
-  getConnectedAccountIds(): string[] {
-    return this.hashconnect.hcData.pairingData
-      .map(pairing => pairing.accountIds)
-      .flat();
+  getConnectedAccountId(): string {
+    return this.accountId;
+  }
+
+  getTopic(): string {
+    return this.topic;
   }
 }

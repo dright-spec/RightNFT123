@@ -125,7 +125,8 @@ function RightCard({ right }: RightCardProps) {
                 description: "Please approve the connection in HashPack wallet",
               });
               
-              await hashConnectService.waitForPairing();
+              const connectedAccount = await hashConnectService.waitForPairing();
+              console.log('Connected to HashPack account:', connectedAccount);
             }
             
             // Now create the NFT token
