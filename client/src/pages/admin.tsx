@@ -55,18 +55,40 @@ export default function Admin() {
   // All hooks called before any conditional returns
   const { data: stats, isLoading: loadingStats, error: statsError } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/stats");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      return result.data;
+    },
     retry: 3,
     enabled: isAuthenticated,
   });
 
   const { data: pendingRights, isLoading: loadingRights, error: rightsError } = useQuery<RightWithCreator[]>({
     queryKey: ["/api/admin/rights", { status: statusFilter, search: searchTerm }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
+      if (searchTerm) params.append("search", searchTerm);
+      
+      const response = await fetch(`/api/admin/rights?${params.toString()}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      return result.data || [];
+    },
     retry: 3,
     enabled: isAuthenticated,
   });
 
   const { data: users, isLoading: loadingUsers, error: usersError } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/users");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const result = await response.json();
+      return result.data || [];
+    },
     retry: 3,
     enabled: isAuthenticated,
   });
