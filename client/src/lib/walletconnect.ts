@@ -49,7 +49,6 @@ const chains = [hederaMainnet, hederaTestnet, mainnet, arbitrum, polygon, sepoli
 
 // 3. Set up Wagmi adapter
 const wagmiAdapter = new WagmiAdapter({
-  storage: typeof window !== 'undefined' ? localStorage : null,
   ssr: false,
   projectId,
   networks: [...chains] as any
@@ -64,23 +63,8 @@ export const appkit = createAppKit({
   networks: [...chains] as any,
   defaultNetwork: hederaMainnet,
   metadata,
-  featuredWalletIds: [
-    // HashPack - Primary Hedera wallet (most important for Hedera users)
-    'f2436c67184f158d1beda5df53298ee84abfc367581e4505134b5bcf5f46467d',
-    // Blade Wallet - Popular Hedera wallet
-    '971e689d0a5be527bac79629b4ee9b925e82208e5168b733496a09c0faed0709',
-    // MetaMask - For Ethereum compatibility  
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96'
-  ],
-  includeWalletIds: [
-    // Hedera wallets first
-    'f2436c67184f158d1beda5df53298ee84abfc367581e4505134b5bcf5f46467d', // HashPack
-    '971e689d0a5be527bac79629b4ee9b925e82208e5168b733496a09c0faed0709', // Blade Wallet
-    // Ethereum wallets for compatibility
-    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96', // MetaMask
-    'fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa', // Coinbase Wallet
-    '4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0'  // Trust Wallet
-  ],
+  // Remove specific wallet filtering to show all available wallets
+  // HashPack will appear through WalletConnect QR code option
   features: {
     analytics: true,
     onramp: false,
@@ -91,7 +75,12 @@ export const appkit = createAppKit({
   themeVariables: {
     '--w3m-color-mix': '#00D4AA',
     '--w3m-color-mix-strength': 20,
-  }
+  },
+  // Enable all connection methods for maximum compatibility
+  enableWalletConnect: true,
+  enableInjected: true,
+  enableEIP6963: true,
+  enableCoinbase: true
 })
 
 export { projectId }

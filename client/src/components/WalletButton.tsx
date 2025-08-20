@@ -78,7 +78,7 @@ export function WalletButton() {
           Connect Wallet
         </Button>
         <p className="text-xs text-muted-foreground text-center">
-          Optimized for HashPack & Hedera wallets
+          Scan QR with HashPack mobile or connect MetaMask
         </p>
       </div>
     )
