@@ -105,67 +105,78 @@ function RightCard({ right }: RightCardProps) {
           
           console.log('Sending transaction to HashPack:', hederaTransaction);
           
-          // Use proper HashConnect SDK for HashPack integration
+          // Use proper Hedera WalletConnect RPC for NFT minting
           try {
-            const { HashConnectService } = await import('@/lib/hashconnect-integration');
-            const hashConnectService = new HashConnectService();
+            const { HederaNFTMinter } = await import('@/lib/hashconnect-integration');
             
-            // Initialize HashConnect
-            toast({
-              title: "Connecting to HashPack",
-              description: "Initializing secure connection...",
-            });
-            
-            await hashConnectService.initHashConnect();
-            
-            // Check if already connected, if not wait for pairing
-            if (!hashConnectService.isConnected()) {
-              toast({
-                title: "HashPack Pairing Required",
-                description: "Please approve the connection in HashPack wallet",
-              });
-              
-              const connectedAccount = await hashConnectService.waitForPairing();
-              console.log('Connected to HashPack account:', connectedAccount);
+            // Get WalletConnect provider from window (set up during wallet connection)
+            const provider = (window as any).walletConnectProvider;
+            if (!provider) {
+              throw new Error('WalletConnect provider not found. Please reconnect wallet.');
             }
             
-            // Now create the NFT token
             toast({
-              title: "Creating NFT Token",
-              description: "Please approve the transaction in HashPack (10 HBAR fee)",
+              title: "Preparing NFT Metadata",
+              description: "Creating HIP-412 compliant metadata...",
             });
             
-            console.log('Creating NFT with HashConnect:', {
+            // 1. Create HIP-412 metadata
+            const metadataUri = await HederaNFTMinter.createHIP412Metadata({
               name: hederaTransaction.name,
-              symbol: hederaTransaction.symbol,
-              metadata: hederaTransaction.metadata,
-              treasuryAccountId: account?.hederaAccountId
+              description: `${right.description} - Minted on Dright marketplace`,
+              creator: account?.displayName || 'Dright User',
+              rightType: right.type,
+              imageUrl: right.imageUrl || '',
+              attributes: [
+                { trait_type: "Right Type", value: right.type },
+                { trait_type: "Verification Status", value: "verified" },
+                { trait_type: "Platform", value: "Dright" },
+                { trait_type: "Created", value: new Date().toISOString() }
+              ]
             });
             
-            const result = await hashConnectService.createNFTToken({
-              name: hederaTransaction.name,
-              symbol: hederaTransaction.symbol,
-              metadata: hederaTransaction.metadata,
-              treasuryAccountId: account?.hederaAccountId || '0.0.2'
+            console.log('HIP-412 metadata URI:', metadataUri);
+            
+            // 2. Initialize Hedera NFT Minter
+            const minter = new HederaNFTMinter(
+              provider,
+              provider.session?.topic || '',
+              'hedera:mainnet',
+              account?.hederaAccountId || '0.0.9266917'
+            );
+            
+            toast({
+              title: "Minting NFT",
+              description: "Please approve the transaction in HashPack...",
             });
             
-            console.log('HashConnect NFT creation result:', result);
+            // 3. Mint NFT to existing token (you need to have created the token collection first)
+            // For now, we'll use a placeholder token ID - in production you'd create the token first
+            const tokenId = data.data.transactionParams.tokenId || '0.0.123456'; // Use from server response
+            
+            const result = await minter.mintNFT({
+              tokenId: tokenId,
+              metadataUri: metadataUri
+            });
+            
+            console.log('Hedera NFT minting result:', result);
             
             if (!result.success) {
-              throw new Error('NFT creation failed in HashPack');
+              throw new Error('NFT minting failed in HashPack');
             }
             
             const txHash = result.transactionId;
             
-            // Record the successful transaction with real token ID
+            // Record the successful transaction with real data
             const completeResponse = await fetch(`/api/rights/${data.rightId}/mint-complete`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
               body: JSON.stringify({
-                tokenId: result.tokenId,
+                tokenId: `${tokenId}.${result.serialNumber}`,
                 transactionId: result.transactionId,
-                transactionHash: result.transactionId
+                transactionHash: result.transactionId,
+                metadataUri: metadataUri
               })
             });
             
@@ -175,15 +186,15 @@ function RightCard({ right }: RightCardProps) {
             
             toast({
               title: "NFT Minted Successfully!",
-              description: `Token ID: ${result.tokenId}`,
+              description: `Transaction ID: ${result.transactionId}`,
             });
             
-          } catch (hashConnectError) {
-            console.error('HashConnect execution error:', hashConnectError);
+          } catch (hederaError) {
+            console.error('Hedera NFT minting error:', hederaError);
             
             toast({
-              title: "HashPack Transaction Failed",
-              description: "Please ensure HashPack wallet is installed and try again",
+              title: "NFT Minting Failed",
+              description: hederaError.message || "Please ensure HashPack is connected and try again",
               variant: "destructive"
             });
           }

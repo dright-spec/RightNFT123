@@ -1050,13 +1050,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ]
         };
 
-        // Return transaction details for HashPack minting
+        // Return transaction details for Hedera NFT minting
         const mintingData = {
           metadata,
           transactionParams: {
-            type: "TokenCreateTransaction", 
+            type: "TokenMintTransaction", 
             name: right.title || `Right #${rightId}`,
             symbol: right.symbol || `DRIGHT${rightId}`,
+            tokenId: "0.0.123456", // In production, use existing token collection
             memo: `Dright NFT - ${right.title || 'Digital Rights'}`,
             initialSupply: 1,
             decimals: 0,

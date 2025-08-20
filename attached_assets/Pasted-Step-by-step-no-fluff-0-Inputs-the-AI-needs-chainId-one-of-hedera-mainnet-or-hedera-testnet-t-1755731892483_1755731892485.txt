@@ -1,0 +1,182 @@
+Step-by-step (no fluff)
+0) Inputs the AI needs
+
+chainId: one of hedera:mainnet or hedera:testnet.
+
+tokenId: HTS token id string (e.g., 0.0.1234567) for the existing NFT collection.
+
+payerAccountId: the WC account you’re connected with (e.g., from the session: namespaces.hedera.accounts[0]).
+
+Rights bundle (business data):
+
+rightType (e.g., "personal-use-license", "commercial-license", etc.)
+
+termsUrl (URL or IPFS URI to license terms)
+
+creator (name or org)
+
+attribution (string)
+
+workRefs (array of related asset URIs/IDs)
+
+media (primary image/video/audio URI)
+
+name, description, attributes (array of trait objects)
+
+1) Build HIP-412 metadata JSON (off-chain)
+
+Structure the JSON with HIP-412 V2 fields. Put rights data inside properties so wallets/marketplaces can parse it consistently. (HIP-412 background and examples. 
+Hiero Improvement Proposals
+Hedera Docs
+docs.hashpack.app
+)
+
+{
+  "name": "User-Created Work #1",
+  "creator": "Example Creator",
+  "description": "Minted from a granted right to generate an NFT.",
+  "image": "ipfs://bafybeiexamplePrimaryImage",
+  "type": "image",
+  "properties": {
+    "rightType": "personal-use-license",
+    "termsUrl": "ipfs://bafybeiexampleLicenseJson",
+    "attribution": "© 2025 Example Creator",
+    "workRefs": ["ipfs://bafybeiexampleSource1"],
+    "licenseVersion": "1.0.0"
+  },
+  "attributes": [
+    { "trait_type": "Edition", "value": "1/1" },
+    { "trait_type": "Rights", "value": "Personal Use" }
+  ]
+}
+
+2) Pin the JSON to IPFS (or Arweave)
+
+Upload the JSON; capture the CID (e.g., bafy...).
+
+The token metadata field you’ll put on-chain should be a small pointer (commonly the ipfs://<CID> URI or just the CID bytes). Hedera wallets (including HashPack) expect that per HIP-412. 
+Hedera
+
+3) Construct an HTS TokenMintTransaction (JavaScript, @hashgraph/sdk)
+
+Use the JS SDK to create a TokenMintTransaction for tokenId.
+
+Add a single metadata entry containing the CID/URI bytes (e.g., Buffer.from("ipfs://bafy...")).
+
+Set the transactionId with payerAccountId.
+
+Freeze the transaction with a Client for the selected network (no operator key needed; the wallet will sign).
+(Official “Mint a token” guide confirms the flow; the supply key must sign. 
+Hedera Docs
+)
+
+import {
+  Client,
+  AccountId,
+  TokenId,
+  TokenMintTransaction,
+  TransactionId
+} from "@hashgraph/sdk";
+
+export async function buildMintTxBytes({
+  network,          // "mainnet" | "testnet"
+  payerAccountId,   // "0.0.x"
+  tokenId,          // "0.0.y"
+  metadataUri       // e.g. "ipfs://bafy..."
+}) {
+  const client = network === "mainnet"
+    ? Client.forMainnet()
+    : Client.forTestnet();
+
+  const tx = await new TokenMintTransaction()
+    .setTokenId(TokenId.fromString(tokenId))
+    .setMetadata([Buffer.from(metadataUri)]) // <== HIP-412 pointer in bytes
+    .setTransactionId(
+      TransactionId.generate(AccountId.fromString(payerAccountId))
+    )
+    .freezeWith(client);
+
+  // Unsigned bytes (wallet will sign & execute)
+  return Buffer.from(await tx.toBytes());
+}
+
+4) Send to HashPack via WalletConnect Hedera RPC
+
+Use the WalletConnect provider (from your existing session) with the Hedera method: hedera_signAndExecuteTransaction. This is the canonical path to have HashPack sign with the supply key and submit to a node in one shot. (Method name & shape per Reown/WalletConnect Hedera RPC docs. 
+docs.reown.com
+)
+
+Minimal, reliable flow:
+
+(Optional but recommended) Ask the wallet for available nodes for your chainId using hedera_getNodeAddresses. Pick 1–3 node account IDs from the response to improve submit resiliency. 
+docs.reown.com
+
+Build one transaction per node id (same body, different nodeAccountIds) and freeze each.
+
+Wrap them into a TransactionList (proto) and Base64-encode the bytes.
+
+Call hedera_signAndExecuteTransaction with that Base64 string.
+
+If you want the shortest working path (usually fine): build/freeze once against the default node list and submit a single-node TransactionList (one element). Wallets that implement the spec accept it and execute. (Spec reference for the method. 
+docs.reown.com
+)
+
+Provider request (shape)
+// wcProvider: your already-connected WalletConnect provider instance
+// txListB64: Base64 of a Hedera TransactionList containing the TokenMint tx
+
+const result = await wcProvider.request({
+  topic,            // your active session topic
+  chainId,          // "hedera:mainnet" or "hedera:testnet"
+  request: {
+    method: "hedera_signAndExecuteTransaction",
+    params: {
+      transactionList: txListB64
+    }
+  }
+});
+
+// result includes transaction id / status. Use it to poll receipt if needed.
+
+
+Implementation note: Creating the TransactionList is a simple proto wrap around one or more Transaction bytes. If you don’t want to hand-roll protobufs, use the community helper @hashgraph/hedera-wallet-connect (maintained with the spec) which “uses the Hedera JS SDK to build transactions, serialize them, send to wallets for processing and return responses back to dApps.” 
+npm
+
+5) Verify success
+
+If the call resolves, parse the response (often includes transactionId); query the mirror node for the receipt/record to confirm the new serial number was minted. (General transaction/receipt docs + mirror queries. 
+Hedera Docs
++1
+)
+
+What the other AI must get right (non-negotiables)
+
+Supply key: The connected HashPack account must control the token’s supply key; otherwise the mint will fail with TOKEN_HAS_NO_SUPPLY_KEY or invalid signature. 
+Hedera Docs
+
+HIP-412: Put full metadata off-chain; on-chain metadata should be a compact pointer (CID/URI). Wallets and marketplaces rely on this for display and rights parsing. 
+Hiero Improvement Proposals
+docs.hashpack.app
+
+WalletConnect method: Use hedera_signAndExecuteTransaction so HashPack can sign and submit in one step. (Per WalletConnect Hedera RPC docs.) 
+docs.reown.com
+
+One tx per node (best): For maximum reliability, duplicate the frozen tx for 1–3 node IDs and put all into a single TransactionList. The wallet will pick/submit. 
+docs.reown.com
+
+Finality/receipt: After success, mirror-query the receipt to get the NFT serial number(s) minted. 
+Hedera Docs
+
+Example: end-to-end call outline
+
+Build HIP-412 JSON → pin → get ipfs://bafy...
+
+const txBytes = await buildMintTxBytes({ network: "testnet", payerAccountId, tokenId, metadataUri: "ipfs://bafy..." })
+
+(Optional) hedera_getNodeAddresses → pick node IDs (e.g., 0.0.3, 0.0.4) → clone/freeze per node
+
+Encode TransactionList (your helper or @hashgraph/hedera-wallet-connect) → txListB64
+
+hedera_signAndExecuteTransaction with txListB64
+
+Mirror-query receipt by transactionId → confirm serial_number.
