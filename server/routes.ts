@@ -54,7 +54,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Set secure HTTP-only cookie
-      res.cookie('dright_session', sessionToken, {
+      res.cookie('session_token', sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -75,7 +75,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Check current authentication status and get user from session
   app.get('/api/auth/me', asyncHandler(async (req: any, res: any) => {
-    const sessionToken = req.cookies?.dright_session;
+    const sessionToken = req.cookies?.session_token;
+    
+    console.log('Auth check - Cookie present:', !!sessionToken);
     
     if (!sessionToken) {
       return res.status(401).json(ApiResponseHelper.error('Not authenticated'));
@@ -85,28 +87,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await sessionManager.getUserFromSession(sessionToken);
       
       if (user) {
+        console.log('Auth check - User found:', user.username);
         res.json(ApiResponseHelper.success({ user, authenticated: true }));
       } else {
+        console.log('Auth check - No user found, clearing cookie');
         // Clear invalid cookie
-        res.clearCookie('dright_session');
+        res.clearCookie('session_token', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/'
+        });
         res.status(401).json(ApiResponseHelper.error('Session expired'));
       }
     } catch (error) {
       console.error('Error fetching user from session:', error);
-      res.clearCookie('dright_session');
+      res.clearCookie('session_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/'
+      });
       res.status(401).json(ApiResponseHelper.error('Authentication failed'));
     }
   }));
 
   // Logout endpoint
   app.post('/api/auth/logout', asyncHandler(async (req: any, res: any) => {
-    const sessionToken = req.cookies?.dright_session;
+    const sessionToken = req.cookies?.session_token;
     
     if (sessionToken) {
       await sessionManager.destroySession(sessionToken);
     }
     
-    res.clearCookie('dright_session');
+    res.clearCookie('session_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/'
+    });
     res.json(ApiResponseHelper.success({ message: 'Logged out successfully' }));
   }));
 

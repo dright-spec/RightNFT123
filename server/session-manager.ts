@@ -89,8 +89,11 @@ class SessionManager {
    * Get user from session token and validate
    */
   async getUserFromSession(sessionToken: string): Promise<any | null> {
-    const session = await this.getSession(sessionToken);
-    if (!session) return null;
+    const session = this.validateSession(sessionToken);
+    if (!session) {
+      console.log('Session validation failed for token:', sessionToken?.substring(0, 8) + '...');
+      return null;
+    }
 
     try {
       // Fetch fresh user data from database
@@ -99,9 +102,11 @@ class SessionManager {
       if (!user) {
         // User was deleted, invalidate session
         delete this.sessions[sessionToken];
+        console.log('User not found in database, invalidating session');
         return null;
       }
 
+      console.log('User retrieved from session:', user.username);
       return user;
     } catch (error) {
       console.error('Error fetching user from session:', error);
