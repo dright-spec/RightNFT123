@@ -42,9 +42,19 @@ export default function Dashboard() {
   // Extract user ID from account or redirect if not connected
   const userId = account?.id;
 
+  // Debug logging
+  console.log('Dashboard render:', { account, isConnected, userId });
+
   const { data: dashboardData, isLoading, error } = useQuery<{ data: DashboardData }>({
-    queryKey: ['/api/users', userId, 'dashboard'],
-    enabled: !!userId && isConnected,
+    queryKey: [`/api/users/${userId}/dashboard`],
+    enabled: !!userId,
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${userId}/dashboard`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    },
   });
 
   const copyToClipboard = (text: string, label: string) => {
@@ -55,7 +65,23 @@ export default function Dashboard() {
     });
   };
 
-  if (!isConnected || !account) {
+  // Show loading state while checking for account
+  if (isLoading || !account) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            {account ? 'Loading your dashboard...' : 'Checking authentication...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no account after loading, redirect to connect
+  if (!isConnected && !account) {
+    setTimeout(() => setLocation('/'), 100);
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <Card className="w-full max-w-md">
