@@ -63,8 +63,11 @@ export const appkit = createAppKit({
   networks: [...chains] as any,
   defaultNetwork: hederaMainnet,
   metadata,
-  // Remove specific wallet filtering to show all available wallets
-  // HashPack will appear through WalletConnect QR code option
+  // Show HashPack first in wallet list
+  featuredWalletIds: [
+    'f2436c67184f158d1beda5df53298ee84abfc367581e4505134b5bcf5f46467d', // HashPack wallet ID
+    'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96'  // MetaMask
+  ],
   features: {
     analytics: true,
     onramp: false,
@@ -75,12 +78,7 @@ export const appkit = createAppKit({
   themeVariables: {
     '--w3m-color-mix': '#00D4AA',
     '--w3m-color-mix-strength': 20,
-  },
-  // Enable all connection methods for maximum compatibility
-  enableWalletConnect: true,
-  enableInjected: true,
-  enableEIP6963: true,
-  enableCoinbase: true
+  }
 })
 
 export { projectId }

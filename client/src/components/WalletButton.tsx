@@ -12,6 +12,7 @@ import { Wallet, LogOut, Copy, ExternalLink, Settings } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import { useAppKit } from '@reown/appkit/react'
 import { useToast } from '@/hooks/use-toast'
+import { HashPackConnector } from '@/components/HashPackConnector'
 
 export function WalletButton() {
   const { 
@@ -67,18 +68,27 @@ export function WalletButton() {
     }
   }
   
+  const handleHashPackConnect = (accountId: string) => {
+    console.log('HashPack connected with account:', accountId)
+    // The connection will be handled by the HashPack extension
+  }
+
   if (!isConnected) {
     return (
-      <div className="flex flex-col items-center gap-2">
-        <Button 
-          onClick={() => open()} 
-          className="gap-2"
-        >
-          <Wallet className="w-4 h-4" />
-          Connect Wallet
-        </Button>
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex gap-2">
+          <HashPackConnector onConnect={handleHashPackConnect} />
+          <Button 
+            onClick={() => open()} 
+            variant="outline"
+            className="gap-2"
+          >
+            <Wallet className="w-4 h-4" />
+            Other Wallets
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground text-center">
-          Scan QR with HashPack mobile or connect MetaMask
+          Connect HashPack (recommended) or use WalletConnect for mobile
         </p>
       </div>
     )
