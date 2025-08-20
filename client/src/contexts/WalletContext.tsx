@@ -69,21 +69,21 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
 
   // Update account state when session data changes
   useEffect(() => {
-    if (sessionUser?.user && !sessionError) {
+    if (sessionUser?.data?.user && !sessionError) {
       setAccount({
-        ...sessionUser.user,
+        ...sessionUser.data.user,
         isConnected: true,
-        userId: sessionUser.user.id
+        userId: sessionUser.data.user.id
       });
-      console.log('Session restored for user:', sessionUser.user.username);
-    } else if (sessionError || sessionUser === null) {
-      // No valid session, clear account
+      console.log('Session restored for user:', sessionUser.data.user.username);
+    } else if (sessionError) {
+      // Session error - clear account if it exists
       if (account) {
         setAccount(null);
         console.log('Session expired or invalid, user logged out');
       }
     }
-  }, [sessionUser, sessionError, account])
+  }, [sessionUser, sessionError])
 
   // Auto-connect when wallet connects if no session exists
   useEffect(() => {
@@ -121,8 +121,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         });
         console.log('User registered/logged in successfully:', data.data.user.username);
         
-        // Refresh session query to update UI  
-        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+        // Force refresh session query to update UI state immediately
+        await queryClient.refetchQueries({ queryKey: ['/api/auth/me'] });
       } else {
         console.error('Wallet connection failed:', data.message);
       }

@@ -246,22 +246,20 @@ export default function Dashboard() {
     });
   };
 
-  // Show loading state while checking for account
-  if (isLoading || !account) {
+  // Show loading state only briefly while checking for account
+  if (!account && isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">
-            {account ? 'Loading your dashboard...' : 'Checking authentication...'}
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   // If no account after loading, redirect to connect
-  if (!isConnected && !account) {
+  if (!account && !isLoading) {
     setTimeout(() => setLocation('/'), 100);
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
@@ -285,12 +283,13 @@ export default function Dashboard() {
     );
   }
 
-  if (isLoading) {
+  // Show loading only for dashboard data, not for the whole page
+  if (isLoading && account) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard data...</p>
         </div>
       </div>
     );
