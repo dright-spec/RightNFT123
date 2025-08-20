@@ -50,8 +50,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const { switchChain } = useSwitchChain()
   const [account, setAccount] = useState<any>(null)
 
-  // Check for existing session on app load
-  const { data: sessionUser, error: sessionError, isLoading: sessionLoading } = useQuery({
+  // Check for existing session on app load and navigation
+  const { data: sessionUser, error: sessionError, isLoading: sessionLoading, refetch: refetchSession } = useQuery({
     queryKey: ['/api/auth/me'],
     queryFn: async () => {
       const response = await fetch('/api/auth/me', {
@@ -63,8 +63,9 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       return response.json();
     },
     retry: false,
-    refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 1000 * 30, // Shorter stale time for better responsiveness
+    refetchInterval: 1000 * 60, // Check session every minute
   })
 
   // Update account state when session data changes
@@ -92,6 +93,19 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
       handleWalletConnect(address);
     }
   }, [isConnected, address, account, sessionLoading])
+
+  // Periodically check session validity to maintain connection
+  useEffect(() => {
+    const checkSession = () => {
+      if (account && !sessionLoading) {
+        refetchSession();
+      }
+    };
+
+    // Check session every 30 seconds when user is active
+    const interval = setInterval(checkSession, 30000);
+    return () => clearInterval(interval);
+  }, [account, sessionLoading, refetchSession])
 
   // Handle wallet connection and registration
   const handleWalletConnect = async (walletAddress: string) => {

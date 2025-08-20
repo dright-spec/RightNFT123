@@ -23,7 +23,8 @@ export function WalletButton() {
     networkName, 
     isHedera, 
     disconnect, 
-    switchToHedera 
+    switchToHedera,
+    account 
   } = useWallet()
   
   const { open } = useAppKit()
@@ -79,7 +80,17 @@ export function WalletButton() {
     setWcSession(null)
   }
 
-  if (!isConnected && !wcSession) {
+  // Show loading state while checking authentication
+  if (account === undefined) {
+    return (
+      <Button variant="outline" disabled>
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+        Loading...
+      </Button>
+    );
+  }
+
+  if (!isConnected && !account && !wcSession) {
     return (
       <div className="flex flex-col items-center gap-3">
         <div className="flex gap-2">

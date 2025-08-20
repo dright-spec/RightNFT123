@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +26,7 @@ import { ArrowLeft, Upload, FileText, Shield, DollarSign, Eye, Check, X, Youtube
 import { z } from "zod";
 import { getDefaultNFTImage } from "@/lib/image-utils";
 import { WalletButton } from "@/components/WalletButton";
+import { useWallet } from '@/contexts/WalletContext';
 
 // Extended form schema for the create right page
 const createRightFormSchema = insertRightSchema.extend({
@@ -632,6 +633,7 @@ const getRightTypes = (contentSource: string): RightTypeOption[] => {
 
 export default function CreateRight() {
   const [, setLocation] = useLocation();
+  const { account, isConnected } = useWallet();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [ownershipFiles, setOwnershipFiles] = useState<File[]>([]);
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -649,6 +651,19 @@ export default function CreateRight() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const uploadErrorHandler = useUploadErrorHandler();
+
+  // Redirect if not connected - check authentication status
+  useEffect(() => {
+    if (!account && !isConnected) {
+      console.log('Create Right: User not authenticated, redirecting to home');
+      toast({
+        title: "Authentication Required",
+        description: "Please connect your wallet to create rights",
+        variant: "destructive",
+      });
+      setLocation('/');
+    }
+  }, [account, isConnected, setLocation, toast]);
 
   const form = useForm<CreateRightFormData>({
     resolver: zodResolver(createRightFormSchema),
