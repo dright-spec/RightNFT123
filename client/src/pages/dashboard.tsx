@@ -122,6 +122,7 @@ function RightCard({ right }: RightCardProps) {
       }
     },
     onError: (error: any) => {
+      console.error('Full minting error:', error);
       toast({
         title: "Minting Failed",
         description: error.message || "Unable to start NFT minting. Please try again.",
@@ -139,7 +140,7 @@ function RightCard({ right }: RightCardProps) {
         </Badge>
       );
     }
-    if (right.verificationStatus === "verified" && right.mintingStatus === "not_started") {
+    if (right.verificationStatus === "verified" && (right.mintingStatus === "not_started" || !right.mintingStatus) && !right.tokenId) {
       return (
         <Badge className="bg-green-500 hover:bg-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
@@ -155,7 +156,7 @@ function RightCard({ right }: RightCardProps) {
         </Badge>
       );
     }
-    if (right.mintingStatus === "completed") {
+    if (right.mintingStatus === "completed" || right.tokenId) {
       return (
         <Badge className="bg-purple-500 hover:bg-purple-600">
           <Coins className="h-3 w-3 mr-1" />
@@ -174,7 +175,9 @@ function RightCard({ right }: RightCardProps) {
     return null;
   };
 
-  const canMint = right.verificationStatus === "verified" && right.mintingStatus === "not_started";
+  const canMint = right.verificationStatus === "verified" && 
+                  (right.mintingStatus === "not_started" || !right.mintingStatus) && 
+                  !right.tokenId;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
