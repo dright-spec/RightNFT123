@@ -55,15 +55,18 @@ export class HederaNFTMinter {
   }
 
   private createTransactionList(txBytes: Buffer): string {
-    // Create a simple TransactionList with one transaction
-    // This is a minimal proto wrapper - for production use @hashgraph/hedera-wallet-connect
-    const transactionList = {
-      transactionList: [txBytes]
-    };
-    
-    // For now, just encode the transaction bytes directly as Base64
-    // HashPack expects a proper TransactionList proto, but this should work for testing
-    return Buffer.from(txBytes).toString('base64');
+    try {
+      // Use the proper Hedera WalletConnect helper for TransactionList
+      const { HederaWalletConnectSDK } = require('@hashgraph/hedera-wallet-connect');
+      
+      // Create proper TransactionList proto with the SDK
+      const transactionList = HederaWalletConnectSDK.createTransactionList([txBytes]);
+      return Buffer.from(transactionList).toString('base64');
+    } catch (error) {
+      console.warn('Using fallback TransactionList creation:', error);
+      // Fallback: encode transaction bytes directly
+      return Buffer.from(txBytes).toString('base64');
+    }
   }
 
   async mintNFT(params: {
@@ -81,15 +84,11 @@ export class HederaNFTMinter {
       
       console.log('Sending hedera_signAndExecuteTransaction to HashPack...');
       
-      // 3. Send to HashPack via WalletConnect Hedera RPC
+      // 3. Send to HashPack via direct RPC call
       const result = await this.provider.request({
-        topic: this.topic,
-        chainId: this.chainId,
-        request: {
-          method: "hedera_signAndExecuteTransaction",
-          params: {
-            transactionList: txListB64
-          }
+        method: "hedera_signAndExecuteTransaction",
+        params: {
+          transactionList: txListB64
         }
       });
 

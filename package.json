@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@hashgraph/hedera-wallet-connect": "^1.5.1",
     "@hashgraph/sdk": "^2.69.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
