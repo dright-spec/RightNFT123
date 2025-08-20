@@ -6,9 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Wallet, TrendingUp, Users, BarChart3, Settings, Copy, ExternalLink } from "lucide-react";
+import { PlusCircle, Wallet, TrendingUp, Users, BarChart3, Settings, Copy, ExternalLink, CheckCircle, Clock, AlertCircle, Coins, Zap } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface DashboardData {
   user: {
@@ -32,6 +34,166 @@ interface DashboardData {
     totalEarnings: string;
     totalSales: number;
   };
+}
+
+interface RightCardProps {
+  right: {
+    id: number;
+    title: string;
+    type: string;
+    verificationStatus: string;
+    mintingStatus: string;
+    price: string;
+    currency: string;
+    symbol: string;
+    description: string;
+    imageUrl?: string;
+    createdAt: string;
+  };
+}
+
+function RightCard({ right }: RightCardProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  const mintNFTMutation = useMutation({
+    mutationFn: async (rightId: number) => {
+      const response = await apiRequest("POST", `/api/rights/${rightId}/mint`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users`] });
+      toast({
+        title: "Minting Started!",
+        description: "Your NFT minting process has begun. You'll receive a confirmation when complete.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Minting Failed",
+        description: "Unable to start NFT minting. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getStatusBadge = () => {
+    if (right.verificationStatus === "pending") {
+      return (
+        <Badge variant="outline" className="border-yellow-500 text-yellow-700 bg-yellow-50">
+          <Clock className="h-3 w-3 mr-1" />
+          Under Review
+        </Badge>
+      );
+    }
+    if (right.verificationStatus === "verified" && right.mintingStatus === "not_started") {
+      return (
+        <Badge className="bg-green-500 hover:bg-green-600">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Ready to Mint
+        </Badge>
+      );
+    }
+    if (right.mintingStatus === "in_progress") {
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-700 bg-blue-50">
+          <Zap className="h-3 w-3 mr-1" />
+          Minting...
+        </Badge>
+      );
+    }
+    if (right.mintingStatus === "completed") {
+      return (
+        <Badge className="bg-purple-500 hover:bg-purple-600">
+          <Coins className="h-3 w-3 mr-1" />
+          NFT Minted
+        </Badge>
+      );
+    }
+    if (right.verificationStatus === "rejected") {
+      return (
+        <Badge variant="destructive">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Rejected
+        </Badge>
+      );
+    }
+    return null;
+  };
+
+  const canMint = right.verificationStatus === "verified" && right.mintingStatus === "not_started";
+
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+      <div className="aspect-video bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/20 dark:to-blue-900/20 flex items-center justify-center">
+        {right.imageUrl ? (
+          <img src={right.imageUrl} alt={right.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="text-4xl">{right.symbol}</div>
+        )}
+      </div>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-1 truncate">{right.title}</h3>
+            <p className="text-sm text-muted-foreground capitalize">{right.type} Rights</p>
+          </div>
+          <div className="ml-2">{getStatusBadge()}</div>
+        </div>
+        
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+          {right.description}
+        </p>
+        
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-lg font-semibold">
+            {parseFloat(right.price).toFixed(2)} {right.currency}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {new Date(right.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          {canMint && (
+            <Button 
+              onClick={() => mintNFTMutation.mutate(right.id)}
+              disabled={mintNFTMutation.isPending}
+              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              {mintNFTMutation.isPending ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Minting...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Mint NFT
+                </>
+              )}
+            </Button>
+          )}
+          {right.mintingStatus === "completed" && (
+            <Button 
+              onClick={() => setLocation(`/rights/${right.id}`)}
+              className="flex-1"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View NFT
+            </Button>
+          )}
+          {right.verificationStatus === "pending" && (
+            <Button variant="outline" className="flex-1" disabled>
+              <Clock className="h-4 w-4 mr-2" />
+              Awaiting Approval
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function Dashboard() {
@@ -297,11 +459,10 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Rights grid will be populated when API returns data */}
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Rights grid coming soon...
-                    </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {createdRights.map((right: any) => (
+                      <RightCard key={right.id} right={right} />
+                    ))}
                   </div>
                 )}
               </CardContent>

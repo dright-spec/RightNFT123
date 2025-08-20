@@ -85,15 +85,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json(ApiResponseHelper.error('User not found'));
       }
 
-      const userRights = await storage.getRightsByCreator(userId);
-      const ownedRights = await storage.getRightsByOwner(userId);
+      // Get user's created rights directly from database
+      const createdRights = await db.select()
+        .from(rights)
+        .where(eq(rights.creatorId, userId))
+        .orderBy(desc(rights.createdAt));
+
+      // Get user's owned rights (for now, same as created - will expand later)
+      const ownedRights = createdRights.filter(right => right.mintingStatus === 'completed');
       
       res.json(ApiResponseHelper.success({
         user,
-        createdRights: userRights,
-        ownedRights: ownedRights,
+        createdRights,
+        ownedRights,
         stats: {
-          totalCreated: userRights.length,
+          totalCreated: createdRights.length,
           totalOwned: ownedRights.length,
           totalEarnings: user.totalEarnings || '0',
           totalSales: user.totalSales || 0
