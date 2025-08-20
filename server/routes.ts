@@ -1020,11 +1020,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
-      // Reset any failed previous minting attempts
-      await storage.updateRight(rightId, { 
-        mintingStatus: "not_started",
-        tokenId: null,
-        transactionHash: null
+      // Reset any failed previous minting attempts (keep existing data for now)
+      console.log('Current right status before minting:', {
+        verificationStatus: right.verificationStatus,
+        mintingStatus: right.mintingStatus,
+        tokenId: right.tokenId,
+        transactionHash: right.transactionHash
       });
       
       // Start Hedera NFT minting process - return transaction data for client-side signing

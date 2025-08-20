@@ -56,6 +56,7 @@ function RightCard({ right }: RightCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const { account, isConnected } = useWallet();
 
   const mintNFTMutation = useMutation({
     mutationFn: async (rightId: number) => {
@@ -80,7 +81,7 @@ function RightCard({ right }: RightCardProps) {
           const hashPack = new HashPackWallet();
           
           // Check if wallet is connected (we already know it is from the authentication)
-          if (!account || !isConnected) {
+          if (!account || !account.hederaAccountId) {
             throw new Error('Wallet not connected. Please connect HashPack wallet first.');
           }
           
@@ -98,7 +99,7 @@ function RightCard({ right }: RightCardProps) {
             metadata: JSON.stringify(data.data.metadata),
             initialSupply: 1,
             decimals: 0,
-            treasuryAccountId: account.hederaAccountId || data.data.transactionParams.treasuryAccountId,
+            treasuryAccountId: account?.hederaAccountId || data.data.transactionParams.treasuryAccountId,
             fee: 1000000000, // 10 HBAR in tinybars
           };
           
@@ -123,8 +124,8 @@ function RightCard({ right }: RightCardProps) {
             const transactionRequest = {
               method: 'wallet_sendTransaction',
               params: [{
-                from: account.walletAddress,
-                to: account.hederaAccountId, // Send to user's own account for token creation
+                from: account?.walletAddress,
+                to: account?.hederaAccountId, // Send to user's own account for token creation
                 value: '0xa968163f0a57b400000', // 10 HBAR in hex wei
                 data: JSON.stringify({
                   type: 'TOKEN_CREATE',
@@ -135,7 +136,7 @@ function RightCard({ right }: RightCardProps) {
                   supplyType: 'FINITE',
                   maxSupply: 1,
                   initialSupply: 0,
-                  treasuryAccountId: account.hederaAccountId
+                  treasuryAccountId: account?.hederaAccountId
                 })
               }]
             };
@@ -261,8 +262,17 @@ function RightCard({ right }: RightCardProps) {
                             right.transactionHash.includes('@');
 
   const canMint = right.verificationStatus === "verified" && 
-                  (right.mintingStatus === "not_started" || right.mintingStatus === "completed") && 
                   !hasRealTransaction;
+
+  console.log('Right minting check:', {
+    id: right.id,
+    verificationStatus: right.verificationStatus,
+    mintingStatus: right.mintingStatus,
+    tokenId: right.tokenId,
+    transactionHash: right.transactionHash,
+    hasRealTransaction,
+    canMint
+  });
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
