@@ -1014,24 +1014,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Start Hedera NFT minting process - return transaction data for client-side signing
-      console.log(`Preparing NFT minting for right ${rightId}: ${right.title}`);
+      console.log(`Preparing NFT minting for right ${rightId}: ${right.title || 'Unknown title'}`);
+      console.log('Right object:', JSON.stringify(right, null, 2));
       
       try {
         // Mark as minting started
         await storage.updateRight(rightId, { mintingStatus: "minting" });
         
-        // Create metadata for HIP-412 standard
+        // Create metadata for HIP-412 standard with safe property access
         const metadata = {
-          name: right.title,
-          description: right.description,
+          name: right.title || `Right #${rightId}`,
+          description: right.description || "Digital rights NFT from Dright platform",
           image: right.imageUrl || "",
-          type: right.type,
-          creator: `User ${right.creatorId}`,
+          type: right.type || "copyright",
+          creator: `User ${right.creatorId || 'Unknown'}`,
           attributes: [
-            { trait_type: "Right Type", value: right.type },
-            { trait_type: "Verification Status", value: right.verificationStatus },
+            { trait_type: "Right Type", value: right.type || "copyright" },
+            { trait_type: "Verification Status", value: right.verificationStatus || "verified" },
             { trait_type: "Platform", value: "Dright" },
-            { trait_type: "Created", value: right.createdAt }
+            { trait_type: "Created", value: right.createdAt || new Date().toISOString() }
           ]
         };
 
@@ -1040,9 +1041,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metadata,
           transactionParams: {
             type: "createNonFungibleToken",
-            name: right.title,
+            name: right.title || `Right #${rightId}`,
             symbol: right.symbol || `DRIGHT${rightId}`,
-            memo: `Dright NFT - ${right.title}`,
+            memo: `Dright NFT - ${right.title || 'Digital Rights'}`,
             initialSupply: 1,
             decimals: 0,
             treasuryAccountId: "0.0.9266917", // Platform treasury account
@@ -1059,6 +1060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (mintingError) {
         console.error(`Minting preparation failed for right ${rightId}:`, mintingError);
+        console.error('Full error stack:', mintingError.stack);
         
         // Update minting status to failed
         await storage.updateRight(rightId, { mintingStatus: "failed" });
@@ -1066,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({
           success: false,
           error: "Failed to prepare NFT minting",
-          details: mintingError.message
+          details: mintingError.message || "Unknown error occurred"
         });
       }
 
