@@ -75,30 +75,82 @@ function RightCard({ right }: RightCardProps) {
       // If the minting requires HashPack transaction, handle it here
       if (data.data?.transactionParams) {
         try {
-          // Import the wallet context to execute HashPack transaction
-          const { createModal } = await import('@reown/appkit');
+          // Import HashPack wallet integration
+          const { HashPackWallet } = await import('@/lib/hashpack-wallet');
+          const hashPack = new HashPackWallet();
           
-          // Show modal asking user to confirm the transaction
+          // Check if HashPack is available
+          if (!hashPack.isExtensionAvailable()) {
+            throw new Error('HashPack wallet extension not found. Please install HashPack.');
+          }
+          
+          // Show transaction preparation message
           toast({
-            title: "Ready to Mint!",
-            description: "Please confirm the transaction in HashPack wallet (Fee: ~10 HBAR)",
+            title: "Preparing Transaction",
+            description: "Opening HashPack to confirm NFT minting (Fee: ~10 HBAR)",
           });
           
-          // Create a simplified transaction request for HashPack
-          const transactionRequest = {
-            type: 'NFT_MINT',
-            fee: '10 HBAR',
-            details: {
-              name: data.data.transactionParams.name,
-              symbol: data.data.transactionParams.symbol,
-              metadata: data.data.metadata
-            }
+          // Prepare Hedera NFT transaction
+          const hederaTransaction = {
+            type: 'TOKEN_CREATE',
+            name: data.data.transactionParams.name,
+            symbol: data.data.transactionParams.symbol,
+            metadata: JSON.stringify(data.data.metadata),
+            initialSupply: 1,
+            decimals: 0,
+            treasuryAccountId: data.data.transactionParams.treasuryAccountId,
+            fee: 1000000000, // 10 HBAR in tinybars
           };
           
-          console.log('Prepared transaction for HashPack:', transactionRequest);
+          console.log('Sending transaction to HashPack:', hederaTransaction);
           
-          // For now, simulate successful preparation
-          // In a real implementation, this would call HashPack's transaction API
+          // Actually call HashPack to create and execute the transaction
+          try {
+            const { HederaTransactionService } = await import('@/lib/hedera-transaction');
+            
+            // Create the Hedera NFT transaction
+            const nftTransaction = await HederaTransactionService.createNFTTransaction({
+              name: hederaTransaction.name,
+              symbol: hederaTransaction.symbol,
+              metadata: hederaTransaction.metadata,
+              treasuryAccountId: hederaTransaction.treasuryAccountId,
+              adminKeys: [hederaTransaction.treasuryAccountId]
+            });
+            
+            // Execute with HashPack
+            const result = await HederaTransactionService.executeWithHashPack(nftTransaction);
+            
+            // Record the successful transaction
+            const completeResponse = await fetch(`/api/rights/${data.rightId}/mint-complete`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                tokenId: result.tokenId,
+                transactionId: result.transactionId,
+                transactionHash: result.transactionHash
+              })
+            });
+            
+            if (!completeResponse.ok) {
+              throw new Error('Failed to record minting completion');
+            }
+            
+            toast({
+              title: "NFT Minted Successfully!",
+              description: `Token ID: ${result.tokenId}`,
+            });
+            
+          } catch (hashPackError) {
+            console.error('HashPack execution error:', hashPackError);
+            
+            // Show the transaction modal for user to approve manually
+            toast({
+              title: "HashPack Required",
+              description: "Please open HashPack and confirm the NFT creation transaction (10 HBAR fee)",
+            });
+          }
+          
           return data;
         } catch (walletError) {
           throw new Error('HashPack transaction failed: ' + walletError.message);
@@ -177,7 +229,7 @@ function RightCard({ right }: RightCardProps) {
 
   const canMint = right.verificationStatus === "verified" && 
                   (right.mintingStatus === "not_started" || !right.mintingStatus) && 
-                  !right.tokenId;
+                  (!right.tokenId || !right.transactionHash || right.transactionHash.length <= 10);
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">

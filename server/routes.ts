@@ -1009,13 +1009,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Right must be verified before minting" });
       }
 
-      if (right.tokenId) {
+      // Allow re-minting if no actual blockchain transaction exists
+      // (tokenId might be set from simulation but no real transaction)
+      if (right.tokenId && right.transactionHash && right.transactionHash.length > 10) {
         return res.status(400).json({ error: "NFT already minted for this right" });
       }
 
+      // Reset any failed previous minting attempts
+      await storage.updateRight(rightId, { 
+        mintingStatus: "not_started",
+        tokenId: null,
+        transactionHash: null
+      });
+      
       // Start Hedera NFT minting process - return transaction data for client-side signing
       console.log(`Preparing NFT minting for right ${rightId}: ${right.title || 'Unknown title'}`);
-      console.log('Right object:', JSON.stringify(right, null, 2));
       
       try {
         // Mark as minting started
@@ -1075,6 +1083,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error initiating NFT minting:", error);
       res.status(500).json({ error: "Failed to initiate NFT minting" });
+    }
+  });
+
+  // Complete NFT minting after successful HashPack transaction
+  app.post("/api/rights/:id/mint-complete", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const { tokenId, transactionId, transactionHash } = req.body;
+      
+      if (!tokenId || !transactionId) {
+        return res.status(400).json({ error: "Missing transaction data" });
+      }
+      
+      const updatedRight = await storage.updateRight(rightId, {
+        tokenId: tokenId,
+        transactionHash: transactionHash || transactionId,
+        mintingStatus: "completed",
+        hederaTokenId: tokenId,
+        chainId: 295, // Hedera mainnet
+        networkType: "hedera"
+      });
+      
+      if (!updatedRight) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+      
+      res.json({
+        success: true,
+        message: "NFT minting completed successfully",
+        data: {
+          right: updatedRight,
+          tokenId: tokenId,
+          transactionHash: transactionHash || transactionId
+        }
+      });
+    } catch (error) {
+      console.error("Error completing NFT mint:", error);
+      res.status(500).json({ error: "Failed to complete NFT mint" });
     }
   });
 
