@@ -91,8 +91,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(rights.creatorId, userId))
         .orderBy(desc(rights.createdAt));
 
-      // Get user's owned rights (for now, same as created - will expand later)
-      const ownedRights = createdRights.filter(right => right.mintingStatus === 'completed');
+      // Get user's owned rights (includes all created rights regardless of minting status)
+      const ownedRights = createdRights;
       
       res.json(ApiResponseHelper.success({
         user,

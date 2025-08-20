@@ -474,7 +474,7 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle>Rights You Own</CardTitle>
                 <CardDescription>
-                  NFTs you've purchased or received
+                  All your rights - ready to mint, completed NFTs, and purchased rights
                 </CardDescription>
               </CardHeader>
               <CardContent>
