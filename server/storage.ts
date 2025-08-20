@@ -1,4 +1,5 @@
 import type { User, Right, Transaction, InsertUser, InsertRight, InsertTransaction, RightWithCreator } from "@shared/schema";
+import { rightTypeSymbols } from "@shared/schema";
 
 export interface IStorage {
   // User methods
