@@ -20,6 +20,8 @@ import ApiReference from "./pages/api-reference";
 import Settings from "./pages/settings";
 import MintingProgress from "./pages/minting-progress";
 import AdminFiles from "./pages/admin-files";
+import AdminLogin from "./pages/admin-login";
+import AdminDashboard from "./pages/admin-dashboard";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -34,6 +36,8 @@ function Router() {
       <Route path="/rights/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/files" component={AdminFiles} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/docs" component={Docs} />
       <Route path="/api-reference" component={ApiReference} />
       <Route path="/about" component={About} />
