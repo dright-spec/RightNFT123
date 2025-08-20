@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface HashPackWalletConnectProps {
   onConnect?: (session: WCSession, accountId: string) => void;
@@ -22,6 +23,7 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
   const [isSigning, setIsSigning] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { setAccount } = useWallet();
 
   // User registration mutation
   const registerUserMutation = useMutation({
@@ -46,6 +48,12 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
     },
     onSuccess: (data) => {
       console.log('User registered successfully:', data);
+      
+      // Set the user account in wallet context
+      if (data.data?.user && setAccount) {
+        setAccount(data.data.user);
+      }
+      
       toast({
         title: "Welcome to Dright!",
         description: "Your account has been created. Redirecting to your dashboard...",

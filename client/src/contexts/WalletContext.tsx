@@ -29,6 +29,7 @@ interface WalletContextType {
     walletAddress: string;
     hederaAccountId?: string;
   }
+  setAccount?: (account: any) => void;
   
   // Network info
   isHedera: boolean
@@ -47,6 +48,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const { disconnect } = useDisconnect()
   const { isPending: isConnecting } = useConnect()
   const { switchChain } = useSwitchChain()
+  const [account, setAccount] = React.useState<any>(null)
   
   const { data: balanceData, isLoading: isBalanceLoading } = useBalance({
     address: address,
@@ -89,6 +91,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     isConnecting,
     balance,
     isBalanceLoading,
+    account,
+    setAccount,
     isHedera,
     networkName,
     disconnect,
