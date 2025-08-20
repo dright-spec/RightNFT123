@@ -21,6 +21,7 @@ import type {
 } from "./api-types";
 import { ApiResponseHelper, asyncHandler, handleApiError } from "./api-types";
 import { requireAuth, optionalAuth, requireAdmin, rateLimit, validateBody } from "./middleware/auth";
+import { sessionManager } from "./session-manager";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Apply rate limiting to all routes
@@ -28,7 +29,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ============ WALLET AUTHENTICATION ROUTES ============
   
-  // Wallet connection and user registration/login
+  // Wallet connection and user registration/login with session management
   app.post('/api/auth/wallet-connect', asyncHandler(async (req: any, res: any) => {
     const { walletAddress, hederaAccountId, walletType, sessionTopic } = req.body;
     
@@ -43,14 +44,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         walletType: walletType || 'hashpack'
       });
 
+      // Create secure session
+      const sessionToken = await sessionManager.createSession(
+        user.id,
+        user.walletAddress,
+        user.hederaAccountId,
+        user.walletType,
+        req
+      );
+
+      // Set secure HTTP-only cookie
+      res.cookie('dright_session', sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/'
+      });
+
       res.json(ApiResponseHelper.success({
         user,
+        authenticated: true,
         message: 'Wallet connected successfully'
       }));
     } catch (error) {
       console.error('Wallet connection error:', error);
       res.status(500).json(ApiResponseHelper.error('Failed to connect wallet'));
     }
+  }));
+
+  // Check current authentication status and get user from session
+  app.get('/api/auth/me', asyncHandler(async (req: any, res: any) => {
+    const sessionToken = req.cookies?.dright_session;
+    
+    if (!sessionToken) {
+      return res.status(401).json(ApiResponseHelper.error('Not authenticated'));
+    }
+
+    try {
+      const user = await sessionManager.getUserFromSession(sessionToken);
+      
+      if (user) {
+        res.json(ApiResponseHelper.success({ user, authenticated: true }));
+      } else {
+        // Clear invalid cookie
+        res.clearCookie('dright_session');
+        res.status(401).json(ApiResponseHelper.error('Session expired'));
+      }
+    } catch (error) {
+      console.error('Error fetching user from session:', error);
+      res.clearCookie('dright_session');
+      res.status(401).json(ApiResponseHelper.error('Authentication failed'));
+    }
+  }));
+
+  // Logout endpoint
+  app.post('/api/auth/logout', asyncHandler(async (req: any, res: any) => {
+    const sessionToken = req.cookies?.dright_session;
+    
+    if (sessionToken) {
+      await sessionManager.destroySession(sessionToken);
+    }
+    
+    res.clearCookie('dright_session');
+    res.json(ApiResponseHelper.success({ message: 'Logged out successfully' }));
   }));
 
   // Get user by wallet address (for checking if user exists)

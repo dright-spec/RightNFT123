@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, ReactNode, useState } from 'react'
 import { WagmiProvider, useAccount, useDisconnect, useConnect, useBalance, useChainId, useSwitchChain } from 'wagmi'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { config } from '@/lib/walletconnect'
 
 // Create React Query client
@@ -48,7 +48,115 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   const { disconnect } = useDisconnect()
   const { isPending: isConnecting } = useConnect()
   const { switchChain } = useSwitchChain()
-  const [account, setAccount] = React.useState<any>(null)
+  const [account, setAccount] = useState<any>(null)
+
+  // Check for existing session on app load
+  const { data: sessionUser, error: sessionError, isLoading: sessionLoading } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error('Not authenticated');
+      }
+      return response.json();
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+
+  // Update account state when session data changes
+  useEffect(() => {
+    if (sessionUser?.user && !sessionError) {
+      setAccount({
+        ...sessionUser.user,
+        isConnected: true,
+        userId: sessionUser.user.id
+      });
+      console.log('Session restored for user:', sessionUser.user.username);
+    } else if (sessionError || sessionUser === null) {
+      // No valid session, clear account
+      if (account) {
+        setAccount(null);
+        console.log('Session expired or invalid, user logged out');
+      }
+    }
+  }, [sessionUser, sessionError, account])
+
+  // Auto-connect when wallet connects if no session exists
+  useEffect(() => {
+    if (isConnected && address && !account && !sessionLoading) {
+      console.log('Wallet connected but no session, auto-registering...');
+      handleWalletConnect(address);
+    }
+  }, [isConnected, address, account, sessionLoading])
+
+  // Handle wallet connection and registration
+  const handleWalletConnect = async (walletAddress: string) => {
+    try {
+      const hederaAccountId = walletAddress.startsWith('hedera:') 
+        ? walletAddress.split(':')[2] 
+        : undefined;
+
+      const response = await fetch('/api/auth/wallet-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress,
+          hederaAccountId,
+          walletType: 'hashpack',
+        }),
+        credentials: 'include' // Include cookies
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setAccount({
+          ...data.data.user,
+          isConnected: true,
+          userId: data.data.user.id
+        });
+        console.log('User registered/logged in successfully:', data.data.user.username);
+        
+        // Refresh session query to update UI  
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      } else {
+        console.error('Wallet connection failed:', data.message);
+      }
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+    }
+  };
+
+  // Enhanced disconnect function
+  const handleDisconnect = async () => {
+    try {
+      // Call logout endpoint to destroy session
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      // Clear local state
+      setAccount(null);
+      
+      // Disconnect wallet
+      disconnect();
+      
+      // Clear query cache
+      queryClient.clear();
+      
+      console.log('User logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still clear local state even if API call fails
+      setAccount(null);
+      disconnect();
+    }
+  };
   
   const { data: balanceData, isLoading: isBalanceLoading } = useBalance({
     address: address,
@@ -85,8 +193,8 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
   }
   
   const contextValue: WalletContextType = {
-    isConnected,
-    address,
+    isConnected: account?.isConnected || false,
+    address: account?.walletAddress || address,
     chainId,
     isConnecting,
     balance,
@@ -95,7 +203,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
     setAccount,
     isHedera,
     networkName,
-    disconnect,
+    disconnect: handleDisconnect,
     switchToHedera,
     switchToMainnet,
   }

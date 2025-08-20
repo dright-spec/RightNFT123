@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, log } from "./vite";
 import { configureProductionSecurity, setupErrorHandling, setupHealthCheck } from "./productionConfig";
@@ -18,6 +19,9 @@ declare module 'express-session' {
 
 const app = express();
 
+// Cookie parsing middleware for session management
+app.use(cookieParser());
+
 // Session middleware for authentication
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret-key',
@@ -26,7 +30,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   }
 }));
 
