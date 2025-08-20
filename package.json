@@ -78,6 +78,7 @@
     "framer-motion": "^11.13.1",
     "ganache": "^7.9.2",
     "hardhat": "^2.26.1",
+    "hashconnect": "^3.0.13",
     "helmet": "^8.1.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.453.0",
