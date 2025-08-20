@@ -1,0 +1,258 @@
+here’s a tight, machine-to-machine playbook that makes WalletConnect’s modal prefer & detect HashPack on Hedera, then signs a message. it’s step-wise + complete, with minimal surface area and no placeholders in the code (secrets come from env).
+
+step-by-step (for an AI)
+
+Install
+
+web app (React/Vite/Next) in browser context.
+
+add deps:
+
+npm i @walletconnect/sign-client @walletconnect/modal
+
+
+Create env
+
+add WC_PROJECT_ID to your runtime env (from Reown/WalletConnect Cloud).
+
+(optional) add HASHPACK_WALLET_ID if you already know it. If not, this flow will fetch it at runtime from the Explorer API.
+
+Use the Hedera namespace
+
+Hedera uses CAIP-2 chain refs like hedera:mainnet, hedera:testnet, etc., and Hedera-specific JSON-RPC methods such as hedera_signMessage, hedera_signTransaction, hedera_getNodeAddresses. 
+docs.reown.com
++1
+
+Prefer HashPack in the modal
+
+WalletConnect Modal lets you prioritize wallets with explorerRecommendedWalletIds. We’ll resolve the HashPack wallet’s Explorer ID at runtime so the modal highlights it first. (You can also hard-set it if you already have it.) 
+docs.reown.com
+
+Connection flow
+
+Initialize SignClient.
+
+Call signClient.connect({ requiredNamespaces }) with hedera namespace.
+
+If uri is returned, open the modal with that uri.
+
+Wait for approval() → you get a session.
+
+Detect HashPack via session.peer.metadata.name === 'HashPack' or its URL, then proceed. (Wallets expose name/icon/url in session metadata.)
+
+Sign a message
+
+Call client.request with method: 'hedera_signMessage' and params { signerAccountId, message }, using the session.topic. signerAccountId is like hedera:mainnet:0.0.1234. 
+docs.reown.com
+
+Disconnect
+
+signClient.disconnect({ topic: session.topic, reason }).
+
+drop-in code (TypeScript, browser)
+
+Create a single module and a tiny UI component.
+
+src/wc-hed.ts
+import SignClient from "@walletconnect/sign-client";
+import { WalletConnectModal } from "@walletconnect/modal";
+
+type HederaChain = "hedera:mainnet" | "hedera:testnet" | "hedera:previewnet" | "hedera:devnet";
+
+const WC_PROJECT_ID = (import.meta as any).env?.WC_PROJECT_ID || (window as any).__WC_PROJECT_ID__;
+if (!WC_PROJECT_ID) throw new Error("WC_PROJECT_ID env var is required");
+
+// Optional: if you already know HashPack's explorer ID, set it here via env.
+// Otherwise, we will fetch it at runtime.
+const HASHPACK_WALLET_ID =
+  (import.meta as any).env?.HASHPACK_WALLET_ID || (window as any).__HASHPACK_WALLET_ID__ || "";
+
+const HEDERA_METHODS = [
+  "hedera_getNodeAddresses",
+  "hedera_signMessage",
+  "hedera_signTransaction",
+  "hedera_signAndExecuteTransaction",
+] as const;
+
+const DEFAULT_CHAINS: HederaChain[] = ["hedera:mainnet"];
+
+async function resolveHashPackExplorerId(projectId: string): Promise<string | null> {
+  if (HASHPACK_WALLET_ID) return HASHPACK_WALLET_ID;
+
+  // Query Explorer API for HashPack’s listing id (requires projectId)
+  // Docs: https://docs.reown.com/cloud/explorer
+  const url = new URL("https://explorer-api.walletconnect.com/v3/wallets");
+  url.searchParams.set("projectId", projectId);
+  url.searchParams.set("entries", "50");
+  url.searchParams.set("page", "1");
+  url.searchParams.set("search", "HashPack");
+
+  const res = await fetch(url.toString());
+  if (!res.ok) return null;
+  const json = await res.json();
+
+  // Find the first wallet named 'HashPack'
+  const hit = Array.isArray(json?.listings)
+    ? json.listings.find((w: any) => (w?.name || "").toLowerCase() === "hashpack")
+    : null;
+
+  return hit?.id || null;
+}
+
+export type WCSession = {
+  client: Awaited<ReturnType<typeof SignClient.init>>;
+  session: import("@walletconnect/types").SessionTypes.Struct;
+};
+
+export async function connectHashPack(opts?: {
+  chains?: HederaChain[];
+  themeMode?: "dark" | "light";
+}): Promise<WCSession> {
+  const chains = opts?.chains ?? DEFAULT_CHAINS;
+
+  const client = await SignClient.init({ projectId: WC_PROJECT_ID });
+
+  const hpId = await resolveHashPackExplorerId(WC_PROJECT_ID);
+
+  const modal = new WalletConnectModal({
+    projectId: WC_PROJECT_ID,
+    themeMode: opts?.themeMode ?? "dark",
+    // Put HashPack first if we have its explorer id.
+    explorerRecommendedWalletIds: hpId ? [hpId] : undefined,
+    // We only need the QR modal; AppKit/Modal handles listing & linking.
+  });
+
+  const { uri, approval } = await client.connect({
+    requiredNamespaces: {
+      hedera: {
+        methods: [...HEDERA_METHODS],
+        chains,
+        events: [], // Hedera doesn’t require EVM-style events
+      },
+    },
+  });
+
+  if (uri) {
+    await modal.openModal({ uri });
+  }
+
+  const session = await approval();
+  modal.closeModal();
+
+  // Soft detection: confirm the connected wallet is HashPack by metadata
+  const isHashPack =
+    (session.peer.metadata?.name || "").toLowerCase().includes("hashpack") ||
+    (session.peer.metadata?.url || "").toLowerCase().includes("hashpack");
+
+  if (!isHashPack && hpId) {
+    // If you strictly require HashPack, you could disconnect here.
+    // For general multi-wallet, keep the session.
+  }
+
+  return { client, session };
+}
+
+export async function signMessage(params: {
+  client: WCSession["client"];
+  session: WCSession["session"];
+  signerAccountId: string; // e.g. "hedera:mainnet:0.0.1234"
+  message: string;         // plain string; wallet will encode per spec
+}): Promise<string> {
+  const { client, session, signerAccountId, message } = params;
+
+  const signature = await client.request<string>({
+    topic: session.topic,
+    chainId: session.namespaces.hedera.accounts[0].split(":").slice(0, 2).join(":"), // "hedera:mainnet"
+    request: {
+      method: "hedera_signMessage",
+      params: { signerAccountId, message },
+    },
+  });
+
+  return signature;
+}
+
+export async function disconnect(params: { client: WCSession["client"]; session: WCSession["session"] }) {
+  const { client, session } = params;
+  await client.disconnect({
+    topic: session.topic,
+    reason: { code: 6000, message: "User disconnected" },
+  });
+}
+
+Minimal UI usage (React)
+// src/ConnectHashPackButton.tsx
+import { useState } from "react";
+import { connectHashPack, signMessage, disconnect, WCSession } from "./wc-hed";
+
+export default function ConnectHashPackButton() {
+  const [wc, setWc] = useState<WCSession | null>(null);
+  const [addr, setAddr] = useState<string>("");
+
+  const onConnect = async () => {
+    const session = await connectHashPack({ chains: ["hedera:mainnet"], themeMode: "dark" });
+    setWc(session);
+    // Example: derive the connected Hedera accountId (HIP-30 format)
+    const hederaAccount = session.session.namespaces.hedera.accounts[0]; // "hedera:mainnet:0.0.x"
+    setAddr(hederaAccount);
+  };
+
+  const onSign = async () => {
+    if (!wc || !addr) return;
+    const sig = await signMessage({
+      client: wc.client,
+      session: wc.session,
+      signerAccountId: addr, // e.g. "hedera:mainnet:0.0.1234"
+      message: "Hello from WalletConnect + HashPack",
+    });
+    console.log("signature:", sig);
+  };
+
+  const onDisconnect = async () => {
+    if (!wc) return;
+    await disconnect({ client: wc.client, session: wc.session });
+    setWc(null);
+    setAddr("");
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      {!wc ? (
+        <button onClick={onConnect}>Connect HashPack</button>
+      ) : (
+        <>
+          <span>{addr}</span>
+          <button onClick={onSign}>Sign message</button>
+          <button onClick={onDisconnect}>Disconnect</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+How this guarantees “HashPack detection”
+
+The modal prioritizes HashPack using explorerRecommendedWalletIds (we fetch HashPack’s Explorer ID dynamically with your WC_PROJECT_ID). 
+docs.reown.com
++1
+
+After approval, the WalletConnect session includes wallet metadata; we verify session.peer.metadata.name / url contains “HashPack”.
+
+If you must restrict to HashPack only, add a guard after approval and disconnect otherwise.
+
+references (key specs)
+
+Hedera RPC methods + parameter shapes (hedera_signMessage, hedera_signTransaction, etc.). 
+docs.reown.com
+
+Hedera namespace & chain refs (e.g., hedera:mainnet). 
+docs.reown.com
+
+WalletConnect Modal options including explorerRecommendedWalletIds. 
+docs.reown.com
+
+Explorer API for resolving wallet IDs (HashPack) by name. 
+docs.reown.com
+
+HashPack confirms full WalletConnect compatibility. 
+docs.hashpack.app

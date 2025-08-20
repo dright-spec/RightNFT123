@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -12,7 +12,8 @@ import { Wallet, LogOut, Copy, ExternalLink, Settings } from 'lucide-react'
 import { useWallet } from '@/contexts/WalletContext'
 import { useAppKit } from '@reown/appkit/react'
 import { useToast } from '@/hooks/use-toast'
-import { HashPackConnector } from '@/components/HashPackConnector'
+import { HashPackWalletConnect } from '@/components/HashPackWalletConnect'
+import { WCSession } from '@/lib/wc-hedera'
 
 export function WalletButton() {
   const { 
@@ -27,6 +28,7 @@ export function WalletButton() {
   
   const { open } = useAppKit()
   const { toast } = useToast()
+  const [wcSession, setWcSession] = useState<WCSession | null>(null)
   
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`
@@ -68,16 +70,23 @@ export function WalletButton() {
     }
   }
   
-  const handleHashPackConnect = (accountId: string) => {
+  const handleHashPackConnect = (session: WCSession, accountId: string) => {
     console.log('HashPack connected with account:', accountId)
-    // The connection will be handled by the HashPack extension
+    setWcSession(session)
   }
 
-  if (!isConnected) {
+  const handleHashPackDisconnect = () => {
+    setWcSession(null)
+  }
+
+  if (!isConnected && !wcSession) {
     return (
       <div className="flex flex-col items-center gap-3">
         <div className="flex gap-2">
-          <HashPackConnector onConnect={handleHashPackConnect} />
+          <HashPackWalletConnect 
+            onConnect={handleHashPackConnect}
+            onDisconnect={handleHashPackDisconnect}
+          />
           <Button 
             onClick={() => open()} 
             variant="outline"
@@ -93,7 +102,18 @@ export function WalletButton() {
       </div>
     )
   }
+
+  // If HashPack is connected via WalletConnect, show HashPack component
+  if (wcSession) {
+    return (
+      <HashPackWalletConnect 
+        onConnect={handleHashPackConnect}
+        onDisconnect={handleHashPackDisconnect}
+      />
+    )
+  }
   
+  // Regular wallet connection (non-HashPack WalletConnect)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
