@@ -1,10 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
-import { Wallet, Smartphone, Download, QrCode } from 'lucide-react'
+import { Wallet, Smartphone, Download, QrCode, Bug } from 'lucide-react'
 import { hashPackWallet } from '@/lib/hashpack-wallet'
 import { useToast } from '@/hooks/use-toast'
+import { debugBrowserWallets, checkHashPackExtension } from '@/lib/browser-debug'
+import { BrowserDebugPanel } from '@/components/BrowserDebugPanel'
 
 interface HashPackConnectorProps {
   onConnect: (accountId: string) => void
@@ -13,7 +15,23 @@ interface HashPackConnectorProps {
 export function HashPackConnector({ onConnect }: HashPackConnectorProps) {
   const [isConnecting, setIsConnecting] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [showDebug, setShowDebug] = useState(false)
   const { toast } = useToast()
+
+  useEffect(() => {
+    // Debug what's available in the browser
+    const walletDebug = debugBrowserWallets()
+    const hashPackDebug = checkHashPackExtension()
+    
+    setDebugInfo({
+      wallets: walletDebug,
+      hashpack: hashPackDebug
+    })
+    
+    console.log('Browser wallet debug:', walletDebug)
+    console.log('HashPack extension debug:', hashPackDebug)
+  }, [])
 
   const handleExtensionConnect = async () => {
     setIsConnecting(true)
@@ -133,6 +151,9 @@ export function HashPackConnector({ onConnect }: HashPackConnectorProps) {
               </a>
             </p>
           </div>
+
+          {/* Debug Panel */}
+          <BrowserDebugPanel />
         </div>
       </DialogContent>
     </Dialog>

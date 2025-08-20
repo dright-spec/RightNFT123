@@ -33,11 +33,30 @@ export class HashPackWallet {
   }
 
   private checkHashPackAvailability() {
-    // Check if HashPack extension is installed
-    if (typeof window !== 'undefined' && (window as any).hashconnect) {
-      console.log("HashPack extension detected")
-      return true
+    if (typeof window === 'undefined') return false
+    
+    const windowObj = window as any
+    
+    // Check multiple possible HashPack objects
+    const hashPackObjects = [
+      windowObj.hashpack,
+      windowObj.HashPack,
+      windowObj.hashconnect,
+      windowObj.HashConnect,
+      windowObj.hc,
+      // Check if ethereum provider is HashPack
+      windowObj.ethereum?.isHashPack ? windowObj.ethereum : null,
+      // Check for HashPack specific methods on ethereum object
+      windowObj.ethereum?.hashpack,
+    ]
+    
+    for (const obj of hashPackObjects) {
+      if (obj && typeof obj === 'object') {
+        console.log("HashPack-like object found:", obj)
+        return true
+      }
     }
+    
     return false
   }
 
@@ -49,16 +68,55 @@ export class HashPackWallet {
   // Connect to HashPack via WalletConnect or extension
   async connect(): Promise<boolean> {
     try {
-      // Try to connect to HashPack extension first
-      if (typeof window !== 'undefined') {
-        const hashpack = (window as any).hashpack
-        if (hashpack) {
-          const result = await hashpack.connect()
-          if (result.success) {
-            this.accounts = result.accounts || []
+      if (typeof window === 'undefined') return false
+      
+      const windowObj = window as any
+      
+      // Try different HashPack connection methods
+      const connectionMethods = [
+        // Method 1: Direct hashpack object
+        async () => {
+          const hashpack = windowObj.hashpack
+          if (hashpack && hashpack.connect) {
+            const result = await hashpack.connect()
+            return result?.success ? { accounts: result.accounts } : null
+          }
+          return null
+        },
+        
+        // Method 2: HashConnect method
+        async () => {
+          const hashconnect = windowObj.hashconnect || windowObj.HashConnect
+          if (hashconnect && hashconnect.connect) {
+            const result = await hashconnect.connect()
+            return result?.success ? { accounts: result.accounts } : null
+          }
+          return null
+        },
+        
+        // Method 3: Ethereum provider with HashPack identification
+        async () => {
+          const ethereum = windowObj.ethereum
+          if (ethereum && (ethereum.isHashPack || ethereum.hashpack)) {
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
+            return accounts?.length > 0 ? { accounts: accounts.map((acc: string) => ({ accountId: acc })) } : null
+          }
+          return null
+        }
+      ]
+      
+      for (const method of connectionMethods) {
+        try {
+          const result = await method()
+          if (result && result.accounts?.length > 0) {
+            this.accounts = result.accounts
             this.isConnectedState = true
+            console.log("HashPack connected successfully:", result.accounts)
             return true
           }
+        } catch (methodError) {
+          console.log("Connection method failed:", methodError)
+          continue
         }
       }
       
