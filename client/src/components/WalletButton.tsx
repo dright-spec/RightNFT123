@@ -69,13 +69,18 @@ export function WalletButton() {
   
   if (!isConnected) {
     return (
-      <Button 
-        onClick={() => open()} 
-        className="gap-2"
-      >
-        <Wallet className="w-4 h-4" />
-        Connect Wallet
-      </Button>
+      <div className="flex flex-col items-center gap-2">
+        <Button 
+          onClick={() => open()} 
+          className="gap-2"
+        >
+          <Wallet className="w-4 h-4" />
+          Connect Wallet
+        </Button>
+        <p className="text-xs text-muted-foreground text-center">
+          Optimized for HashPack & Hedera wallets
+        </p>
+      </div>
     )
   }
   
