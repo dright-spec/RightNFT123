@@ -912,7 +912,7 @@ export default function CreateRight() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-              <Web3ModalConnectButton />
+              <WalletButton />
             </div>
           </div>
         </div>
