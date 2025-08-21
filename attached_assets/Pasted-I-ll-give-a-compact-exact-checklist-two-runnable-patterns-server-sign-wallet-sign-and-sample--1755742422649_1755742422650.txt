@@ -1,0 +1,263 @@
+I’ll give a compact, exact checklist + two runnable patterns (server-sign + wallet-sign) and sample code you can drop into Node. Key rules & sources first:
+
+The mint operation for NFTs requires the supply key to sign; if no supply key the mint fails. 
+Hedera
+
+Each on-chain NFT metadata blob is limited to 100 bytes — store full metadata off-chain and put a short pointer on-chain (IPFS/HFS). 
+Hedera
+Hedera
+
+Use HIP-412 (Token Metadata JSON Schema v2) to structure name, description, image, and a properties object where you put the rights bundle (terms URL, license type, attribution, permitted uses, expiration, etc.). 
+Hiero Improvement Proposals
+
+If you want the wallet (HashPack) to sign the mint, use the WalletConnect Hedera RPC hedera_signAndExecuteTransaction. 
+Reown Docs
+
+1) Rights metadata — HIP-412 example (off-chain JSON)
+
+Put all rights info in the JSON properties.rights block. Keep on-chain bytes short (pointer only).
+
+Example JSON (pin this to IPFS or HFS):
+
+{
+  "name": "Righted Artwork #1",
+  "description": "Artwork minted from a granted 'right to generate' license.",
+  "image": "ipfs://bafybeiexamplePrimaryImageCid",
+  "type": "image",
+  "properties": {
+    "rights": {
+      "rightType": "commercial-license",
+      "grantee": "0.0.12345",
+      "granter": "Creator Name",
+      "termsUrl": "ipfs://bafybeiexampleLicenseCid",
+      "allowedUses": ["display", "sell", "sublicense"],
+      "exclusive": false,
+      "expiration": "2027-12-31T23:59:59Z",
+      "royaltyPercent": 5,
+      "attribution": "© Creator Name"
+    },
+    "workRefs": ["ipfs://bafybeisource1","ipfs://bafybeisource2"]
+  },
+  "attributes":[
+    {"trait_type":"Edition","value":"1/1"}
+  ]
+}
+
+
+Pin it (IPFS) and get ipfs://bafy... — that URI will be the on-chain metadata pointer (must fit ≤100 bytes). If the pointer would exceed 100 bytes, use Hedera File Service (HFS) and put https://files.hedera.com/<fileId> or hfs://0.0.X shorter pointer (HFS is recommended for metadata up to ~30KB). 
+Hedera
+
+2) Token collection basics (HTS)
+
+For an NFT collection, TokenCreateTransaction must set tokenType = NON_FUNGIBLE_UNIQUE, decimals = 0, initialSupply = 0. You must set a supplyKey (the key that can mint). The treasury receives minted supply. 
+Hedera
++1
+
+If you already have the token ID, skip to mint. If not, create:
+
+// createCollection.js (Node)
+const {
+  Client, PrivateKey, TokenCreateTransaction,
+  TokenType, TokenSupplyType, Hbar
+} = require("@hashgraph/sdk");
+
+async function createCollection({
+  network = "testnet",
+  operatorAccountId,        // e.g. "0.0.1001" (process.env.OPERATOR_ID)
+  operatorPrivateKey,       // PrivateKey.fromString(process.env.OPERATOR_KEY)
+  name = "Rights NFT Collection",
+  symbol = "RGT",
+  maxSupply = 1000
+}) {
+  const client = network === "mainnet"
+    ? Client.forMainnet()
+    : Client.forTestnet();
+
+  client.setOperator(operatorAccountId, operatorPrivateKey);
+
+  // Use operator as treasury + supply key in this example:
+  const tx = await new TokenCreateTransaction()
+    .setTokenName(name)
+    .setTokenSymbol(symbol)
+    .setTokenType(TokenType.NonFungibleUnique)
+    .setDecimals(0)
+    .setInitialSupply(0)
+    .setTreasuryAccountId(operatorAccountId)
+    .setSupplyType(TokenSupplyType.Finite)
+    .setMaxSupply(maxSupply)
+    .setSupplyKey(operatorPrivateKey.publicKey) // public-side set
+    .setMaxTransactionFee(new Hbar(2))
+    .freezeWith(client);
+
+  // sign with the supply (private) key and treasury (operator) as needed:
+  const signed = await tx.sign(operatorPrivateKey);
+  const resp = await signed.execute(client);
+  const receipt = await resp.getReceipt(client);
+  return receipt.tokenId.toString(); // e.g. "0.0.123456"
+}
+
+
+Notes:
+
+If supplyKey is NOT set you cannot mint later (error TOKEN_HAS_NO_SUPPLY_KEY). 
+Hedera
+
+3) Minting the NFT (server-signed flow)
+
+Server has the supply private key and calls HTS directly.
+
+// mintServer.js
+const {
+  Client, PrivateKey, TokenMintTransaction, TokenId, TransactionId, AccountId
+} = require("@hashgraph/sdk");
+
+/**
+ * mintOneNFT:
+ *  - tokenId: "0.0.12345"
+ *  - treasuryAccountId: "0.0.1001" (must be associated and hold supplyKey)
+ *  - supplyPrivateKey: PrivateKey instance that is the token's supply key
+ *  - metadataPointer: small string pointer e.g. "ipfs://bafybeiexampleCid"
+ */
+async function mintOneNFT({
+  network = "testnet",
+  operatorAccountId,
+  operatorPrivateKey,
+  tokenId,
+  treasuryAccountId,
+  supplyPrivateKey,
+  metadataPointer
+}) {
+  const client = network === "mainnet" ? Client.forMainnet() : Client.forTestnet();
+  client.setOperator(operatorAccountId, operatorPrivateKey);
+
+  // Ensure metadataPointer length <= 100 bytes
+  if (Buffer.byteLength(metadataPointer, "utf8") > 100) {
+    throw new Error("metadata pointer exceeds 100 bytes - use HFS or shorten pointer");
+  }
+
+  // Create Mint transaction with the pointer as metadata (NFT uses metadata bytes[])
+  const mintTx = await new TokenMintTransaction()
+    .setTokenId(TokenId.fromString(tokenId))
+    .setMetadata([Buffer.from(metadataPointer, "utf8")]) // single NFT
+    .setTransactionId(TransactionId.generate(AccountId.fromString(treasuryAccountId)))
+    .freezeWith(client);
+
+  // must be signed by the supply key (and transaction fee payer)
+  const signed = await mintTx.sign(supplyPrivateKey);
+  const submit = await signed.execute(client);
+  const receipt = await submit.getReceipt(client);
+
+  // receipt contains the minted serial number(s)
+  // in SDK the receipt will include serials; print them
+  console.log("mint status:", receipt.status.toString());
+  console.log("serials:", receipt.serials || receipt.serialNumbers || receipt);
+  return receipt;
+}
+
+
+Important:
+
+Each metadata entry in setMetadata([...]) produces one NFT and each entry must be ≤100 bytes. To mint multiple tokens in one tx supply an array of pointers. 
+Hedera
+
+To obtain the minted token serial number(s) query the receipt (mirror node or SDK getReceipt). 
+Unicorn Ultra
+
+4) Minting when the wallet must sign (wallet-sign flow)
+
+If the supply key is held in the user’s wallet (HashPack), you must build and freeze an unsigned TokenMintTransaction, serialize it to bytes, pack it into a Hedera TransactionList (one per target node), Base64 it, and call the wallet via WalletConnect hedera_signAndExecuteTransaction. Use the Hedera WalletConnect helper lib to avoid protobuf mistakes.
+
+Flow (high level):
+
+Build & freezeWith(client) the TokenMintTransaction (same as server code).
+
+const txBytes = await mintTx.toBytes() (Uint8Array)
+
+Build a TransactionList (wrap txBytes — different nodeAccountIds OK) and Base64 it (use helper lib @momental-org/hedera-wallet-connect or hashgraph/hedera-wallet-connect).
+
+Call signClient.request({ topic, chainId, request: { method: "hedera_signAndExecuteTransaction", params: { transactionList: txListBase64, signerAccountId } } }). The wallet will show the request; the user approves; wallet signs with the supply key and submits; the result returns txId/status. 
+Reown Docs
+npm
+
+Short code sketch (assumes you have active WalletConnect signClient and session):
+
+// walletMintSketch.js (conceptual)
+const tx = await new TokenMintTransaction()
+  .setTokenId(tokenId)
+  .setMetadata([Buffer.from(metadataPointer)])
+  .setTransactionId(TransactionId.generate(AccountId.fromString(treasuryAccountId)))
+  .freezeWith(client);
+
+const txBytes = await tx.toBytes(); // Uint8Array
+
+// use a helper to create TransactionList base64
+const HederaWC = require("@momental-org/hedera-wallet-connect");
+const hwc = new HederaWC();
+const txListBase64 = hwc.makeTransactionListBase64([txBytes]);
+
+const result = await signClient.request({
+  topic: session.topic,
+  chainId: "hedera:testnet",
+  request: {
+    method: "hedera_signAndExecuteTransaction",
+    params: { signerAccountId: treasuryAccountId.replace("hedera:testnet:", ""), transactionList: txListBase64 }
+  }
+});
+
+// result will include transactionId / nodeId / transactionHash
+
+
+If you use the wallet route, make sure:
+
+session.namespaces included hedera chain and allowed methods including hedera_signAndExecuteTransaction.
+
+topic used in request matches the session topic.
+
+transactionList is valid Base64 of a Hedera TransactionList (use the helper libs). 
+Reown Docs
+npm
+
+5) Practical rules / gotchas (do these or fail)
+
+Supply key must sign the mint. If supply key is on wallet, wallet must sign (wallet route). If your server signs, server must hold supply private key. 
+Hedera
+
+Metadata pointer ≤ 100 bytes. If you need bigger metadata, pin JSON to HFS or IPFS and put a short pointer on-chain. HIP-412 is the recommended schema for the JSON. 
+Hedera
+Hiero Improvement Proposals
+
+Each setMetadata([...]) element = one NFT serial number minted; you can mint many in one tx but each entry limited to 100 bytes. 
+Hedera
+
+If you want metadata updatability, add a metadataKey at token creation and use TokenUpdateNftsTransaction signed by that key; otherwise metadata is immutable. 
+Docs.rs
+
+After mint, read the receipt / mirror node to get serial(s) and then store those serial numbers linked to the rights JSON (off-chain DB). 
+Unicorn Ultra
+
+6) Quick checklist to prove it worked
+
+Mint tx response contains transactionId → query mirror node for receipt.
+
+Receipt shows status: SUCCESS and serials (the new serial number(s)). 
+Unicorn Ultra
+
+Off-chain DB now stores { tokenId, serial, ipfsUri, rightsJsonCid, ownerAccount } — this is what marketplaces/wallets will use to show rights.
+
+References (core)
+
+HTS Mint rules / supply key requirement. 
+Hedera
+
+HTS TokenMint metadata size / behavior. 
+Hedera
+
+HIP-412 metadata JSON schema (rights go in properties). 
+Hiero Improvement Proposals
+
+Create token / HTS TokenCreate basics (NFT collection config). 
+Hedera
+
+WalletConnect <> Hedera RPC (hedera_signAndExecuteTransaction) and helper libs. 
+Reown Docs
+npm

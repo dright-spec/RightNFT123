@@ -1057,7 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: "TokenMintTransaction", 
             name: right.title || `Right #${rightId}`,
             symbol: right.symbol || `DRIGHT${rightId}`,
-            tokenId: "0.0.123456", // In production, use existing token collection
+            tokenId: process.env.HEDERA_NFT_COLLECTION_ID || "0.0.123456", // Use configured collection ID
             memo: `Dright NFT - ${right.title || 'Digital Rights'}`,
             initialSupply: 1,
             decimals: 0,
