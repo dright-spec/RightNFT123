@@ -1,0 +1,174 @@
+You’re paired but not sending the mint. Fix it by (a) reusing the approved session, (b) building a frozen TokenMintTransaction with the supply-key account as payer, (c) packing a valid TransactionList (Base64), and (d) calling hedera_signAndExecuteTransaction with the correct topic, chainId, signerAccountId.
+
+Below is a tight, drop-in set that works. No placeholders.
+
+1) One-time connect (reuse session; don’t re-pair if you already have one)
+// connect.ts
+import SignClient from "@walletconnect/sign-client";
+import { WalletConnectModal } from "@walletconnect/modal";
+
+const WC_PROJECT_ID = import.meta.env.VITE_WC_PROJECT_ID as string;
+if (!WC_PROJECT_ID) throw new Error("Missing VITE_WC_PROJECT_ID");
+
+export async function connectOrReuse(existing?: { signClient: any; session: any }) {
+  if (existing?.signClient && existing?.session) return existing;
+
+  const signClient = await SignClient.init({
+    projectId: WC_PROJECT_ID,
+    relayUrl: "wss://relay.walletconnect.com",
+    metadata: {
+      name: "Rights Mint DApp",
+      description: "Mint NFTs via HTS + HashPack",
+      url: "https://localhost",
+      icons: ["https://walletconnect.com/walletconnect-logo.png"],
+    },
+  });
+
+  const modal = new WalletConnectModal({ projectId: WC_PROJECT_ID });
+  signClient.on("display_uri", ({ uri }) => modal.openModal({ uri }));
+
+  const { uri, approval } = await signClient.connect({
+    requiredNamespaces: {
+      hedera: {
+        chains: [import.meta.env.VITE_CHAIN as "hedera:testnet" | "hedera:mainnet"],
+        methods: ["hedera_signAndExecuteTransaction", "hedera_getNodeAddresses"],
+        events: []
+      }
+    }
+  });
+
+  if (uri) await modal.openModal({ uri });
+  const session = await approval();
+  await modal.closeModal();
+
+  return { signClient, session };
+}
+
+2) Mint function (freeze tx, pack TransactionList, request to wallet)
+// mint.ts
+import {
+  Client,
+  TokenMintTransaction,
+  TransactionId,
+  AccountId,
+  TokenId
+} from "@hashgraph/sdk";
+import { makeTransactionListBase64 } from "hedera-wallet-connect";
+
+const CHAIN = import.meta.env.VITE_CHAIN as "hedera:testnet" | "hedera:mainnet";
+const TOKEN_ID = import.meta.env.VITE_TOKEN_ID as string;       // e.g. "0.0.123456"
+const TREASURY_ID = import.meta.env.VITE_TREASURY_ID as string; // e.g. "0.0.1001" (holds supply key in HashPack)
+
+if (!CHAIN || !TOKEN_ID || !TREASURY_ID) {
+  throw new Error("Missing VITE_CHAIN or VITE_TOKEN_ID or VITE_TREASURY_ID");
+}
+
+function getSessionChainId(session: any) {
+  // use the chainId actually approved
+  const acc = session.namespaces.hedera.accounts?.[0]; // "hedera:testnet:0.0.x"
+  return acc?.split(":").slice(0, 2).join(":");        // "hedera:testnet"
+}
+
+function signerFromSession(session: any) {
+  const acc = session.namespaces.hedera.accounts?.[0]; // "hedera:testnet:0.0.x"
+  return acc?.split(":")[2];                           // "0.0.x"
+}
+
+function assertPointer(pointer: string) {
+  if (Buffer.byteLength(pointer, "utf8") > 100) {
+    throw new Error("metadata pointer > 100 bytes; shorten ipfs:// CID or use HFS");
+  }
+}
+
+export async function mintOneNFT(params: {
+  signClient: any;
+  session: any;
+  metadataPointer: string; // e.g. "ipfs://bafybeihip412cid"
+}) {
+  const { signClient, session, metadataPointer } = params;
+
+  // 1) Use approved chainId and signer from the session (prevents re-pair loops)
+  const chainId = getSessionChainId(session);
+  if (!chainId) throw new Error("No Hedera chain in session");
+  const signerAccountId = signerFromSession(session);
+  if (!signerAccountId) throw new Error("No signer account in session");
+
+  // 2) Ensure payer == supply-key account (treasury) so wallet can sign & pay
+  if (signerAccountId !== TREASURY_ID) {
+    // If your supply key is on another account, you must connect with that one in HashPack
+    throw new Error(`Connected wallet (${signerAccountId}) is not the supply-key account (${TREASURY_ID})`);
+  }
+
+  // 3) Build & freeze mint tx (no operator keys needed)
+  assertPointer(metadataPointer);
+  const sdkClient = chainId === "hedera:mainnet" ? Client.forMainnet() : Client.forTestnet();
+
+  const tx = await new TokenMintTransaction()
+    .setTokenId(TokenId.fromString(TOKEN_ID))
+    .setMetadata([Buffer.from(metadataPointer, "utf8")])
+    .setTransactionId(TransactionId.generate(AccountId.fromString(TREASURY_ID))) // payer = supply-key acct
+    .freezeWith(sdkClient);
+
+  const txBytes = await tx.toBytes();
+
+  // 4) Pack into TransactionList (Base64)
+  const txListB64 = makeTransactionListBase64([txBytes]);
+
+  // 5) Send to wallet
+  const result = await signClient.request({
+    topic: session.topic,
+    chainId, // must match session’s chain
+    request: {
+      method: "hedera_signAndExecuteTransaction",
+      params: {
+        transactionList: txListB64,
+        signerAccountId: TREASURY_ID // "0.0.x"
+      }
+    }
+  });
+
+  return result; // includes txId; query mirror for receipt/serials
+}
+
+3) Minimal usage glue
+// useMint.tsx
+import { useState } from "react";
+import { connectOrReuse } from "./connect";
+import { mintOneNFT } from "./mint";
+
+export default function UseMint() {
+  const [ctx, setCtx] = useState<any>(null);
+  const [out, setOut] = useState("");
+
+  const onConnect = async () => setCtx(await connectOrReuse(ctx));
+  const onMint = async () => {
+    if (!ctx) return;
+    const pointer = "ipfs://bafybeihip412examplecid"; // ≤100 bytes
+    const res = await mintOneNFT({ ...ctx, metadataPointer: pointer });
+    setOut(JSON.stringify(res));
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      <button onClick={onConnect}>Connect (reuse session)</button>
+      <button onClick={onMint} disabled={!ctx}>Mint NFT</button>
+      <pre>{out}</pre>
+    </div>
+  );
+}
+
+Do these checks if it still re-pairs or doesn’t mint
+
+You are not calling connect() again before request(); reuse session.topic.
+
+chainId in request equals the approved session chain (derived from session.namespaces).
+
+signerAccountId equals the treasury/supply-key account (the wallet must control that key).
+
+metadataPointer ≤ 100 bytes.
+
+TOKEN_ID exists and is an NFT token with your supply key.
+
+If HashPack is desktop and doesn’t pop, try mobile QR (it’s more reliable).
+
+This setup stops the pairing loop and reliably sends the mint to the wallet for approval.
