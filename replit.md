@@ -6,7 +6,9 @@ Dright is a web3 marketplace for tokenizing and trading legal rights as NFTs on 
 
 ## Recent Changes (August 2025)
 
-✅ **Seamless HashPack Wallet Onboarding Completed** - Users can now connect HashPack via WalletConnect and are automatically registered in the database with immediate dashboard redirect. Full user registration and authentication flow working perfectly.
+✅ **Hedera Mainnet Integration** - Implemented proper Hedera Token Service (HTS) NFT minting with HIP-412 compliant metadata for mainnet deployment. Server-side minting approach with supply key management for production-ready rights NFTs.
+
+✅ **Professional NFT Rights Architecture** - Built comprehensive metadata structure following HIP-412 V2 specifications with rights data in properties block, IPFS metadata pinning, and proper token collection management.
 
 ## User Preferences
 

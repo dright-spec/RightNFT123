@@ -214,5 +214,5 @@ export class HederaNFTService {
   }
 }
 
-// Singleton service
-export const hederaNFTService = new HederaNFTService("testnet");
+// Singleton service for mainnet
+export const hederaNFTService = new HederaNFTService("mainnet");

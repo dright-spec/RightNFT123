@@ -118,7 +118,7 @@ function RightCard({ right }: RightCardProps) {
             const metadata = hederaNFTService.createHIP412Metadata({
               name: hederaTransaction.name,
               description: `${right.description} - Digital rights NFT minted on Dright platform`,
-              creator: account?.displayName || 'Dright User',
+              creator: account?.username || 'Dright User',
               rightType: right.type,
               imageUrl: right.imageUrl || `https://via.placeholder.com/400x300?text=${encodeURIComponent(right.type)}`,
               allowedUses: ["display", "sell", "sublicense"],
