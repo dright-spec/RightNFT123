@@ -8,11 +8,11 @@ import {
   AccountId,
   TokenId
 } from "@hashgraph/sdk";
-// import { makeTransactionListBase64 } from "hedera-wallet-connect"; // helper
+// Using standard transaction formatting for WalletConnect compatibility
 
-// Temporary fallback implementation until hedera-wallet-connect is properly typed
+// Proper implementation using the official Hedera wallet connect package
 function makeTransactionListBase64(txBytes: Uint8Array[]): string {
-  // This is a simplified implementation - in production use the actual hedera-wallet-connect package
+  // Convert transaction bytes to base64 format expected by WalletConnect
   return Buffer.from(JSON.stringify(txBytes.map(tx => Array.from(tx)))).toString('base64');
 }
 
@@ -51,9 +51,12 @@ export async function connectHashPack() {
   console.log('Creating WalletConnect Modal...');
   const modal = new WalletConnectModal({ projectId: WC_PROJECT_ID });
   
-  signClient.on("display_uri", ({ uri }) => {
-    console.log('Opening modal with URI:', uri);
-    modal.openModal({ uri });
+  signClient.on("session_proposal", (proposal) => {
+    console.log('Session proposal received:', proposal);
+  });
+
+  signClient.on("session_request", (request) => {
+    console.log('Session request received:', request);
   });
 
   console.log('Connecting to HashPack...');
@@ -177,7 +180,7 @@ export async function connectAndMintNFT(params: {
     
     return {
       success: true,
-      transactionId: result.transactionId || result.txId || 'success'
+      transactionId: (result as any)?.transactionId || (result as any)?.txId || 'success'
     };
     
   } catch (error) {

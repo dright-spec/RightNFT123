@@ -49,6 +49,8 @@ interface RightCardProps {
     description: string;
     imageUrl?: string;
     createdAt: string;
+    hederaTokenId?: string;
+    hederaSerialNumber?: number;
   };
 }
 
@@ -176,7 +178,8 @@ function RightCard({ right }: RightCardProps) {
           
           return data;
         } catch (walletError) {
-          throw new Error('HashPack transaction failed: ' + walletError.message);
+          const errorMessage = walletError instanceof Error ? walletError.message : 'Unknown wallet error';
+          throw new Error('HashPack transaction failed: ' + errorMessage);
         }
       }
       

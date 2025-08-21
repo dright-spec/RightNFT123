@@ -81,7 +81,6 @@
     "ganache": "^7.9.2",
     "hardhat": "^2.26.1",
     "hashconnect": "^3.0.13",
-    "hedera-wallet-connect": "^0.0.1",
     "helmet": "^8.1.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.453.0",
