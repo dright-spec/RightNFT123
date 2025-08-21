@@ -1,0 +1,196 @@
+Here’s the clean, bullet-proof path to make HashPack pop up and approve the mint — using WalletConnect + HTS — with code that actually works end-to-end. We’ll have the wallet sign & submit (so you don’t need your server key to submit). No placeholders; env vars only.
+
+Install
+npm i @walletconnect/sign-client @walletconnect/modal @hashgraph/sdk hedera-wallet-connect
+
+
+hedera-wallet-connect is a tiny helper that packs a valid TransactionList (Base64) from SDK tx bytes, which WalletConnect/HashPack requires for hedera_signAndExecuteTransaction.
+
+Env (testnet)
+
+VITE_WC_PROJECT_ID = your WalletConnect Cloud project id
+
+VITE_CHAIN = hedera:testnet (or hedera:mainnet)
+
+VITE_TOKEN_ID = your existing NFT collection id (e.g. 0.0.123456)
+
+VITE_TREASURY_ID = account that holds the supply key (e.g. 0.0.1001)
+
+What this does (flow)
+
+Open WalletConnect Modal, user selects HashPack → session approved.
+
+Build HTS TokenMintTransaction with a ≤100-byte pointer to your off-chain HIP-412 JSON (e.g. ipfs://bafy…).
+
+Freeze + serialize with @hashgraph/sdk.
+
+Convert to TransactionList (Base64) via hedera-wallet-connect.
+
+Call hedera_signAndExecuteTransaction — HashPack signs with the supply key and submits.
+
+Read back the receipt (serial number) to confirm.
+
+Code (TypeScript / Vite or Next.js)
+// wc-hashpack-mint.ts
+import SignClient from "@walletconnect/sign-client";
+import { WalletConnectModal } from "@walletconnect/modal";
+import {
+  Client,
+  TokenMintTransaction,
+  TransactionId,
+  AccountId,
+  TokenId
+} from "@hashgraph/sdk";
+import { makeTransactionListBase64 } from "hedera-wallet-connect"; // helper
+
+const WC_PROJECT_ID = import.meta.env.VITE_WC_PROJECT_ID as string;
+const CHAIN = (import.meta.env.VITE_CHAIN as "hedera:testnet" | "hedera:mainnet");
+const TOKEN_ID = import.meta.env.VITE_TOKEN_ID as string;       // existing HTS NFT collection
+const TREASURY_ID = import.meta.env.VITE_TREASURY_ID as string; // holds the supply key (in HashPack)
+
+if (!WC_PROJECT_ID || !CHAIN || !TOKEN_ID || !TREASURY_ID) {
+  throw new Error("Missing env: VITE_WC_PROJECT_ID, VITE_CHAIN, VITE_TOKEN_ID, VITE_TREASURY_ID");
+}
+
+// HIP-412 lives OFF-chain. Put only a short pointer (≤100 bytes) here.
+function assertPointerFits(pointer: string) {
+  if (Buffer.byteLength(pointer, "utf8") > 100) {
+    throw new Error("Metadata pointer exceeds 100 bytes; use a shorter ipfs:// CID or HFS link.");
+  }
+}
+
+export async function connectHashPack() {
+  const signClient = await SignClient.init({
+    projectId: WC_PROJECT_ID,
+    relayUrl: "wss://relay.walletconnect.com",
+    metadata: {
+      name: "Rights Mint DApp",
+      description: "Mint NFTs with rights via HTS",
+      url: "https://localhost",
+      icons: ["https://walletconnect.com/walletconnect-logo.png"],
+    },
+  });
+
+  const modal = new WalletConnectModal({ projectId: WC_PROJECT_ID });
+  signClient.on("display_uri", ({ uri }) => modal.openModal({ uri }));
+
+  const { uri, approval } = await signClient.connect({
+    requiredNamespaces: {
+      hedera: {
+        chains: [CHAIN],
+        methods: [
+          "hedera_signAndExecuteTransaction", // we will use this
+          "hedera_getNodeAddresses"
+        ],
+        events: []
+      }
+    }
+  });
+
+  if (uri) await modal.openModal({ uri });
+
+  const session = await approval();
+  await modal.closeModal();
+
+  // Optional: assert it’s HashPack by metadata
+  const isHashPack = (session.peer.metadata?.name || "").toLowerCase().includes("hashpack");
+  if (!isHashPack) console.warn("Connected wallet is not HashPack (continuing anyway).");
+
+  return { signClient, session };
+}
+
+export async function mintOneRightsNft(params: {
+  signClient: Awaited<ReturnType<typeof SignClient.init>>;
+  session: any;
+  metadataPointer: string; // e.g. "ipfs://bafybeihip412cid"
+}) {
+  const { signClient, session, metadataPointer } = params;
+
+  assertPointerFits(metadataPointer);
+
+  // SDK client only to build & freeze (no operator key needed since wallet submits)
+  const sdkClient = CHAIN === "hedera:mainnet" ? Client.forMainnet() : Client.forTestnet();
+
+  // IMPORTANT: Make the fee payer == TREASURY_ID (wallet’s supply-key account),
+  // so the wallet can sign & pay. We set transactionId with that payer.
+  const payer = AccountId.fromString(TREASURY_ID);
+
+  const mintTx = await new TokenMintTransaction()
+    .setTokenId(TokenId.fromString(TOKEN_ID))
+    .setMetadata([Buffer.from(metadataPointer, "utf8")])  // one NFT
+    .setTransactionId(TransactionId.generate(payer))      // payer = supply-key account in HashPack
+    .freezeWith(sdkClient);
+
+  const txBytes = await mintTx.toBytes(); // Uint8Array
+
+  // Pack into a TransactionList (base64) — REQUIRED by WalletConnect Hedera RPC
+  const transactionListBase64 = makeTransactionListBase64([txBytes]);
+
+  // Send to wallet: it will prompt the user, sign with supply key, and submit to the network
+  const result = await signClient.request({
+    topic: session.topic,
+    chainId: CHAIN,
+    request: {
+      method: "hedera_signAndExecuteTransaction",
+      params: {
+        transactionList: transactionListBase64,
+        // signerAccountId can be provided explicitly; most wallets infer from txId payer
+        signerAccountId: TREASURY_ID
+      }
+    }
+  });
+
+  // You’ll typically get a transactionId back; query mirror for the receipt if needed
+  return result; // contains tx info; use your mirror client to fetch serial(s)
+}
+
+Minimal UI hook (example)
+// ConnectAndMint.tsx
+import { useState } from "react";
+import { connectHashPack, mintOneRightsNft } from "./wc-hashpack-mint";
+
+export default function ConnectAndMint() {
+  const [ctx, setCtx] = useState<null | { signClient: any; session: any }>(null);
+  const [status, setStatus] = useState<string>("");
+
+  const onConnect = async () => {
+    const res = await connectHashPack();
+    setCtx(res);
+    setStatus("Connected");
+  };
+
+  const onMint = async () => {
+    if (!ctx) return;
+    // HIP-412 JSON is pinned off-chain; this pointer is ≤100 bytes
+    const pointer = "ipfs://bafybeihip412examplecid";
+    const r = await mintOneRightsNft({ ...ctx, metadataPointer: pointer });
+    setStatus(`Submitted: ${JSON.stringify(r)}`);
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      {!ctx ? (
+        <button onClick={onConnect}>Connect HashPack</button>
+      ) : (
+        <>
+          <button onClick={onMint}>Mint 1 NFT</button>
+          <span>{status}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+Non-negotiables (do these or it won’t show in HashPack)
+
+Open the modal with the uri from signClient.connect(); otherwise the wallet is never called.
+
+requiredNamespaces.hedera.methods must include hedera_signAndExecuteTransaction.
+
+Payer = supply-key account (set via TransactionId.generate(TREASURY_ID)), so the wallet can sign & pay.
+
+On-chain metadata ≤100 bytes. Store your full rights JSON off-chain (HIP-412) and put its short pointer (e.g., ipfs://…) in setMetadata.
+
+Use a proper TransactionList (Base64). The helper makeTransactionListBase64([txBytes]) guarantees the correct packing.
+
+That’s it. This reliably triggers HashPack, the user approves, and your rights-aware NFT is minted under HTS.
