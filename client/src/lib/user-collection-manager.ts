@@ -35,8 +35,8 @@ export class UserCollectionManager {
     
     // Use the existing connection
     await hashPackService.initialize();
-    const signClient = hashPackService.getSignClient();
-    const sessions = signClient?.session.getAll() || [];
+    const signClient = (hashPackService as any).signClient;
+    const sessions = signClient?.session?.getAll() || [];
     
     if (!signClient || sessions.length === 0) {
       throw new Error('HashPack wallet must be connected first. Please connect your wallet and try again.');

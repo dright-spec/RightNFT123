@@ -178,6 +178,37 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
     }
   };
 
+  const handleResetCollection = async () => {
+    if (!account?.id) return;
+
+    try {
+      const response = await fetch(`/api/users/${account.id}/reset-collection`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Status Reset',
+          description: 'You can now try creating your collection again'
+        });
+        
+        // Refresh collection status
+        await fetchCollectionStatus();
+      } else {
+        throw new Error('Failed to reset collection status');
+      }
+    } catch (error) {
+      console.error('Reset error:', error);
+      toast({
+        title: 'Reset Failed',
+        description: 'Unable to reset collection status. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
@@ -216,17 +247,27 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
     return (
       <Card className="w-full max-w-2xl mx-auto border-orange-200 bg-orange-50">
         <CardContent className="pt-6">
-          <div className="flex items-center">
-            <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
-            <div className="ml-3">
-              <h3 className="text-lg font-semibold text-orange-900">Collection Creation In Progress</h3>
-              <p className="text-orange-700">
-                Please approve the transaction in your HashPack wallet to complete the collection creation.
-              </p>
-              <p className="text-sm text-orange-600 mt-2">
-                💡 If you've already approved it, the creation should complete shortly.
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-orange-900">Collection Creation In Progress</h3>
+                <p className="text-orange-700">
+                  Please approve the transaction in your HashPack wallet to complete the collection creation.
+                </p>
+                <p className="text-sm text-orange-600 mt-2">
+                  💡 If you've already approved it, the creation should complete shortly.
+                </p>
+              </div>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleResetCollection}
+              className="ml-4"
+            >
+              Try Again
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -260,7 +301,7 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
         <div className="bg-gray-50 p-4 rounded-lg">
           <h4 className="font-semibold mb-2">Your Collection Details:</h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• <strong>Name:</strong> {account?.displayName || account?.username} Rights Collection</li>
+            <li>• <strong>Name:</strong> {account?.username} Rights Collection</li>
             <li>• <strong>Owner:</strong> {account?.hederaAccountId}</li>
             <li>• <strong>Type:</strong> Non-Fungible Unique (NFT)</li>
             <li>• <strong>Supply:</strong> Unlimited (you can mint as many rights as needed)</li>

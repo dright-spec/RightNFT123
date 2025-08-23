@@ -239,6 +239,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
 
+  // Reset collection creation status (for stuck users)
+  app.post('/api/users/:userId/reset-collection', asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+
+      // Reset collection status to allow trying again
+      const updatedUser = await storage.updateUser(userId, {
+        collectionCreationStatus: 'not_created',
+        hederaCollectionTokenId: null,
+        collectionCreatedAt: null
+      });
+
+      if (!updatedUser) {
+        return res.status(500).json(ApiResponseHelper.error('Failed to reset collection status'));
+      }
+
+      res.json(ApiResponseHelper.success({
+        message: 'Collection status reset successfully',
+        user: updatedUser
+      }));
+
+    } catch (error) {
+      console.error('Error resetting collection status:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to reset collection status'));
+    }
+  }));
+
   // Complete collection creation after successful HashPack transaction
   app.post('/api/users/:userId/complete-collection', asyncHandler(async (req: any, res: any) => {
     const userId = parseInt(req.params.userId);
