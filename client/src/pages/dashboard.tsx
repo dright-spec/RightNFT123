@@ -263,12 +263,15 @@ function RightCard({ right }: RightCardProps) {
     return null;
   };
 
-  // Check if token IDs are invalid (simulated 0.0.x format that doesn't exist on mainnet)
+  // Check if token IDs are invalid (test tokens vs real mainnet tokens)
+  // Real Hedera mainnet tokens have shard.realm.entity format where entity > 100000
   const hasInvalidTokenId = (right as any).tokenId && 
-                           (right as any).tokenId.startsWith('0.0.');
+                           (right as any).tokenId.startsWith('0.0.') &&
+                           parseInt((right as any).tokenId.split('.')[2]) < 100000;
   
   const hasInvalidCollection = (account as any)?.hederaCollectionTokenId && 
-                              (account as any).hederaCollectionTokenId.startsWith('0.0.');
+                              (account as any).hederaCollectionTokenId.startsWith('0.0.') &&
+                              parseInt((account as any).hederaCollectionTokenId.split('.')[2]) < 100000;
 
   // Check if this is a real Hedera transaction (proper length and format)
   const hasRealTransaction = (right as any).transactionHash && 
@@ -276,7 +279,8 @@ function RightCard({ right }: RightCardProps) {
                             !(right as any).transactionHash.startsWith('0x') && // Hedera uses different format
                             (right as any).transactionHash.includes('@') &&
                             !hasInvalidTokenId && // Token must be valid
-                            !hasInvalidCollection; // Collection must be valid
+                            !hasInvalidCollection && // Collection must be valid
+                            right.mintingStatus === 'completed'; // Must be completed
 
   const canMint = right.verificationStatus === "verified" && 
                   !hasRealTransaction; // Allow minting - collection will be created if needed
@@ -322,9 +326,9 @@ function RightCard({ right }: RightCardProps) {
               {new Date(right.createdAt).toLocaleDateString()}
             </div>
           </div>
-          {(right as any).hederaTokenId && (
+          {((right as any).hederaTokenId || (right as any).tokenId) && (
             <div className="text-xs text-muted-foreground font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-              Token: {(right as any).hederaTokenId}/{(right as any).hederaSerialNumber || 1}
+              Token: {(right as any).hederaTokenId || (right as any).tokenId}/{(right as any).hederaSerialNumber || 1}
             </div>
           )}
         </div>
@@ -355,10 +359,10 @@ function RightCard({ right }: RightCardProps) {
                 <ExternalLink className="h-4 w-4 mr-2" />
                 View NFT
               </Button>
-              {right.hederaTokenId && (
+              {((right as any).hederaTokenId || (right as any).tokenId) && (
                 <Button 
                   variant="outline"
-                  onClick={() => window.open(`https://hashscan.io/mainnet/token/${right.hederaTokenId}/${right.hederaSerialNumber || 1}`, '_blank')}
+                  onClick={() => window.open(`https://hashscan.io/mainnet/token/${(right as any).hederaTokenId || (right as any).tokenId}/${(right as any).hederaSerialNumber || 1}`, '_blank')}
                   className="flex-1"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
