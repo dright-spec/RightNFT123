@@ -30,29 +30,45 @@ export class UserCollectionManager {
    * Use existing HashPack connection - no separate initialization needed
    */
   async connect(): Promise<{ signClient: SignClient; session: any }> {
-    // Import the existing HashPack service instead of creating a new WalletConnect instance
-    const { hashPackService } = await import('./bulletproof-hashpack');
-    
-    // Check if HashPack is connected first
-    if (!hashPackService.isConnected()) {
-      throw new Error('HashPack wallet must be connected first. Please connect your wallet and try again.');
+    try {
+      // Import the existing HashPack service instead of creating a new WalletConnect instance
+      const { hashPackService } = await import('./bulletproof-hashpack');
+      
+      console.log('Checking HashPack connection status...');
+      
+      // Initialize the service first
+      await hashPackService.initialize();
+      
+      // Check if HashPack is connected
+      if (!hashPackService.isConnected()) {
+        throw new Error('HashPack wallet must be connected first. Please connect your wallet and try again.');
+      }
+
+      // Access the private properties safely
+      const signClient = (hashPackService as any).signClient;
+      const session = (hashPackService as any).session;
+      
+      console.log('SignClient available:', !!signClient);
+      console.log('Session available:', !!session);
+      
+      if (!signClient) {
+        throw new Error('HashPack SignClient not initialized. Please reconnect your wallet.');
+      }
+      
+      if (!session) {
+        throw new Error('No active HashPack session found. Please reconnect your wallet and try again.');
+      }
+
+      console.log('Using existing HashPack connection for collection creation');
+      
+      this.signClient = signClient;
+      this.session = session;
+
+      return { signClient, session };
+    } catch (error) {
+      console.error('Connection error details:', error);
+      throw error;
     }
-
-    // Use the existing connection
-    await hashPackService.initialize();
-    const signClient = (hashPackService as any).signClient;
-    const session = (hashPackService as any).session;
-    
-    if (!signClient || !session) {
-      throw new Error('No active HashPack session found. Please reconnect your wallet and try again.');
-    }
-
-    console.log('Using existing HashPack connection for collection creation');
-    
-    this.signClient = signClient;
-    this.session = session;
-
-    return { signClient, session };
   }
 
   /**
