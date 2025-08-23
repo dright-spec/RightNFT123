@@ -1,5 +1,6 @@
 import SignClient from "@walletconnect/sign-client";
 import { WalletConnectModal } from "@walletconnect/modal";
+import { hashPackSessionStore } from "./hashpack-session-store";
 
 type HederaChain = "hedera:mainnet" | "hedera:testnet" | "hedera:previewnet" | "hedera:devnet";
 
@@ -102,6 +103,12 @@ export async function connectHashPack(opts?: {
     console.warn("Connected wallet is not HashPack, but proceeding with connection");
   }
 
+  // Store the session globally for reuse
+  const accountId = getHederaAccountId(session);
+  if (accountId) {
+    hashPackSessionStore.setSession(client, session, accountId.split(':')[2]);
+  }
+
   return { client, session };
 }
 
@@ -131,6 +138,9 @@ export async function disconnect(params: { client: WCSession["client"]; session:
     topic: session.topic,
     reason: { code: 6000, message: "User disconnected" },
   });
+  
+  // Clear the global session store
+  hashPackSessionStore.clearSession();
 }
 
 // Helper function to extract account ID from session

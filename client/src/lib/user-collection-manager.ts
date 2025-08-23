@@ -11,6 +11,7 @@ import {
   TokenMintTransaction,
   TokenId
 } from "@hashgraph/sdk";
+import { hashPackSessionStore } from "./hashpack-session-store";
 
 const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string;
 const CHAIN = "hedera:mainnet";
@@ -31,45 +32,26 @@ export class UserCollectionManager {
    */
   async connect(): Promise<{ signClient: SignClient; session: any }> {
     try {
-      console.log('Connecting to HashPack for collection creation...');
+      console.log('Getting HashPack session for collection creation...');
       
-      // Get existing sessions from WalletConnect
-      const activeSessions = localStorage.getItem('wc@2:client:0.3//session');
-      
-      if (!activeSessions) {
+      // Check if we have a stored session from the global store
+      if (!hashPackSessionStore.hasActiveSession()) {
         throw new Error('No active HashPack session. Please connect your wallet first.');
       }
       
-      const sessions = JSON.parse(activeSessions);
-      const sessionKeys = Object.keys(sessions);
+      const { signClient, session } = hashPackSessionStore.getSession();
       
-      if (sessionKeys.length === 0) {
-        throw new Error('No active sessions found. Please reconnect your wallet.');
+      if (!signClient || !session) {
+        throw new Error('HashPack session is incomplete. Please reconnect your wallet.');
       }
       
-      // Use the first active session
-      const activeSession = sessions[sessionKeys[0]];
-      console.log('Found active session:', activeSession.topic);
+      console.log('Using stored HashPack session:', {
+        topic: session.topic,
+        hasClient: !!signClient
+      });
       
-      // Initialize SignClient if needed
-      if (!this.signClient) {
-        const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "2f05a7cee75d4f65c6bbdf8f84b9e37c";
-        
-        this.signClient = await SignClient.init({
-          projectId: WC_PROJECT_ID,
-          relayUrl: "wss://relay.walletconnect.org",
-          metadata: {
-            name: "Dright",
-            description: "Digital Rights Marketplace on Hedera",
-            url: window.location.origin,
-            icons: [`${window.location.origin}/favicon.ico`]
-          }
-        });
-        
-        console.log('SignClient initialized for collection creation');
-      }
-      
-      this.session = activeSession;
+      this.signClient = signClient;
+      this.session = session;
       
       return { signClient: this.signClient, session: this.session };
     } catch (error) {

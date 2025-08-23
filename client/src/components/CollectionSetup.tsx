@@ -159,7 +159,7 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
       const result = await userCollectionManager.createUserCollection({
         userAccountId: account.hederaAccountId,
         userName: account.username || 'user',
-        displayName: account.displayName || account.username
+        displayName: (account as any).displayName || account.username
       });
       
       if (!result.success) {

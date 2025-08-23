@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Wallet, LogOut, Copy, MessageSquare, AlertCircle } from "lucide-react";
 import { connectHashPack, signMessage, disconnect, WCSession, getHederaAccountId, isHashPackWallet } from "@/lib/wc-hedera";
+import { hashPackSessionStore } from "@/lib/hashpack-session-store";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -108,9 +109,13 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
       setWc(session);
       setAccountId(hederaAccount);
       
+      // Store session in global store for collection creation
+      const accountIdOnly = hederaAccount.split(':')[2];
+      hashPackSessionStore.setSession(session.client, session.session, accountIdOnly);
+      
       toast({
         title: "HashPack Connected!",
-        description: `Connected with account ${hederaAccount.split(':')[2]}`,
+        description: `Connected with account ${accountIdOnly}`,
       });
 
       // Register user in database
