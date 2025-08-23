@@ -166,21 +166,43 @@ export async function connectAndMintNFT(params: {
   userAccountId: string;
 }): Promise<{ success: boolean; transactionId?: string; error?: string }> {
   try {
-    console.log('Development mode minting for:', {
+    console.log('Starting HashPack NFT minting with:', {
       metadataPointer: params.metadataPointer,
       collectionTokenId: params.collectionTokenId,
       userAccountId: params.userAccountId
     });
     
-    // Development mode - simulate successful minting
-    const mockTransactionId = `dev_mint_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // Use existing HashPack service
+    const { hashPackService } = await import('./bulletproof-hashpack');
     
-    console.log(`Mock minting successful with transaction ID: ${mockTransactionId}`);
+    // Ensure HashPack is connected
+    await hashPackService.initialize();
     
-    return {
-      success: true,
-      transactionId: mockTransactionId
-    };
+    if (!hashPackService.isConnected()) {
+      throw new Error('HashPack wallet must be connected. Please connect your wallet and try again.');
+    }
+
+    const accountId = hashPackService.getAccountId();
+    if (!accountId) {
+      throw new Error('Unable to retrieve account ID from HashPack');
+    }
+
+    console.log(`Requesting HashPack approval for NFT minting to collection ${params.collectionTokenId}`);
+
+    // Use HashPack service to mint with proper wallet approval
+    const result = await hashPackService.mintNFT({
+      tokenId: params.collectionTokenId,
+      metadataUri: params.metadataPointer, // Fix parameter name
+      accountId: params.userAccountId
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || 'Minting transaction failed');
+    }
+
+    console.log(`NFT minting approved! Transaction ID: ${result.transactionId}`);
+    
+    return result;
     
   } catch (error) {
     console.error('HashPack mint flow error:', error);

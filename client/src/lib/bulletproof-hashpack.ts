@@ -126,7 +126,12 @@ export class BulletproofHashPack {
         throw new Error('Wallet not connected');
       }
 
-      console.log('Building TokenMint transaction...');
+      console.log('Building TokenMint transaction with metadata:', {
+        tokenId: params.tokenId,
+        metadataUri: params.metadataUri,
+        accountId: params.accountId,
+        estimatedCost: '~0.01 HBAR for NFT minting'
+      });
 
       // Build TokenMintTransaction using Hedera SDK
       const client = HederaClient.forMainnet();
@@ -134,6 +139,7 @@ export class BulletproofHashPack {
         .setTokenId(TokenId.fromString(params.tokenId))
         .setMetadata([Buffer.from(params.metadataUri)]) // HIP-412 pointer in bytes
         .setTransactionId(TransactionId.generate(AccountId.fromString(params.accountId)))
+        .setTransactionMemo(`Minting Rights NFT - Metadata: ${params.metadataUri}`) // Add clear memo
         .freezeWith(client);
 
       const txBytes = await tx.toBytes();

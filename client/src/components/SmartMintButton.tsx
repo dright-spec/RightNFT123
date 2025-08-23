@@ -77,8 +77,8 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         const params = result.data.transactionParams;
         
         toast({
-          title: 'Confirm Transaction',
-          description: 'Please approve the NFT minting transaction in HashPack'
+          title: 'Approve Minting in HashPack',
+          description: 'Please review and approve the NFT minting transaction. Cost: ~0.01 HBAR'
         });
 
         // Step 3: Execute minting via HashPack
