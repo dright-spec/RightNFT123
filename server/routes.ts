@@ -1195,11 +1195,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Allow re-minting if no actual Hedera blockchain transaction exists
+      // Check if token ID is invalid (simulated 0.0.x format that doesn't exist on mainnet)
+      const hasInvalidTokenId = right.tokenId && right.tokenId.startsWith('0.0.');
+      
+      // Check if collection is invalid
+      const creator = await storage.getUser(right.creatorId);
+      const hasInvalidCollection = creator?.hederaCollectionTokenId && 
+                                   creator.hederaCollectionTokenId.startsWith('0.0.');
+      
       // Real Hedera transaction hashes are longer and have different format than simulated ones
+      // BUT also check that token IDs and collections are valid (not test 0.0.x format)
       const hasRealTransaction = right.transactionHash && 
                                 right.transactionHash.length > 20 && 
                                 !right.transactionHash.startsWith('0x') && 
-                                right.transactionHash.includes('@');
+                                right.transactionHash.includes('@') &&
+                                !hasInvalidTokenId && // Token must be valid
+                                !hasInvalidCollection; // Collection must be valid
       
       if (hasRealTransaction) {
         return res.status(400).json({ error: "NFT already minted for this right" });
@@ -1223,15 +1234,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ error: "Creator not found" });
         }
 
-        // Check if user has a dedicated collection
-        if (!creator.hederaCollectionTokenId || creator.collectionCreationStatus !== 'created') {
+        // Check if user has a valid collection (not invalid 0.0.x format)
+        const hasValidCollection = creator.hederaCollectionTokenId && 
+                                   creator.collectionCreationStatus === 'created' &&
+                                   !creator.hederaCollectionTokenId.startsWith('0.0.');
+        
+        if (!hasValidCollection) {
           return res.status(400).json({ 
             error: "User collection required", 
             message: "You must create your personal NFT collection first before minting rights",
             needsCollection: true,
             userAccountId: creator.hederaAccountId,
             userName: creator.username,
-            displayName: creator.displayName
+            displayName: creator.displayName,
+            invalidCollection: hasInvalidCollection
           });
         }
 
