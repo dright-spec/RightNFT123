@@ -27,50 +27,26 @@ export class UserCollectionManager {
   private session: any = null;
 
   /**
-   * Connect to HashPack wallet
+   * Use existing HashPack connection - no separate initialization needed
    */
   async connect(): Promise<{ signClient: SignClient; session: any }> {
-    if (this.signClient && this.session) {
-      return { signClient: this.signClient, session: this.session };
+    // Import the existing HashPack service instead of creating a new WalletConnect instance
+    const { hashPackService } = await import('./bulletproof-hashpack');
+    
+    // Use the existing connection
+    await hashPackService.initialize();
+    const signClient = hashPackService.getSignClient();
+    const sessions = signClient?.session.getAll() || [];
+    
+    if (!signClient || sessions.length === 0) {
+      throw new Error('HashPack wallet must be connected first. Please connect your wallet and try again.');
     }
 
-    console.log('Initializing WalletConnect for collection creation...');
+    // Use the first available session (the current connected session)
+    const session = sessions[0];
     
-    const signClient = await SignClient.init({
-      projectId: WC_PROJECT_ID,
-      relayUrl: "wss://relay.walletconnect.com",
-      metadata: {
-        name: "Dright Rights Marketplace",
-        description: "Create your personal NFT rights collection",
-        url: "https://dright.com",
-        icons: ["https://walletconnect.com/walletconnect-logo.png"],
-      },
-    });
-
-    const modal = new WalletConnectModal({ projectId: WC_PROJECT_ID });
+    console.log('Using existing HashPack connection for collection creation');
     
-    const { uri, approval } = await signClient.connect({
-      requiredNamespaces: {
-        hedera: {
-          chains: [CHAIN],
-          methods: [
-            "hedera_signAndExecuteTransaction",
-            "hedera_getNodeAddresses"
-          ],
-          events: []
-        }
-      }
-    });
-
-    if (uri) {
-      console.log('Opening modal for collection creation...');
-      await modal.openModal({ uri });
-    }
-
-    console.log('Waiting for wallet approval...');
-    const session = await approval();
-    await modal.closeModal();
-
     this.signClient = signClient;
     this.session = session;
 
