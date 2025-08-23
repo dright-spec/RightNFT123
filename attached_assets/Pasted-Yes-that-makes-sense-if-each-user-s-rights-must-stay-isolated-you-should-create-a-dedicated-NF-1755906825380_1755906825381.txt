@@ -1,0 +1,78 @@
+Yes, that makes sense ✅ — if each user’s rights must stay isolated, you should create a dedicated NFT collection (token) per user on Hedera. Here’s how to do it correctly:
+
+🔹 Approach: One Collection per User
+
+Each collection is a Non-Fungible Unique (NFT) Token on HTS.
+
+Treasury account: The user’s HashPack wallet (or your platform’s wallet acting as custodian).
+
+Supply key: Whoever is allowed to mint new NFTs in that collection (can be the same as the treasury, or your platform).
+
+Token ID: Unique per collection.
+
+🔹 Flow per New User
+
+User connects with HashPack via WalletConnect.
+
+Create a new NFT collection (TokenCreateTransaction) where:
+
+tokenName = "<UserName> Rights Collection"
+
+tokenSymbol = "U123R" (unique short symbol per user)
+
+treasuryAccountId = user’s account ID
+
+supplyKey = either:
+
+The user’s key (means only the user can mint), or
+
+Your platform’s key (means platform mints on their behalf)
+
+Get the returned tokenId → this is the user’s collection ID.
+
+Store it in your DB, mapped to the user.
+
+🔹 Example Code (Mainnet)
+import {
+  Client,
+  TokenCreateTransaction,
+  TokenType,
+  TokenSupplyType
+} from "@hashgraph/sdk";
+
+async function createUserCollection(client, userAccountId, supplyKey, userName) {
+  const tx = await new TokenCreateTransaction()
+    .setTokenName(`${userName} Rights Collection`)
+    .setTokenSymbol(`${userName.substring(0,3).toUpperCase()}R`)
+    .setTokenType(TokenType.NonFungibleUnique)
+    .setSupplyType(TokenSupplyType.Infinite)
+    .setTreasuryAccountId(userAccountId)
+    .setSupplyKey(supplyKey.publicKey)
+    .freezeWith(client)
+    .sign(supplyKey);
+
+  const response = await tx.execute(client);
+  const receipt = await response.getReceipt(client);
+  return receipt.tokenId.toString();
+}
+
+// Usage
+const client = Client.forMainnet().setOperator(operatorId, operatorKey);
+const newCollectionId = await createUserCollection(
+  client,
+  "0.0.1234567",  // user’s HashPack ID
+  operatorKey,     // supply key
+  "Alice"
+);
+
+console.log("Alice’s Collection ID:", newCollectionId);
+
+🔹 Pros & Cons
+
+✅ Rights are cleanly separated per user.
+
+✅ Users keep full ownership over their collection.
+
+⚠️ Cost: Each collection creation = $1 in HBAR on mainnet (TokenCreateTransaction fee).
+
+⚠️ Managing supply keys: If platform holds them, it can mint on behalf of user. If user holds them, you’ll need them online for minting.

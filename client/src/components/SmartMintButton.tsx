@@ -1,0 +1,199 @@
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Wallet, AlertCircle, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useWallet } from '@/contexts/WalletContext';
+import { CollectionSetup } from './CollectionSetup';
+import { connectAndMintNFT } from '@/lib/bulletproof-hedera-minting';
+
+interface SmartMintButtonProps {
+  rightId: number;
+  disabled?: boolean;
+  className?: string;
+}
+
+interface MintResponse {
+  success: boolean;
+  message?: string;
+  needsCollection?: boolean;
+  userAccountId?: string;
+  userName?: string;
+  displayName?: string;
+  data?: {
+    transactionParams?: {
+      collectionTokenId: string;
+      userAccountId: string;
+      metadataPointer: string;
+    };
+  };
+  error?: string;
+}
+
+export function SmartMintButton({ rightId, disabled = false, className = "" }: SmartMintButtonProps) {
+  const [isMinting, setIsMinting] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
+  const [mintParams, setMintParams] = useState<MintResponse | null>(null);
+  const { account } = useWallet();
+  const { toast } = useToast();
+
+  const handleMintClick = async () => {
+    if (!account?.id) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please connect your wallet first',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsMinting(true);
+
+    try {
+      // Step 1: Check if user can mint (has collection, etc.)
+      const response = await fetch(`/api/rights/${rightId}/mint`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result: MintResponse = await response.json();
+
+      if (!response.ok) {
+        if (result.needsCollection) {
+          // User needs to create a collection first
+          setMintParams(result);
+          setShowCollectionDialog(true);
+          setIsMinting(false);
+          return;
+        }
+        
+        throw new Error(result.error || 'Failed to prepare minting');
+      }
+
+      // Step 2: User has collection, proceed with minting
+      if (result.success && result.data?.transactionParams) {
+        const params = result.data.transactionParams;
+        
+        toast({
+          title: 'Confirm Transaction',
+          description: 'Please approve the NFT minting transaction in HashPack'
+        });
+
+        // Step 3: Execute minting via HashPack
+        const mintResult = await connectAndMintNFT({
+          metadataPointer: params.metadataPointer,
+          collectionTokenId: params.collectionTokenId,
+          userAccountId: params.userAccountId
+        });
+
+        if (!mintResult.success) {
+          throw new Error(mintResult.error || 'Minting failed');
+        }
+
+        // Step 4: Complete the minting on backend
+        const completeResponse = await fetch(`/api/rights/${rightId}/mint-complete`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tokenId: params.collectionTokenId,
+            transactionId: mintResult.transactionId,
+            transactionHash: mintResult.transactionId
+          })
+        });
+
+        if (!completeResponse.ok) {
+          throw new Error('Failed to complete minting process');
+        }
+
+        toast({
+          title: 'NFT Minted Successfully!',
+          description: 'Your rights NFT has been minted to your collection'
+        });
+
+        // Refresh the page or update UI as needed
+        window.location.reload();
+      }
+
+    } catch (error) {
+      console.error('Minting error:', error);
+      toast({
+        title: 'Minting Failed',
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsMinting(false);
+    }
+  };
+
+  const handleCollectionCreated = () => {
+    setShowCollectionDialog(false);
+    setMintParams(null);
+    
+    toast({
+      title: 'Collection Ready!',
+      description: 'You can now mint your NFT'
+    });
+
+    // Auto-trigger minting after collection is created
+    setTimeout(() => {
+      handleMintClick();
+    }, 1000);
+  };
+
+  return (
+    <>
+      <Button
+        onClick={handleMintClick}
+        disabled={disabled || isMinting || !account?.hederaAccountId}
+        className={className}
+        size="lg"
+      >
+        {isMinting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            Minting NFT...
+          </>
+        ) : (
+          <>
+            <Wallet className="h-4 w-4 mr-2" />
+            Mint NFT
+          </>
+        )}
+      </Button>
+
+      <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Wallet className="h-6 w-6 mr-2" />
+              Collection Setup Required
+            </DialogTitle>
+            <DialogDescription>
+              Before you can mint rights as NFTs, you need to create your personal collection on Hedera.
+              This is a one-time setup that gives you a dedicated space for all your rights.
+            </DialogDescription>
+          </DialogHeader>
+
+          {mintParams?.needsCollection && (
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Why do I need this?</strong> Each user gets their own NFT collection to keep their rights 
+                properly isolated and organized. This ensures full ownership and control over your digital assets.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <CollectionSetup
+            onCollectionCreated={handleCollectionCreated}
+            showTitle={false}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

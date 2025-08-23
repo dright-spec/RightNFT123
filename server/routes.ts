@@ -189,7 +189,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json(ApiResponseHelper.error('Failed to fetch dashboard data'));
     }
   }));
-  
+
+  // Collection Management Routes
+  // Create user's dedicated NFT collection
+  app.post('/api/users/:userId/create-collection', asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    const { userName, displayName } = req.body;
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+
+      // Check if user already has a collection
+      if (user.hederaCollectionTokenId && user.collectionCreationStatus === 'created') {
+        return res.json(ApiResponseHelper.success({
+          message: 'Collection already exists',
+          collectionTokenId: user.hederaCollectionTokenId,
+          status: 'created'
+        }));
+      }
+
+      // Update status to creating
+      await storage.updateUser(userId, {
+        collectionCreationStatus: 'creating'
+      });
+
+      // Return collection creation parameters for frontend to handle via HashPack
+      res.json(ApiResponseHelper.success({
+        message: 'Ready to create collection',
+        status: 'creating',
+        collectionParams: {
+          userAccountId: user.hederaAccountId,
+          userName: userName || user.username,
+          displayName: displayName || user.displayName,
+          collectionName: `${displayName || user.displayName || user.username} Rights Collection`,
+          collectionSymbol: `${(userName || user.username).substring(0, 3).toUpperCase()}R${Date.now().toString().slice(-4)}`
+        }
+      }));
+
+    } catch (error) {
+      console.error('Error initiating collection creation:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to initiate collection creation'));
+    }
+  }));
+
+  // Complete collection creation after successful HashPack transaction
+  app.post('/api/users/:userId/complete-collection', asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    const { tokenId, transactionId, transactionHash } = req.body;
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+
+    if (!tokenId || !transactionId) {
+      return res.status(400).json(ApiResponseHelper.error('Missing transaction data'));
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+
+      // Update user with collection details
+      const updatedUser = await storage.updateUser(userId, {
+        hederaCollectionTokenId: tokenId,
+        collectionCreationStatus: 'created',
+        collectionCreatedAt: new Date()
+      });
+
+      if (!updatedUser) {
+        return res.status(500).json(ApiResponseHelper.error('Failed to update user'));
+      }
+
+      res.json(ApiResponseHelper.success({
+        message: 'Collection created successfully',
+        user: updatedUser,
+        collectionTokenId: tokenId,
+        transactionHash: transactionHash || transactionId
+      }));
+
+    } catch (error) {
+      console.error('Error completing collection creation:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to complete collection creation'));
+    }
+  }));
+
+  // Get user's collection status
+  app.get('/api/users/:userId/collection-status', asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+
+      res.json(ApiResponseHelper.success({
+        hasCollection: !!user.hederaCollectionTokenId,
+        collectionTokenId: user.hederaCollectionTokenId,
+        status: user.collectionCreationStatus || 'not_created',
+        createdAt: user.collectionCreatedAt
+      }));
+
+    } catch (error) {
+      console.error('Error fetching collection status:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to fetch collection status'));
+    }
+  }));
 
   // YouTube verification endpoint - must be before other routes
   app.post("/api/youtube/verify", async (req, res) => {
@@ -1028,10 +1146,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: right.transactionHash
       });
       
-      // Start Hedera NFT minting process - return transaction data for client-side signing
+      // Start Hedera NFT minting process with user-specific collection
       console.log(`Preparing NFT minting for right ${rightId}: ${right.title || 'Unknown title'}`);
       
       try {
+        // Get the user who created this right
+        const creator = await storage.getUser(right.creatorId);
+        if (!creator) {
+          return res.status(404).json({ error: "Creator not found" });
+        }
+
+        // Check if user has a dedicated collection
+        if (!creator.hederaCollectionTokenId || creator.collectionCreationStatus !== 'created') {
+          return res.status(400).json({ 
+            error: "User collection required", 
+            message: "You must create your personal NFT collection first before minting rights",
+            needsCollection: true,
+            userAccountId: creator.hederaAccountId,
+            userName: creator.username,
+            displayName: creator.displayName
+          });
+        }
+
         // Mark as minting started
         await storage.updateRight(rightId, { mintingStatus: "minting" });
         
@@ -1041,29 +1177,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: right.description || "Digital rights NFT from Dright platform",
           image: right.imageUrl || "",
           type: right.type || "copyright",
-          creator: `User ${right.creatorId || 'Unknown'}`,
+          creator: creator.displayName || creator.username || `User ${right.creatorId}`,
+          collection: `${creator.displayName || creator.username} Rights Collection`,
+          properties: {
+            rightType: right.type || "copyright",
+            verificationStatus: right.verificationStatus || "verified",
+            platform: "Dright",
+            createdAt: right.createdAt || new Date().toISOString(),
+            creatorAccountId: creator.hederaAccountId
+          },
           attributes: [
             { trait_type: "Right Type", value: right.type || "copyright" },
             { trait_type: "Verification Status", value: right.verificationStatus || "verified" },
             { trait_type: "Platform", value: "Dright" },
+            { trait_type: "Creator", value: creator.displayName || creator.username },
             { trait_type: "Created", value: right.createdAt || new Date().toISOString() }
           ]
         };
 
-        // Return transaction details for Hedera NFT minting
+        // Return transaction details for Hedera NFT minting using user's collection
         const mintingData = {
           metadata,
           transactionParams: {
             type: "TokenMintTransaction", 
-            name: right.title || `Right #${rightId}`,
-            symbol: right.symbol || `DRIGHT${rightId}`,
-            tokenId: process.env.HEDERA_NFT_COLLECTION_ID || "0.0.123456", // Use configured collection ID
-            memo: `Dright NFT - ${right.title || 'Digital Rights'}`,
-            initialSupply: 1,
-            decimals: 0,
-            treasuryAccountId: "0.0.9266917", // Platform treasury account
-            adminKeys: ["0.0.9266917"],
-            metadata: JSON.stringify(metadata)
+            collectionTokenId: creator.hederaCollectionTokenId, // Use user's collection
+            userAccountId: creator.hederaAccountId, // User signs and pays
+            metadataPointer: `ipfs://bafyn6m8lex3xcright${rightId}`, // IPFS metadata pointer
+            memo: `Dright NFT - ${right.title || 'Digital Rights'}`
           }
         };
         

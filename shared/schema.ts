@@ -10,6 +10,9 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   walletAddress: text("wallet_address").unique(),
   hederaAccountId: text("hedera_account_id"), // Format: 0.0.12345
+  hederaCollectionTokenId: text("hedera_collection_token_id"), // User's dedicated NFT collection token ID (e.g., 0.0.12346)
+  collectionCreationStatus: text("collection_creation_status").default("not_created"), // not_created, creating, created, failed
+  collectionCreatedAt: timestamp("collection_created_at"),
   walletType: text("wallet_type"), // 'metamask' or 'hashpack'
   networkType: text("network_type"), // 'ethereum' or 'hedera'
   email: text("email").unique(),

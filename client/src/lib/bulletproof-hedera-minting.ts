@@ -98,21 +98,21 @@ export async function mintOneRightsNft(params: {
   signClient: Awaited<ReturnType<typeof SignClient.init>>;
   session: any;
   metadataPointer: string; // e.g. "ipfs://bafybeihip412cid"
-  tokenId?: string;
-  treasuryId?: string;
+  collectionTokenId: string; // User's specific collection token ID
+  userAccountId: string; // User's Hedera account ID
 }) {
   const { 
     signClient, 
     session, 
     metadataPointer,
-    tokenId = TOKEN_ID,
-    treasuryId = TREASURY_ID 
+    collectionTokenId,
+    userAccountId
   } = params;
 
-  console.log('Starting NFT mint with params:', { metadataPointer, tokenId, treasuryId });
+  console.log('Starting NFT mint with params:', { metadataPointer, collectionTokenId, userAccountId });
 
-  if (!tokenId || !treasuryId) {
-    throw new Error("Missing TOKEN_ID or TREASURY_ID - required for minting");
+  if (!collectionTokenId || !userAccountId) {
+    throw new Error("Missing collection token ID or user account ID - required for minting");
   }
 
   assertPointerFits(metadataPointer);
@@ -120,15 +120,15 @@ export async function mintOneRightsNft(params: {
   // SDK client only to build & freeze (no operator key needed since wallet submits)
   const sdkClient = CHAIN === "hedera:mainnet" ? Client.forMainnet() : Client.forTestnet();
 
-  // IMPORTANT: Make the fee payer == TREASURY_ID (wallet's supply-key account),
-  // so the wallet can sign & pay. We set transactionId with that payer.
-  const payer = AccountId.fromString(treasuryId);
+  // IMPORTANT: Make the fee payer == userAccountId (wallet's account),
+  // so the wallet can sign & pay. User owns their own collection and supply key.
+  const payer = AccountId.fromString(userAccountId);
 
   console.log('Building TokenMintTransaction...');
   const mintTx = await new TokenMintTransaction()
-    .setTokenId(TokenId.fromString(tokenId))
+    .setTokenId(TokenId.fromString(collectionTokenId))
     .setMetadata([Buffer.from(metadataPointer, "utf8")])  // one NFT
-    .setTransactionId(TransactionId.generate(payer))      // payer = supply-key account in HashPack
+    .setTransactionId(TransactionId.generate(payer))      // payer = user account in HashPack
     .freezeWith(sdkClient);
 
   console.log('Serializing transaction to bytes...');
@@ -148,7 +148,7 @@ export async function mintOneRightsNft(params: {
       params: {
         transactionList: transactionListBase64,
         // signerAccountId can be provided explicitly; most wallets infer from txId payer
-        signerAccountId: treasuryId
+        signerAccountId: userAccountId
       }
     }
   });
@@ -159,11 +159,11 @@ export async function mintOneRightsNft(params: {
   return result; // contains tx info; use your mirror client to fetch serial(s)
 }
 
-// Convenience function for the complete flow
+// Convenience function for the complete flow with user-specific collection
 export async function connectAndMintNFT(params: {
   metadataPointer: string;
-  tokenId?: string;
-  treasuryId?: string;
+  collectionTokenId: string;
+  userAccountId: string;
 }): Promise<{ success: boolean; transactionId?: string; error?: string }> {
   try {
     console.log('Starting complete HashPack connect and mint flow...');
@@ -171,11 +171,13 @@ export async function connectAndMintNFT(params: {
     // Connect to HashPack
     const { signClient, session } = await connectHashPack();
     
-    // Mint the NFT
+    // Mint the NFT to user's collection
     const result = await mintOneRightsNft({
       signClient,
       session,
-      ...params
+      metadataPointer: params.metadataPointer,
+      collectionTokenId: params.collectionTokenId,
+      userAccountId: params.userAccountId
     });
     
     return {
