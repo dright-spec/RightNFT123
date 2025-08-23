@@ -129,10 +129,10 @@ export async function mintOneRightsNft(params: {
     .setTokenId(TokenId.fromString(collectionTokenId))
     .setMetadata([Buffer.from(metadataPointer, "utf8")])  // one NFT
     .setTransactionId(TransactionId.generate(payer))      // payer = user account in HashPack
-    .freezeWith(sdkClient);
+    .freezeWith(sdkClient);  // Freeze with client to get proper transaction bytes
 
   console.log('Serializing transaction to bytes...');
-  const txBytes = await mintTx.toBytes(); // Uint8Array
+  const txBytes = await mintTx.toBytes(); // Get bytes from frozen transaction
 
   // Pack into a TransactionList (base64) — REQUIRED by WalletConnect Hedera RPC
   console.log('Creating TransactionList Base64...');
