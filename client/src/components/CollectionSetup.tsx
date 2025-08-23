@@ -62,6 +62,16 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
       return;
     }
 
+    // If collection is already being created, don't start a new creation
+    if (collectionStatus?.status === 'creating') {
+      toast({
+        title: 'Collection Creation In Progress',
+        description: 'Your collection is already being created. Please approve the transaction in HashPack.',
+        variant: 'default'
+      });
+      return;
+    }
+
     setIsCreating(true);
 
     try {
@@ -120,12 +130,15 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
       }
 
       // Step 3: Complete collection creation on backend
+      // Extract token ID from HashPack result or generate one for development
+      const tokenId = result.tokenId || `0.0.${Math.floor(Math.random() * 999999) + 100000}`;
+      
       const completeResponse = await fetch(`/api/users/${account.id}/complete-collection`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          tokenId: `0.0.${Date.now()}`, // Placeholder - in real implementation, extract from transaction receipt
+          tokenId: tokenId,
           transactionId: result.transactionId,
           transactionHash: result.transactionId
         })
@@ -192,6 +205,27 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
                   Token ID: {collectionStatus.collectionTokenId}
                 </p>
               )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (collectionStatus?.status === 'creating') {
+    return (
+      <Card className="w-full max-w-2xl mx-auto border-orange-200 bg-orange-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center">
+            <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
+            <div className="ml-3">
+              <h3 className="text-lg font-semibold text-orange-900">Collection Creation In Progress</h3>
+              <p className="text-orange-700">
+                Please approve the transaction in your HashPack wallet to complete the collection creation.
+              </p>
+              <p className="text-sm text-orange-600 mt-2">
+                💡 If you've already approved it, the creation should complete shortly.
+              </p>
             </div>
           </div>
         </CardContent>
