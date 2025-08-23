@@ -97,11 +97,15 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
 
       // Register user in database
       const hederaAccountId = hederaAccount.split(':')[2]; // Extract account ID from hedera:mainnet:0.0.123456
-      registerUserMutation.mutate({
-        walletAddress: hederaAccount, // Full address with namespace
-        hederaAccountId: hederaAccountId, // Just the account ID (0.0.123456)
-        walletType: 'hashpack'
-      });
+      
+      // Add a small delay to ensure wallet connection is fully established
+      setTimeout(() => {
+        registerUserMutation.mutate({
+          walletAddress: hederaAccount, // Full address with namespace
+          hederaAccountId: hederaAccountId, // Just the account ID (0.0.123456)
+          walletType: 'hashpack'
+        });
+      }, 500);
 
       onConnect?.(session, hederaAccount);
     } catch (error) {
