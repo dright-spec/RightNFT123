@@ -110,11 +110,11 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
 
         toast({
           title: 'NFT Minted Successfully!',
-          description: 'Your rights NFT has been minted to your collection'
+          description: 'Your rights NFT has been minted to your collection. Check your dashboard to see it!'
         });
 
-        // Refresh the page or update UI as needed
-        window.location.reload();
+        // Don't reload - just update the UI
+        setIsMinting(false);
       }
 
     } catch (error) {
