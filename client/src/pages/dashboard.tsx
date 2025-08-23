@@ -220,19 +220,19 @@ function RightCard({ right }: RightCardProps) {
         </Badge>
       );
     }
-    if (hasInvalidCollection || hasInvalidTokenId) {
-      return (
-        <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50">
-          <AlertCircle className="h-3 w-3 mr-1" />
-          Collection Invalid
-        </Badge>
-      );
-    }
     if (canMint) {
       return (
         <Badge className="bg-green-500 hover:bg-green-600">
           <CheckCircle className="h-3 w-3 mr-1" />
           Ready to Mint
+        </Badge>
+      );
+    }
+    if (hasInvalidCollection || hasInvalidTokenId) {
+      return (
+        <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Collection Invalid
         </Badge>
       );
     }
@@ -267,8 +267,8 @@ function RightCard({ right }: RightCardProps) {
   const hasInvalidTokenId = (right as any).tokenId && 
                            (right as any).tokenId.startsWith('0.0.');
   
-  const hasInvalidCollection = account?.hederaCollectionTokenId && 
-                              account.hederaCollectionTokenId.startsWith('0.0.');
+  const hasInvalidCollection = (account as any)?.hederaCollectionTokenId && 
+                              (account as any).hederaCollectionTokenId.startsWith('0.0.');
 
   // Check if this is a real Hedera transaction (proper length and format)
   const hasRealTransaction = (right as any).transactionHash && 
@@ -279,8 +279,7 @@ function RightCard({ right }: RightCardProps) {
                             !hasInvalidCollection; // Collection must be valid
 
   const canMint = right.verificationStatus === "verified" && 
-                  !hasRealTransaction &&
-                  !hasInvalidCollection; // Can't mint with invalid collection
+                  !hasRealTransaction; // Allow minting - collection will be created if needed
 
   console.log('Right minting check:', {
     id: right.id,
@@ -331,7 +330,13 @@ function RightCard({ right }: RightCardProps) {
         </div>
         
         <div className="flex gap-2">
-          {hasInvalidCollection && (
+          {canMint && (
+            <SmartMintButton 
+              rightId={right.id}
+              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            />
+          )}
+          {hasInvalidCollection && !canMint && (
             <Button 
               onClick={() => setLocation('/')}
               variant="outline"
@@ -340,12 +345,6 @@ function RightCard({ right }: RightCardProps) {
               <AlertCircle className="h-4 w-4 mr-2" />
               Reset Collection
             </Button>
-          )}
-          {canMint && (
-            <SmartMintButton 
-              rightId={right.id}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            />
           )}
           {hasRealTransaction && (
             <div className="flex gap-2 flex-1">
