@@ -1233,9 +1233,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Simulate IPFS pinning (in production, use actual IPFS service)
         // Create a short, deterministic CID based on right ID
-        const crypto = require('crypto');
+        const { createHash } = await import('crypto');
         const metadataString = JSON.stringify(metadata);
-        const metadataHash = crypto.createHash('sha256').update(metadataString).digest('hex');
+        const metadataHash = createHash('sha256').update(metadataString).digest('hex');
         // Create a shorter IPFS CID to fit within 100 bytes
         // Using a shorter hash to ensure it fits: bafyb + 40 chars = ~50 bytes total
         const shortHash = metadataHash.substring(0, 40).toLowerCase();
