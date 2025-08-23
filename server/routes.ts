@@ -1199,6 +1199,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const hasInvalidTokenId = right.tokenId && right.tokenId.startsWith('0.0.');
       
       // Check if collection is invalid
+      if (!right.creatorId) {
+        return res.status(400).json({ error: "Invalid right: missing creator ID" });
+      }
+      
       const creator = await storage.getUser(right.creatorId);
       const hasInvalidCollection = creator?.hederaCollectionTokenId && 
                                    creator.hederaCollectionTokenId.startsWith('0.0.');
@@ -1229,6 +1233,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         // Get the user who created this right
+        if (!right.creatorId) {
+          return res.status(400).json({ error: "Invalid right: missing creator ID" });
+        }
+        
         const creator = await storage.getUser(right.creatorId);
         if (!creator) {
           return res.status(404).json({ error: "Creator not found" });
