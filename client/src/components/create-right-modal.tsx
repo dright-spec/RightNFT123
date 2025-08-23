@@ -47,7 +47,7 @@ const formSchema = z.object({
   tags: z.array(z.string()).default([]),
   listingType: z.enum(["fixed", "auction"]).default("fixed"),
   price: z.string().optional(),
-  currency: z.string().default("ETH"),
+  currency: z.string().default("HBAR"),
   auctionDuration: z.number().optional(),
   minBidAmount: z.string().optional(),
   paysDividends: z.boolean().default(false),
@@ -117,7 +117,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
       tags: [],
       listingType: "fixed" as const,
       price: "",
-      currency: "ETH",
+      currency: "HBAR",
       paysDividends: false,
       paymentAddress: "",
       paymentFrequency: "monthly" as const,
@@ -690,7 +690,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
         tags: data.tags,
         listingType: data.listingType,
         price: data.price,
-        currency: "ETH", // Use ETH as the platform currency
+        currency: "HBAR", // Use ETH as the platform currency
         verificationStatus: verificationStatus,
         contentSource: youtubeUrl ? "youtube" : "upload",
         auctionEndTime: data.listingType === "auction" && data.auctionDuration 
@@ -1031,7 +1031,7 @@ export function CreateRightModal({ open, onOpenChange }: CreateRightModalProps) 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="ETH">ETH</SelectItem>
+                          <SelectItem value="HBAR">HBAR</SelectItem>
                           <SelectItem value="USDC">USDC</SelectItem>
                           <SelectItem value="DAI">DAI</SelectItem>
                         </SelectContent>

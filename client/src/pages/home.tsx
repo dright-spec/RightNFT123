@@ -45,6 +45,9 @@ export default function Home() {
               <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors font-medium">
                 Marketplace
               </Link>
+              <Link href="/dashboard" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+                Dashboard
+              </Link>
               <Link href="/staking" className="text-blue-600 hover:text-blue-700 transition-colors font-bold">
                 🎯 Staking
               </Link>

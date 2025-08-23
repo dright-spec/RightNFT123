@@ -180,7 +180,7 @@ export function AuctionCard({ right, showBidding = true }: AuctionCardProps) {
             <span className="text-sm text-muted-foreground">Current Price</span>
             <div className="text-right">
               <div className="font-bold text-lg text-orange-600">
-                {getCurrentPrice()} ETH
+                {getCurrentPrice()} HBAR
               </div>
               {right.highestBidAmount && (
                 <div className="text-xs text-muted-foreground">
@@ -193,7 +193,7 @@ export function AuctionCard({ right, showBidding = true }: AuctionCardProps) {
           {right.minBidAmount && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Minimum Bid</span>
-              <span className="font-medium">{getMinimumBid()} ETH</span>
+              <span className="font-medium">{getMinimumBid()} HBAR</span>
             </div>
           )}
         </div>
@@ -234,7 +234,7 @@ export function AuctionCard({ right, showBidding = true }: AuctionCardProps) {
                     <span>{bid.bidder.username || "Anonymous"}</span>
                     {index === 0 && <Badge variant="secondary" className="text-xs py-0">Highest</Badge>}
                   </div>
-                  <span className="font-medium">{bid.amount} ETH</span>
+                  <span className="font-medium">{bid.amount} HBAR</span>
                 </div>
               ))}
             </div>
@@ -259,7 +259,7 @@ export function AuctionCard({ right, showBidding = true }: AuctionCardProps) {
                     type="number"
                     step="0.0001"
                     min={getMinimumBid()}
-                    placeholder={`Min: ${getMinimumBid()} ETH`}
+                    placeholder={`Min: ${getMinimumBid()} HBAR`}
                     value={bidAmount}
                     onChange={(e) => setBidAmount(e.target.value)}
                     className="flex-1"

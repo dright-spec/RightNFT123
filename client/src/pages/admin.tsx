@@ -294,7 +294,7 @@ export default function Admin() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 ETH"}</p>
+                  <p className="text-2xl font-bold">{stats?.totalRevenue || "0 HBAR"}</p>
                 </div>
               </div>
             </CardContent>

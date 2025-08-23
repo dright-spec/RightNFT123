@@ -304,7 +304,7 @@ export default function Marketplace() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   {/* Investment Budget Range */}
                   <div>
-                    <label className="text-sm font-medium mb-3 block">Investment Budget (ETH)</label>
+                    <label className="text-sm font-medium mb-3 block">Investment Budget (HBAR)</label>
                     <div className="space-y-3">
                       <Slider
                         value={priceRange}
@@ -314,8 +314,8 @@ export default function Marketplace() {
                         className="w-full"
                       />
                       <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>{priceRange[0]} ETH</span>
-                        <span>{priceRange[1]} ETH</span>
+                        <span>{priceRange[0]} HBAR</span>
+                        <span>{priceRange[1]} HBAR</span>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Set your investment range to find suitable opportunities
@@ -629,7 +629,7 @@ export default function Marketplace() {
                       <div className="text-white/80">Available Now</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-cyan-300">0.05 ETH</div>
+                      <div className="text-4xl font-bold text-cyan-300">50 HBAR</div>
                       <div className="text-white/80">Starting From</div>
                     </div>
                   </div>
@@ -735,7 +735,7 @@ export default function Marketplace() {
                       <div className="text-white/80">Trades Today</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-4xl font-bold text-green-300">47.2 ETH</div>
+                      <div className="text-4xl font-bold text-green-300">47,200 HBAR</div>
                       <div className="text-white/80">24h Volume</div>
                     </div>
                   </div>
@@ -775,7 +775,7 @@ export default function Marketplace() {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
                       <span className="text-sm font-medium">Total Market Volume</span>
-                      <span className="font-bold text-green-600 text-lg">847.3 ETH</span>
+                      <span className="font-bold text-green-600 text-lg">847,300 HBAR</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
                       <span className="text-sm font-medium">Average ROI</span>
@@ -783,7 +783,7 @@ export default function Marketplace() {
                     </div>
                     <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950/20 rounded-lg">
                       <span className="text-sm font-medium">Floor Price</span>
-                      <span className="font-medium text-lg">0.05 ETH</span>
+                      <span className="font-medium text-lg">50 HBAR</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                       <span className="text-sm font-medium">Listed Opportunities</span>
@@ -791,7 +791,7 @@ export default function Marketplace() {
                     </div>
                     <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
                       <span className="text-sm font-medium">24h Volume</span>
-                      <span className="font-medium text-lg">47.2 ETH</span>
+                      <span className="font-medium text-lg">47,200 HBAR</span>
                     </div>
                   </CardContent>
                 </Card>

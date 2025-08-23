@@ -137,7 +137,7 @@ export function WalletButton() {
             variant={isHedera ? "default" : "secondary"}
             className={`ml-1 ${isHedera ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}`}
           >
-            {isHedera ? 'ℏ' : 'ETH'}
+            {isHedera ? 'ℏ' : 'HBAR'}
           </Badge>
         </Button>
       </DropdownMenuTrigger>
