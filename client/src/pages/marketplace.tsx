@@ -66,6 +66,20 @@ export default function Marketplace() {
       search: searchQuery || undefined,
       type: typeFilter === "all" ? undefined : typeFilter 
     }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        limit: '100',
+        isListed: 'true',
+        ...(searchQuery && { search: searchQuery }),
+        ...(typeFilter !== "all" && { type: typeFilter })
+      });
+      
+      const response = await fetch(`/api/rights?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch rights');
+      }
+      return response.json();
+    }
   });
 
   // Advanced filtering logic based on business model
@@ -154,7 +168,7 @@ export default function Marketplace() {
                 />
               </div>
               {/* Removed help tour button */}
-              <Web3ModalConnectButton />
+              <WalletButton />
             </div>
           </div>
         </div>
