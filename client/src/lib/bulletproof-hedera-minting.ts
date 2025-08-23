@@ -138,8 +138,15 @@ export async function mintOneRightsNft(params: {
   console.log('Creating TransactionList Base64...');
   const transactionListBase64 = makeTransactionListBase64([txBytes]);
 
-  console.log('Sending transaction to HashPack for signing...');
-  // Send to wallet: it will prompt the user, sign with supply key, and submit to the network
+  console.log('Sending transaction to HashPack wallet for user approval...');
+  console.log('Transaction details:', {
+    tokenId: collectionTokenId,
+    metadata: metadataPointer,
+    payer: userAccountId,
+    estimatedFee: '~0.01 HBAR'
+  });
+  
+  // Send to wallet: user will see transaction details, approve, and pay fees
   const result = await signClient.request({
     topic: session.topic,
     chainId: CHAIN,
@@ -147,8 +154,7 @@ export async function mintOneRightsNft(params: {
       method: "hedera_signAndExecuteTransaction",
       params: {
         transactionList: transactionListBase64,
-        // signerAccountId can be provided explicitly; most wallets infer from txId payer
-        signerAccountId: userAccountId
+        signerAccountId: userAccountId // User's account that will pay fees
       }
     }
   });
@@ -159,38 +165,66 @@ export async function mintOneRightsNft(params: {
   return result; // contains tx info; use your mirror client to fetch serial(s)
 }
 
-// Direct HashConnect integration for reliable wallet approval
+// Real HashPack wallet integration for NFT minting with user approval
 export async function connectAndMintNFT(params: {
   metadataPointer: string;
   collectionTokenId: string;
   userAccountId: string;
 }): Promise<{ success: boolean; transactionId?: string; error?: string }> {
   try {
-    console.log('Development mode NFT minting:', {
+    console.log('Initiating HashPack wallet approval for NFT minting:', {
       metadataPointer: params.metadataPointer,
       collectionTokenId: params.collectionTokenId,
       userAccountId: params.userAccountId
     });
 
-    // Simulate a short delay for realistic feel
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Connect to HashPack and request minting approval
+    const { signClient, session } = await connectHashPack();
     
-    // Generate mock transaction ID
-    const mockTransactionId = `hedera_mint_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    console.log('HashPack connected, preparing transaction for wallet approval...');
     
-    console.log('Development mode: NFT minted successfully with transaction:', mockTransactionId);
+    // Execute the mint transaction with wallet approval
+    const result = await mintOneRightsNft({
+      signClient,
+      session,
+      metadataPointer: params.metadataPointer,
+      collectionTokenId: params.collectionTokenId,
+      userAccountId: params.userAccountId
+    });
+    
+    console.log('Transaction approved and executed:', result);
+    
+    // Extract transaction ID from result
+    const transactionId = (result as any)?.transactionId || 
+                         (result as any)?.receipt?.transactionId || 
+                         (result as any)?.[0]?.transactionId ||
+                         'success';
     
     return {
       success: true,
-      transactionId: mockTransactionId
+      transactionId: transactionId
     };
     
   } catch (error) {
-    console.error('Minting error:', error);
+    console.error('HashPack minting error:', error);
+    
+    // Provide user-friendly error messages
+    let errorMessage = 'Minting failed';
+    if (error instanceof Error) {
+      if (error.message.includes('User rejected') || error.message.includes('cancelled')) {
+        errorMessage = 'Transaction cancelled by user';
+      } else if (error.message.includes('Insufficient')) {
+        errorMessage = 'Insufficient HBAR balance to pay transaction fees';
+      } else if (error.message.includes('not connected')) {
+        errorMessage = 'HashPack wallet disconnected. Please reconnect.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
     
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Minting failed'
+      error: errorMessage
     };
   }
 }
