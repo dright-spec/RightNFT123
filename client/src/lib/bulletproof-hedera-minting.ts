@@ -12,8 +12,14 @@ import {
 
 // Proper implementation using the official Hedera wallet connect package
 function makeTransactionListBase64(txBytes: Uint8Array[]): string {
-  // Convert transaction bytes to base64 format expected by WalletConnect
-  return Buffer.from(JSON.stringify(txBytes.map(tx => Array.from(tx)))).toString('base64');
+  // WalletConnect expects direct base64 encoding of the transaction bytes
+  // For a single transaction, we just encode it directly
+  if (txBytes.length === 1) {
+    return Buffer.from(txBytes[0]).toString('base64');
+  }
+  // For multiple transactions, concatenate them (not needed for our use case)
+  const combined = Buffer.concat(txBytes.map(tx => Buffer.from(tx)));
+  return combined.toString('base64');
 }
 
 const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string;
@@ -147,22 +153,42 @@ export async function mintOneRightsNft(params: {
   });
   
   // Send to wallet: user will see transaction details, approve, and pay fees
-  const result = await signClient.request({
-    topic: session.topic,
-    chainId: CHAIN,
-    request: {
-      method: "hedera_signAndExecuteTransaction",
-      params: {
-        transactionList: transactionListBase64,
-        signerAccountId: userAccountId // User's account that will pay fees
+  try {
+    const result = await signClient.request({
+      topic: session.topic,
+      chainId: CHAIN,
+      request: {
+        method: "hedera_signAndExecuteTransaction",
+        params: {
+          transactionList: transactionListBase64,
+          signerAccountId: `hedera:mainnet:${userAccountId}` // Full account format
+        }
       }
-    }
-  });
+    });
+    
+    console.log('Transaction executed successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('Transaction request failed:', error);
+    // If the standard method fails, try with the transaction bytes directly
+    const fallbackResult = await signClient.request({
+      topic: session.topic,
+      chainId: CHAIN,
+      request: {
+        method: "hedera_signAndExecuteTransaction",
+        params: [
+          {
+            transactionList: transactionListBase64,
+            signerAccountId: userAccountId
+          }
+        ]
+      }
+    });
+    
+    console.log('Fallback transaction executed:', fallbackResult);
+    return fallbackResult;
+  }
 
-  console.log('HashPack response:', result);
-  
-  // You'll typically get a transactionId back; query mirror for the receipt if needed
-  return result; // contains tx info; use your mirror client to fetch serial(s)
 }
 
 // Real HashPack wallet integration for NFT minting with user approval
