@@ -1,0 +1,153 @@
+Perfect, let’s walk another AI through the correct way to design a rights marketplace (like OpenSea, but for rights on Hedera) so it avoids INVALID_TOKEN_ID and achieves a good UX.
+
+🔹 Root Cause of Your Error
+
+INVALID_TOKEN_ID means the token doesn’t exist on Hedera (or the wrong ID was used).
+
+This happens if:
+
+You didn’t persist/store the tokenId from TokenCreateTransaction.
+
+You tried minting into a token collection that was never created, deleted, or mismatched between mainnet/testnet.
+
+So the fix: always confirm `TokenCreateTransaction → tokenId → store in DB → reuse that ID for minting.
+
+🔹 Marketplace Architecture Choices
+Option 1: Use HTS directly (no custom contract)
+
+Hedera’s Token Service (HTS) natively supports NFTs.
+
+You can:
+
+Create collections per user (or one global collection per asset type).
+
+Mint NFTs with HIP-412 metadata (JSON with rights info).
+
+Transfer NFTs between accounts.
+
+✅ Benefits:
+
+No smart contract gas headaches.
+
+Cheaper fees.
+
+Native HashPack support.
+
+⚠️ Limitations:
+
+Marketplace logic (listing, bidding, royalties) must be off-chain in your app’s backend.
+
+You enforce rules (e.g., “royalty to creator”) by building them into UI/backend, not blockchain logic.
+
+Option 2: Deploy a Marketplace Smart Contract
+
+Write a Solidity contract on Hedera EVM that:
+
+Manages NFT listings (price, currency).
+
+Enforces royalties & transfers automatically.
+
+Handles escrow of NFTs + payment tokens.
+
+✅ Benefits:
+
+On-chain trustless execution.
+
+Closer to OpenSea’s model.
+
+⚠️ Downsides:
+
+Higher fees (smart contract calls).
+
+Users must approve contract interactions.
+
+Slower development, more complexity.
+
+🔹 Recommendation for You
+
+Since this is a rights marketplace, where compliance & clarity matter more than full decentralization:
+
+Use HTS directly for minting NFTs
+
+Each NFT = one right (with HIP-412 JSON metadata: title, type of right, duration, jurisdiction, etc.).
+
+Each user has their own collection or you create sub-collections grouped by type.
+
+Handle listings/trades off-chain (like Rarible did early on)
+
+Backend stores "User X listed NFT Y for 100 HBAR/USDC".
+
+Buyer clicks “Buy” → triggers TransferTransaction from seller to buyer.
+
+Payment handled via HTS fungible tokens or HBAR.
+
+Only move to smart contracts if you need:
+
+Automatic escrow.
+
+Royalty enforcement at the protocol level.
+
+🔹 UI/UX Recommendations
+
+WalletConnect Flow
+
+On first load: show “Connect HashPack” (via WalletConnect modal).
+
+After connect: display user’s account ID & owned NFTs.
+
+Minting Flow
+
+Show a simple “Create Right NFT” form:
+
+Title of Right
+
+Type (copyright, succession, property, etc.)
+
+Metadata fields (HIP-412 JSON builder)
+
+On submit → backend generates metadata JSON, stores on IPFS, calls TokenMintTransaction.
+
+Marketplace Flow
+
+For sellers: “List NFT” → backend registers listing, doesn’t move NFT yet.
+
+For buyers: “Buy NFT” → UI prompts HashPack to approve payment + transfer NFT.
+
+Confirmations shown in-app with a progress loader → success toast with Hedera Explorer link.
+
+Error Handling
+
+If INVALID_TOKEN_ID → show “This collection does not exist. Please create a new NFT collection first.”
+
+Always surface transactionId + explorer link.
+
+🔹 Metadata Standard (HIP-412 for Rights NFTs)
+
+Example JSON you’d pin to IPFS:
+
+{
+  "name": "Copyright for Book X",
+  "creator": "Alice",
+  "type": "Copyright",
+  "jurisdiction": "US",
+  "valid_until": "2030-12-31",
+  "description": "Exclusive copyright rights for the novel 'Book X'.",
+  "files": [
+    { "uri": "ipfs://QmExampleFile", "type": "application/pdf" }
+  ],
+  "attributes": [
+    { "trait_type": "Right Type", "value": "Copyright" },
+    { "trait_type": "Transferable", "value": "Yes" }
+  ]
+}
+
+
+✅ Summary for the other AI:
+
+Use HTS (not smart contracts) to mint & transfer NFTs for rights.
+
+Persist token IDs to avoid INVALID_TOKEN_ID.
+
+Handle listings off-chain for now (simpler + cheaper).
+
+Build UI around WalletConnect, IPFS metadata, and clean error handling.

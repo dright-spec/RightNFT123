@@ -345,6 +345,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
 
+  // Reset invalid collection token ID
+  app.post("/api/users/:userId/reset-collection", asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+
+    try {
+      // Clear the invalid collection token ID
+      const updatedUser = await storage.updateUser(userId, {
+        hederaCollectionTokenId: null,
+        collectionCreationStatus: 'not_created',
+        collectionCreatedAt: null
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+      
+      res.json(ApiResponseHelper.success({
+        message: 'Collection reset successfully. You can now create a new collection.',
+        userId: userId,
+        collectionStatus: 'not_created'
+      }));
+    } catch (error) {
+      console.error('Error resetting collection:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to reset collection'));
+    }
+  }));
+
   // YouTube verification endpoint - must be before other routes
   app.post("/api/youtube/verify", async (req, res) => {
     try {

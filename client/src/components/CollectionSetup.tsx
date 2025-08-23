@@ -48,6 +48,41 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
     }
   };
 
+  // Reset invalid collection
+  const handleResetCollection = async () => {
+    if (!account?.id) return;
+    
+    setIsCreating(true);
+    try {
+      const response = await fetch(`/api/users/${account.id}/reset-collection`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Collection Reset',
+          description: 'Invalid collection has been cleared. You can now create a new one.',
+          variant: 'default'
+        });
+        
+        // Refresh collection status
+        await fetchCollectionStatus();
+      } else {
+        throw new Error('Failed to reset collection');
+      }
+    } catch (error) {
+      console.error('Error resetting collection:', error);
+      toast({
+        title: 'Reset Failed',
+        description: 'Could not reset the collection. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   useEffect(() => {
     fetchCollectionStatus();
   }, [account?.id]);
@@ -119,24 +154,32 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
         description: 'Please approve the transaction in HashPack to create your personal NFT collection'
       });
 
-      // Development mode - skip HashPack wallet and create collection directly
-      console.log('Creating development collection for testing...');
+      // Create real collection via HashPack
+      console.log('Creating real NFT collection on Hedera...');
       
-      const result = {
-        success: true,
-        transactionId: `dev_${Date.now()}`,
-        tokenId: `0.0.${Math.floor(Math.random() * 999999) + 100000}`
-      };
+      // Use the userCollectionManager to create a real collection
+      const result = await userCollectionManager.createUserCollection({
+        userAccountId: account.hederaAccountId,
+        userName: account.username || 'user',
+        displayName: account.displayName || account.username
+      });
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create collection');
+      }
       
       toast({
-        title: 'Development Collection',
-        description: 'Created a test collection. You can now mint your rights NFT!',
+        title: 'Collection Created on Hedera!',
+        description: `Your NFT collection has been created. Token ID: ${result.tokenId}`,
         variant: 'default'
       });
 
-      // Step 3: Complete collection creation on backend
-      // Extract token ID from HashPack result or generate one for development
-      const tokenId = result.tokenId || `0.0.${Math.floor(Math.random() * 999999) + 100000}`;
+      // Step 3: Complete collection creation on backend with real token ID
+      const tokenId = result.tokenId;
+      
+      if (!tokenId) {
+        throw new Error('No token ID returned from collection creation');
+      }
       
       const completeResponse = await fetch(`/api/users/${account.id}/complete-collection`, {
         method: 'POST',
@@ -183,37 +226,6 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
     }
   };
 
-  const handleResetCollection = async () => {
-    if (!account?.id) return;
-
-    try {
-      const response = await fetch(`/api/users/${account.id}/reset-collection`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Status Reset',
-          description: 'You can now try creating your collection again'
-        });
-        
-        // Refresh collection status
-        await fetchCollectionStatus();
-      } else {
-        throw new Error('Failed to reset collection status');
-      }
-    } catch (error) {
-      console.error('Reset error:', error);
-      toast({
-        title: 'Reset Failed',
-        description: 'Unable to reset collection status. Please try again.',
-        variant: 'destructive'
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
@@ -226,6 +238,56 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
   }
 
   if (collectionStatus?.hasCollection && collectionStatus.status === 'created') {
+    // Check if this is a simulated/invalid token ID
+    const isInvalidToken = collectionStatus.collectionTokenId && 
+                          collectionStatus.collectionTokenId.startsWith('0.0.');
+    
+    if (isInvalidToken) {
+      return (
+        <Card className="w-full max-w-2xl mx-auto border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex items-center">
+              <AlertCircle className="h-8 w-8 text-yellow-600" />
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-yellow-900">Invalid Collection Detected</h3>
+                <p className="text-yellow-700">
+                  Your collection token ID doesn't exist on Hedera mainnet.
+                </p>
+                <p className="text-sm text-yellow-600 mt-1">
+                  Token ID: {collectionStatus.collectionTokenId} (Invalid)
+                </p>
+              </div>
+            </div>
+            <Alert className="border-yellow-300 bg-yellow-100">
+              <AlertCircle className="h-4 w-4 text-yellow-700" />
+              <AlertDescription className="text-yellow-800">
+                This is a test token ID that was created for development. To mint real NFTs on Hedera, 
+                you need to reset this and create a real collection through HashPack.
+              </AlertDescription>
+            </Alert>
+            <Button 
+              onClick={handleResetCollection}
+              disabled={isCreating}
+              className="w-full"
+              variant="outline"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Resetting...
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  Reset Invalid Collection
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+    
     return (
       <Card className="w-full max-w-2xl mx-auto border-green-200 bg-green-50">
         <CardContent className="pt-6">
