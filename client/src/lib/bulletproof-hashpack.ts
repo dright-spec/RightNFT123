@@ -1,6 +1,6 @@
 // Bulletproof HashPack integration following the exact recipe
 import SignClient from "@walletconnect/sign-client";
-import WalletConnectModal from "@walletconnect/modal";
+import { WalletConnectModal } from "@walletconnect/modal";
 import { 
   Client as HederaClient, 
   TokenMintTransaction, 

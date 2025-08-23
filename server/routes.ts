@@ -47,9 +47,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create secure session
       const sessionToken = await sessionManager.createSession(
         user.id,
-        user.walletAddress,
-        user.hederaAccountId,
-        user.walletType,
+        user.walletAddress || '',
+        user.hederaAccountId || '',
+        user.walletType || 'hashpack',
         req
       );
 

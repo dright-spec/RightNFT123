@@ -32,19 +32,27 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
       hederaAccountId?: string;
       walletType?: string;
     }) => {
+      console.log('Sending registration data:', userData);
+      
       const response = await fetch('/api/auth/wallet-connect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Include cookies for session management
         body: JSON.stringify(userData)
       });
       
+      const responseData = await response.json();
+      console.log('Registration response:', responseData);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Extract error message from server response
+        const errorMessage = responseData?.error || responseData?.message || `HTTP ${response.status}: Registration failed`;
+        throw new Error(errorMessage);
       }
       
-      return await response.json();
+      return responseData;
     },
     onSuccess: (data) => {
       console.log('User registered successfully:', data);
@@ -66,9 +74,19 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
     },
     onError: (error) => {
       console.error('User registration failed:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // Extract actual error message
+      let errorMessage = "Failed to create your account. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage = (error as any)?.message || (error as any)?.error || errorMessage;
+      }
+      
       toast({
         title: "Registration Error",
-        description: "Failed to create your account. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
