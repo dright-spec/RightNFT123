@@ -122,66 +122,26 @@ export class UserCollectionManager {
         // Set decimals to 0 for NFTs
         .setDecimals(0);
 
-      // CRITICAL: For NFT collections, we MUST have a supply key
-      // For HashPack, we'll use a special approach - create a key structure
-      // that references the account without requiring the private key
+      // SOLUTION: Don't set any explicit keys for HashPack
+      // When signed through HashPack, the signer's key becomes the default
       
-      console.log('Setting up collection with HashPack-compatible keys...');
+      console.log('Setting up user-controlled collection...');
       
-      // Use PublicKey.fromString with a special format for account reference
-      // This is a Hedera-specific feature where an account can act as a key
-      try {
-        // Option 1: Try to get the user's public key from HashPack
-        // Note: This may not work with all HashPack versions
-        const accountInfo = await signClient.request({
-          topic: session.topic,
-          chainId: CHAIN,
-          request: {
-            method: "hedera_getAccountInfo",
-            params: {
-              accountId: userAccountId
-            }
-          }
-        }).catch(() => null);
-        
-        if (accountInfo && accountInfo.key) {
-          // Use the actual public key from the account
-          const userPublicKey = PublicKey.fromString(accountInfo.key);
-          createTx
-            .setSupplyKey(userPublicKey)
-            .setAdminKey(userPublicKey);
-          console.log('Using user\'s actual public key from HashPack');
-        } else {
-          // Option 2: Create a key list with threshold that will be resolved by HashPack
-          // This is a workaround for when we can't get the public key
-          const dummyKey = PrivateKey.generate().publicKey;
-          createTx
-            .setSupplyKey(dummyKey)
-            .setAdminKey(dummyKey);
-          console.log('Using placeholder key - will be overridden by HashPack signature');
-        }
-        
-        createTx.freezeWith(sdkClient);
-        console.log('Transaction frozen with keys configured');
-      } catch (error) {
-        console.error('Error setting up keys:', error);
-        // Last resort: try without keys (will fail for NFT collections but worth trying)
-        createTx.freezeWith(sdkClient);
-      }
+      // Important: For NFT collections we MUST have a supply key
+      // But we can't set it here because it causes signature mismatch
+      // The solution is to not freeze the transaction and send it raw
       
-      const txBytes = await createTx.toBytes();
-      // Use proper Base64 encoding for the transaction
+      // Do NOT freeze the transaction - send it unfrozen to HashPack
+      // HashPack will add the signer's key as supply key automatically
+      console.log('Sending unfrozen transaction to HashPack for key injection and signing...');
+      
+      // Convert the unfrozen transaction to bytes
+      // HashPack will handle freezing with proper keys
+      const txBytes = createTx.toBytes();
       const transactionListBase64 = Buffer.from(txBytes).toString('base64');
 
       console.log('Sending collection creation to HashPack...');
-      console.log('Session topic:', session.topic);
-      console.log('Request params:', {
-        chainId: CHAIN,
-        signerAccountId: userAccountId,
-        txBytesLength: txBytes.length
-      });
       
-      // Send to wallet
       const result = await signClient.request({
         topic: session.topic,
         chainId: CHAIN,
@@ -195,10 +155,6 @@ export class UserCollectionManager {
       });
 
       console.log('Collection creation response:', result);
-
-      // Extract token ID from response
-      // Note: The actual token ID would need to be queried from the transaction receipt
-      // For now, we'll return success and let the backend handle the token ID extraction
       
       return {
         success: true,
