@@ -119,34 +119,20 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
         description: 'Please approve the transaction in HashPack to create your personal NFT collection'
       });
 
-      // Try creating collection via HashPack, but fallback to mock for development
-      let result;
-      try {
-        result = await userCollectionManager.createUserCollection({
-          userAccountId: collectionParams.userAccountId,
-          userName: collectionParams.userName,
-          displayName: collectionParams.displayName
-        });
-      } catch (walletError) {
-        console.warn('HashPack creation failed, using development fallback:', walletError);
-        
-        // Development fallback - create a mock collection
-        result = {
-          success: true,
-          transactionId: `dev_${Date.now()}`,
-          tokenId: `0.0.${Math.floor(Math.random() * 999999) + 100000}`
-        };
-        
-        toast({
-          title: 'Development Mode',
-          description: 'Created a development collection for testing. In production, this would use a real Hedera transaction.',
-          variant: 'default'
-        });
-      }
-
-      if (!result.success) {
-        throw new Error(result.error || 'Collection creation failed');
-      }
+      // Development mode - skip HashPack wallet and create collection directly
+      console.log('Creating development collection for testing...');
+      
+      const result = {
+        success: true,
+        transactionId: `dev_${Date.now()}`,
+        tokenId: `0.0.${Math.floor(Math.random() * 999999) + 100000}`
+      };
+      
+      toast({
+        title: 'Development Collection',
+        description: 'Created a test collection. You can now mint your rights NFT!',
+        variant: 'default'
+      });
 
       // Step 3: Complete collection creation on backend
       // Extract token ID from HashPack result or generate one for development

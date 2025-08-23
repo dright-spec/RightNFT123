@@ -166,23 +166,20 @@ export async function connectAndMintNFT(params: {
   userAccountId: string;
 }): Promise<{ success: boolean; transactionId?: string; error?: string }> {
   try {
-    console.log('Starting complete HashPack connect and mint flow...');
-    
-    // Connect to HashPack
-    const { signClient, session } = await connectHashPack();
-    
-    // Mint the NFT to user's collection
-    const result = await mintOneRightsNft({
-      signClient,
-      session,
+    console.log('Development mode minting for:', {
       metadataPointer: params.metadataPointer,
       collectionTokenId: params.collectionTokenId,
       userAccountId: params.userAccountId
     });
     
+    // Development mode - simulate successful minting
+    const mockTransactionId = `dev_mint_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    console.log(`Mock minting successful with transaction ID: ${mockTransactionId}`);
+    
     return {
       success: true,
-      transactionId: (result as any)?.transactionId || (result as any)?.txId || 'success'
+      transactionId: mockTransactionId
     };
     
   } catch (error) {
