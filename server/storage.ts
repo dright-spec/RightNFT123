@@ -6,6 +6,8 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByWalletAddress(walletAddress: string): Promise<User | undefined>;
+  getUserByEmailVerificationToken(token: string): Promise<User | undefined>;
+  getUserByHederaAccountId(hederaAccountId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   upsertUser(userData: {
@@ -34,6 +36,25 @@ export interface IStorage {
   createNotification(notification: any): Promise<any>;
   getUserNotifications(userId: number): Promise<any[]>;
   markNotificationAsRead(notificationId: number): Promise<void>;
+  
+  // Category methods
+  getCategories(): Promise<any[]>;
+  
+  // Search methods
+  searchRights(query: string, options: { limit: number; offset: number }): Promise<Right[]>;
+  
+  // Bidding methods
+  placeBid(bid: any): Promise<any>;
+  getBidsForRight(rightId: number): Promise<any[]>;
+  
+  // Favorites methods
+  addToFavorites(userId: number, rightId: number): Promise<void>;
+  removeFromFavorites(userId: number, rightId: number): Promise<void>;
+  
+  // Stake methods
+  getStake(id: number): Promise<any>;
+  createRevenueDistribution(distribution: any): Promise<any>;
+  updateStake(id: number, updates: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -77,6 +98,54 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
+  async getUserByEmailVerificationToken(token: string): Promise<User | undefined> {
+    for (const user of Array.from(this.users.values())) {
+      if (user.emailVerificationToken === token) {
+        return user;
+      }
+    }
+    return undefined;
+  }
+
+  async getUserByHederaAccountId(hederaAccountId: string): Promise<User | undefined> {
+    for (const user of Array.from(this.users.values())) {
+      if (user.hederaAccountId === hederaAccountId) {
+        return user;
+      }
+    }
+    return undefined;
+  }
+
+  async upsertUser(userData: {
+    walletAddress: string;
+    hederaAccountId?: string;
+    walletType?: string;
+    username?: string;
+  }): Promise<User> {
+    let existingUser = await this.getUserByWalletAddress(userData.walletAddress);
+    
+    if (!existingUser && userData.hederaAccountId) {
+      existingUser = await this.getUserByHederaAccountId(userData.hederaAccountId);
+    }
+
+    if (existingUser) {
+      return await this.updateUser(existingUser.id, {
+        walletAddress: userData.walletAddress,
+        hederaAccountId: userData.hederaAccountId,
+        walletType: userData.walletType || 'hashpack',
+      }) || existingUser;
+    } else {
+      return await this.createUser({
+        walletAddress: userData.walletAddress,
+        hederaAccountId: userData.hederaAccountId,
+        walletType: userData.walletType || 'hashpack',
+        username: userData.username || `hedera_${userData.hederaAccountId?.replace(/\./g, '_') || Date.now()}`,
+        password: 'wallet_auth',
+        displayName: `Hedera User ${userData.hederaAccountId || ''}`,
+      });
+    }
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const user: User = { 
       id: this.currentUserId++,
@@ -90,12 +159,11 @@ export class MemStorage implements IStorage {
       website: insertUser.website || null,
       twitter: insertUser.twitter || null,
       instagram: insertUser.instagram || null,
-      youtube: null,
       isVerified: false,
       isBanned: false,
       totalEarnings: "0",
       totalSales: 0,
-      followerCount: 0,
+      followersCount: 0,
       followingCount: 0,
       createdAt: new Date(),
       updatedAt: new Date()
