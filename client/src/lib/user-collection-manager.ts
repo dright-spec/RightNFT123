@@ -33,18 +33,20 @@ export class UserCollectionManager {
     // Import the existing HashPack service instead of creating a new WalletConnect instance
     const { hashPackService } = await import('./bulletproof-hashpack');
     
-    // Use the existing connection
-    await hashPackService.initialize();
-    const signClient = (hashPackService as any).signClient;
-    const sessions = signClient?.session?.getAll() || [];
-    
-    if (!signClient || sessions.length === 0) {
+    // Check if HashPack is connected first
+    if (!hashPackService.isConnected()) {
       throw new Error('HashPack wallet must be connected first. Please connect your wallet and try again.');
     }
 
-    // Use the first available session (the current connected session)
-    const session = sessions[0];
+    // Use the existing connection
+    await hashPackService.initialize();
+    const signClient = (hashPackService as any).signClient;
+    const session = (hashPackService as any).session;
     
+    if (!signClient || !session) {
+      throw new Error('No active HashPack session found. Please reconnect your wallet and try again.');
+    }
+
     console.log('Using existing HashPack connection for collection creation');
     
     this.signClient = signClient;
