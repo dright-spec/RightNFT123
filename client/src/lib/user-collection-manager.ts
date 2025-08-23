@@ -31,40 +31,47 @@ export class UserCollectionManager {
    */
   async connect(): Promise<{ signClient: SignClient; session: any }> {
     try {
-      // Import the existing HashPack service instead of creating a new WalletConnect instance
-      const { hashPackService } = await import('./bulletproof-hashpack');
+      console.log('Connecting to HashPack for collection creation...');
       
-      console.log('Checking HashPack connection status...');
+      // Get existing sessions from WalletConnect
+      const activeSessions = localStorage.getItem('wc@2:client:0.3//session');
       
-      // Initialize the service first
-      await hashPackService.initialize();
-      
-      // Check if HashPack is connected
-      if (!hashPackService.isConnected()) {
-        throw new Error('HashPack wallet must be connected first. Please connect your wallet and try again.');
-      }
-
-      // Access the private properties safely
-      const signClient = (hashPackService as any).signClient;
-      const session = (hashPackService as any).session;
-      
-      console.log('SignClient available:', !!signClient);
-      console.log('Session available:', !!session);
-      
-      if (!signClient) {
-        throw new Error('HashPack SignClient not initialized. Please reconnect your wallet.');
+      if (!activeSessions) {
+        throw new Error('No active HashPack session. Please connect your wallet first.');
       }
       
-      if (!session) {
-        throw new Error('No active HashPack session found. Please reconnect your wallet and try again.');
-      }
-
-      console.log('Using existing HashPack connection for collection creation');
+      const sessions = JSON.parse(activeSessions);
+      const sessionKeys = Object.keys(sessions);
       
-      this.signClient = signClient;
-      this.session = session;
-
-      return { signClient, session };
+      if (sessionKeys.length === 0) {
+        throw new Error('No active sessions found. Please reconnect your wallet.');
+      }
+      
+      // Use the first active session
+      const activeSession = sessions[sessionKeys[0]];
+      console.log('Found active session:', activeSession.topic);
+      
+      // Initialize SignClient if needed
+      if (!this.signClient) {
+        const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "2f05a7cee75d4f65c6bbdf8f84b9e37c";
+        
+        this.signClient = await SignClient.init({
+          projectId: WC_PROJECT_ID,
+          relayUrl: "wss://relay.walletconnect.org",
+          metadata: {
+            name: "Dright",
+            description: "Digital Rights Marketplace on Hedera",
+            url: window.location.origin,
+            icons: [`${window.location.origin}/favicon.ico`]
+          }
+        });
+        
+        console.log('SignClient initialized for collection creation');
+      }
+      
+      this.session = activeSession;
+      
+      return { signClient: this.signClient, session: this.session };
     } catch (error) {
       console.error('Connection error details:', error);
       throw error;
@@ -98,6 +105,7 @@ export class UserCollectionManager {
         .setTokenType(TokenType.NonFungibleUnique)
         .setSupplyType(TokenSupplyType.Infinite)
         .setTreasuryAccountId(AccountId.fromString(userAccountId))
+        .setMaxTransactionFee(100000000) // 1 HBAR max fee
         // Note: For user-controlled supply key, we'd need the user's public key
         // For now, let's assume the platform manages supply keys for users
         // .setSupplyKey(supplyKey) // This would need to be passed as a parameter
@@ -105,9 +113,16 @@ export class UserCollectionManager {
         .freezeWith(sdkClient);
 
       const txBytes = await createTx.toBytes();
-      const transactionListBase64 = this.makeTransactionListBase64([txBytes]);
+      // Use proper Base64 encoding for the transaction
+      const transactionListBase64 = Buffer.from(txBytes).toString('base64');
 
       console.log('Sending collection creation to HashPack...');
+      console.log('Session topic:', session.topic);
+      console.log('Request params:', {
+        chainId: CHAIN,
+        signerAccountId: userAccountId,
+        txBytesLength: txBytes.length
+      });
       
       // Send to wallet
       const result = await signClient.request({

@@ -97,16 +97,6 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
       return;
     }
 
-    // If collection is already being created, don't start a new creation
-    if (collectionStatus?.status === 'creating') {
-      toast({
-        title: 'Collection Creation In Progress',
-        description: 'Your collection is already being created. Please approve the transaction in HashPack.',
-        variant: 'default'
-      });
-      return;
-    }
-
     setIsCreating(true);
 
     try {
@@ -150,12 +140,20 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
       const collectionParams = initData.data.collectionParams;
       
       toast({
-        title: 'Creating Collection...',
-        description: 'Please approve the transaction in HashPack to create your personal NFT collection'
+        title: 'Opening HashPack...',
+        description: 'Please approve the collection creation transaction in your HashPack wallet (costs ~$1 HBAR)'
       });
 
       // Create real collection via HashPack
       console.log('Creating real NFT collection on Hedera...');
+      console.log('Account details:', {
+        hederaAccountId: account.hederaAccountId,
+        username: account.username,
+        displayName: account.displayName
+      });
+      
+      // Add a small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Use the userCollectionManager to create a real collection
       const result = await userCollectionManager.createUserCollection({
@@ -314,7 +312,7 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
     return (
       <Card className="w-full max-w-2xl mx-auto border-orange-200 bg-orange-50">
         <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col space-y-4">
             <div className="flex items-center">
               <Loader2 className="h-8 w-8 text-orange-600 animate-spin" />
               <div className="ml-3">
@@ -323,18 +321,41 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
                   Please approve the transaction in your HashPack wallet to complete the collection creation.
                 </p>
                 <p className="text-sm text-orange-600 mt-2">
-                  💡 If you've already approved it, the creation should complete shortly.
+                  💡 If HashPack didn't open, click "Trigger HashPack" below.
                 </p>
               </div>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleResetCollection}
-              className="ml-4"
-            >
-              Try Again
-            </Button>
+            <div className="flex space-x-2">
+              <Button 
+                variant="default"
+                onClick={async () => {
+                  // Retry collection creation - trigger HashPack again
+                  await handleResetCollection();
+                  await handleCreateCollection();
+                }}
+                disabled={isCreating}
+                className="flex-1"
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="h-4 w-4 mr-2" />
+                    Trigger HashPack
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={handleResetCollection}
+                disabled={isCreating}
+              >
+                Cancel & Reset
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
