@@ -220,6 +220,14 @@ function RightCard({ right }: RightCardProps) {
         </Badge>
       );
     }
+    if (hasInvalidCollection || hasInvalidTokenId) {
+      return (
+        <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Collection Invalid
+        </Badge>
+      );
+    }
     if (canMint) {
       return (
         <Badge className="bg-green-500 hover:bg-green-600">
@@ -255,14 +263,24 @@ function RightCard({ right }: RightCardProps) {
     return null;
   };
 
+  // Check if token IDs are invalid (simulated 0.0.x format that doesn't exist on mainnet)
+  const hasInvalidTokenId = (right as any).tokenId && 
+                           (right as any).tokenId.startsWith('0.0.');
+  
+  const hasInvalidCollection = account?.hederaCollectionTokenId && 
+                              account.hederaCollectionTokenId.startsWith('0.0.');
+
   // Check if this is a real Hedera transaction (proper length and format)
   const hasRealTransaction = (right as any).transactionHash && 
                             (right as any).transactionHash.length > 20 && 
                             !(right as any).transactionHash.startsWith('0x') && // Hedera uses different format
-                            (right as any).transactionHash.includes('@');
+                            (right as any).transactionHash.includes('@') &&
+                            !hasInvalidTokenId && // Token must be valid
+                            !hasInvalidCollection; // Collection must be valid
 
   const canMint = right.verificationStatus === "verified" && 
-                  !hasRealTransaction;
+                  !hasRealTransaction &&
+                  !hasInvalidCollection; // Can't mint with invalid collection
 
   console.log('Right minting check:', {
     id: right.id,
@@ -313,6 +331,16 @@ function RightCard({ right }: RightCardProps) {
         </div>
         
         <div className="flex gap-2">
+          {hasInvalidCollection && (
+            <Button 
+              onClick={() => setLocation('/')}
+              variant="outline"
+              className="flex-1 border-orange-500 text-orange-700 hover:bg-orange-50"
+            >
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Reset Collection
+            </Button>
+          )}
           {canMint && (
             <SmartMintButton 
               rightId={right.id}
