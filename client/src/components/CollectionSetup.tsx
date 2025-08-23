@@ -71,8 +71,8 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          userName: account.username,
-          displayName: account.displayName
+          userName: account?.username || 'user',
+          displayName: account?.username || 'User'
         })
       });
 

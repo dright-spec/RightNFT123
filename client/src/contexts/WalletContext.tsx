@@ -76,7 +76,7 @@ function WalletProviderInner({ children }: { children: ReactNode }) {
         isConnected: true,
         userId: sessionUser.data.user.id
       });
-      console.log('Session restored for user:', sessionUser.data.user.username);
+      console.log('Session restored for user:', sessionUser.data.user?.username || 'Unknown');
     } else if (sessionError) {
       // Session error - clear account if it exists
       if (account) {

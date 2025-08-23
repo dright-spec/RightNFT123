@@ -143,8 +143,8 @@ export function AnimatedRightCard({
             
             {/* Creator info with micro-animation */}
             <div className={`flex items-center space-x-2 text-sm text-muted-foreground ${animationClasses.fadeIn}`}>
-              <span>by {right.creator.username}</span>
-              {right.creator.isVerified && (
+              <span>by {right.creator?.username || 'Unknown Creator'}</span>
+              {right.creator?.isVerified && (
                 <Shield className={`w-3 h-3 text-blue-500 ${animationClasses.float}`} />
               )}
             </div>
