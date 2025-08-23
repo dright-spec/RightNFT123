@@ -105,9 +105,8 @@ export class UserCollectionManager {
         console.log('Could not get account info, proceeding with transaction anyway');
       }
       
-      // Build transaction without explicitly setting keys
-      // HashPack will automatically use the signer's key for all key fields
-      const createTx = await new TokenCreateTransaction()
+      // Build transaction - we MUST set a supply key for NFT collections
+      const createTx = new TokenCreateTransaction()
         .setTokenName(collectionName)
         .setTokenSymbol(collectionSymbol)
         .setTokenType(TokenType.NonFungibleUnique)
@@ -115,23 +114,36 @@ export class UserCollectionManager {
         .setTreasuryAccountId(treasuryAccount)
         .setMaxTransactionFee(100000000) // 1 HBAR max fee
         .setTransactionId(TransactionId.generate(treasuryAccount))
-        .setTransactionMemo(`Creating ${collectionName}`)
-        // Don't freeze yet - we'll modify it based on HashPack's capabilities
-        ;
+        .setTransactionMemo(`Creating ${collectionName}`);
 
-      // IMPORTANT: For HashPack to sign properly, we need to set the keys
-      // The signer's key will be used automatically when they sign
-      // We'll use a special pattern that tells HashPack to use the signer's key
+      // CRITICAL: For NFT collections, we MUST set a supply key
+      // Since HashPack doesn't expose the user's public key directly,
+      // we'll use a workaround that still allows the user to mint
       
-      // Create a placeholder key that will be replaced by the signer's actual key
-      // This is a known pattern for HashPack/WalletConnect
-      const THRESHOLD_KEY = "302a300506032b6570032100"; // Empty threshold key in hex
+      console.log('Setting up collection keys for HashPack...');
       
-      // Now set the keys using the threshold pattern
-      // This tells the network to use the account's key that signs the transaction
+      // Generate a key pair that we'll store for this collection
+      // This allows minting through the platform while the user owns the NFTs
+      const supplyKey = PrivateKey.generate();
+      const supplyPublicKey = supplyKey.publicKey;
+      
+      // Store the supply key in localStorage for this user's collection
+      // This will be used later for minting
+      const keyStorage = {
+        privateKey: supplyKey.toString(),
+        publicKey: supplyPublicKey.toString(),
+        userAccountId: userAccountId,
+        timestamp: Date.now()
+      };
+      
+      // Save to localStorage (in production, this should be stored securely on the server)
+      localStorage.setItem(`collection_supply_key_${userAccountId}`, JSON.stringify(keyStorage));
+      
+      console.log('Supply key generated and stored for collection');
+      
       createTx
-        .setSupplyKey(treasuryAccount) // Use treasury account's key as supply key
-        .setAdminKey(treasuryAccount)  // Use treasury account's key as admin key
+        .setSupplyKey(supplyPublicKey)
+        .setAdminKey(supplyPublicKey)
         .freezeWith(sdkClient);
       
       const txBytes = await createTx.toBytes();
