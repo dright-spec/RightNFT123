@@ -11,6 +11,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { SmartMintButton } from "@/components/SmartMintButton";
 
 interface DashboardData {
   user: {
@@ -130,7 +131,8 @@ function RightCard({ right }: RightCardProps) {
             // Use bulletproof integration - this will actually trigger HashPack
             const result = await connectAndMintNFT({
               metadataPointer: metadataPointer,
-              // tokenId and treasuryId will come from env vars
+              collectionTokenId: import.meta.env.VITE_TOKEN_ID || '0.0.123456', // Temp fallback
+              userAccountId: account?.hederaAccountId || '0.0.123456' // Temp fallback
             });
             
             console.log('Bulletproof HashPack minting result:', result);
@@ -312,23 +314,10 @@ function RightCard({ right }: RightCardProps) {
         
         <div className="flex gap-2">
           {canMint && (
-            <Button 
-              onClick={() => mintNFTMutation.mutate(right.id)}
-              disabled={mintNFTMutation.isPending}
+            <SmartMintButton 
+              rightId={right.id}
               className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              {mintNFTMutation.isPending ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Minting...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Mint NFT
-                </>
-              )}
-            </Button>
+            />
           )}
           {hasRealTransaction && (
             <div className="flex gap-2 flex-1">
