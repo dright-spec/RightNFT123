@@ -181,9 +181,27 @@ export class UserCollectionManager {
 
       console.log('Collection creation response:', result);
       
+      // Extract the transaction ID from the response
+      const transactionId = (result as any)?.transactionId || (result as any)?.txId || 'pending';
+      
+      // For successful transactions, we need to query the token ID from the transaction
+      // The token ID will be in the transaction receipt
+      // Since we can't query it directly from the client, we'll parse it from the response
+      let tokenId = null;
+      
+      // Check if the result contains the token ID directly
+      if ((result as any)?.tokenId) {
+        tokenId = (result as any).tokenId;
+      } else if (transactionId && transactionId !== 'pending') {
+        // The token ID needs to be retrieved from the transaction receipt
+        // For now, we'll return the transaction ID and let the backend handle it
+        console.log('Transaction successful, token ID will be retrieved from receipt');
+      }
+      
       return {
         success: true,
-        transactionId: (result as any)?.transactionId || (result as any)?.txId || 'pending'
+        transactionId: transactionId,
+        tokenId: tokenId
       };
 
     } catch (error) {
