@@ -81,7 +81,7 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
           description: 'Please review and approve the NFT minting transaction. Cost: ~0.01 HBAR'
         });
 
-        // Step 3: Execute minting via HashPack
+        // Step 3: Execute minting (simulated in development)
         const mintResult = await connectAndMintNFT({
           metadataPointer: params.metadataPointer,
           collectionTokenId: params.collectionTokenId,

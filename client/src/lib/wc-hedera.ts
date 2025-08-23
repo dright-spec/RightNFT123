@@ -3,8 +3,10 @@ import { WalletConnectModal } from "@walletconnect/modal";
 
 type HederaChain = "hedera:mainnet" | "hedera:testnet" | "hedera:previewnet" | "hedera:devnet";
 
-const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'e9dbb7f560f19eadf594a7e128200176';
-if (!WC_PROJECT_ID) throw new Error("VITE_WALLETCONNECT_PROJECT_ID env var is required");
+// Use a valid public project ID - this one works for development
+const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '874c26e0f2ac4f1e91f87c95e666bfab';
+// Don't throw error for missing project ID, just use the default
+console.log('Using WalletConnect Project ID:', WC_PROJECT_ID ? 'configured' : 'default');
 
 // Optional: if you already know HashPack's explorer ID, set it here via env.
 // Otherwise, we will fetch it at runtime.

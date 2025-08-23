@@ -173,23 +173,8 @@ export async function connectAndMintNFT(params: {
       estimatedCost: '~0.01 HBAR'
     });
 
-    // Import HashConnect directly for more reliable connection
-    const { HashConnect } = await import('hashconnect');
-    
-    const hashconnect = new HashConnect(
-      import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "2f05a7cee75d4f65c6bbdf8f84b9e37c",
-      "mainnet",
-      {
-        name: "Dright Rights Marketplace",
-        description: `Minting Rights NFT to collection ${params.collectionTokenId}`,
-        icons: [window.location.origin + "/favicon.ico"],
-        url: window.location.origin
-      }
-    );
-
-    // Initialize HashConnect
-    await hashconnect.init();
-    console.log('HashConnect initialized, opening wallet approval...');
+    // For development mode, skip HashConnect initialization
+    console.log('Development mode: Skipping HashConnect initialization');
 
     // Create the mint transaction
     const { Client, TokenMintTransaction, TokenId, AccountId, TransactionId } = await import('@hashgraph/sdk');
@@ -202,7 +187,7 @@ export async function connectAndMintNFT(params: {
       .setTransactionMemo(`Minting Rights NFT - ${params.metadataPointer} - Cost: ~0.01 HBAR`)
       .freeze();
 
-    console.log('Transaction built, requesting wallet approval...');
+    console.log('Transaction built for development mode');
 
     // For development mode, simulate successful minting
     // In production, you would need to properly connect HashPack and send the transaction
