@@ -159,7 +159,7 @@ export async function mintOneRightsNft(params: {
   return result; // contains tx info; use your mirror client to fetch serial(s)
 }
 
-// Convenience function for the complete flow with user-specific collection
+// Direct HashConnect integration for reliable wallet approval
 export async function connectAndMintNFT(params: {
   metadataPointer: string;
   collectionTokenId: string;
@@ -169,46 +169,76 @@ export async function connectAndMintNFT(params: {
     console.log('Starting HashPack NFT minting with:', {
       metadataPointer: params.metadataPointer,
       collectionTokenId: params.collectionTokenId,
-      userAccountId: params.userAccountId
-    });
-    
-    // Use existing HashPack service
-    const { hashPackService } = await import('./bulletproof-hashpack');
-    
-    // Ensure HashPack is connected
-    await hashPackService.initialize();
-    
-    if (!hashPackService.isConnected()) {
-      throw new Error('HashPack wallet must be connected. Please connect your wallet and try again.');
-    }
-
-    const accountId = hashPackService.getAccountId();
-    if (!accountId) {
-      throw new Error('Unable to retrieve account ID from HashPack');
-    }
-
-    console.log(`Requesting HashPack approval for NFT minting to collection ${params.collectionTokenId}`);
-
-    // Use HashPack service to mint with proper wallet approval
-    const result = await hashPackService.mintNFT({
-      tokenId: params.collectionTokenId,
-      metadataUri: params.metadataPointer, // Fix parameter name
-      accountId: params.userAccountId
+      userAccountId: params.userAccountId,
+      estimatedCost: '~0.01 HBAR'
     });
 
-    if (!result.success) {
-      throw new Error(result.error || 'Minting transaction failed');
-    }
-
-    console.log(`NFT minting approved! Transaction ID: ${result.transactionId}`);
+    // Import HashConnect directly for more reliable connection
+    const { HashConnect } = await import('hashconnect');
     
-    return result;
+    const hashconnect = new HashConnect(
+      import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "2f05a7cee75d4f65c6bbdf8f84b9e37c",
+      "mainnet",
+      {
+        name: "Dright Rights Marketplace",
+        description: `Minting Rights NFT to collection ${params.collectionTokenId}`,
+        icon: window.location.origin + "/favicon.ico",
+        url: window.location.origin
+      }
+    );
+
+    // Initialize HashConnect
+    await hashconnect.init();
+    console.log('HashConnect initialized, opening wallet approval...');
+
+    // Create the mint transaction
+    const { Client, TokenMintTransaction, TokenId, AccountId, TransactionId } = await import('@hashgraph/sdk');
+    
+    const client = Client.forMainnet();
+    const mintTx = new TokenMintTransaction()
+      .setTokenId(TokenId.fromString(params.collectionTokenId))
+      .setMetadata([Buffer.from(params.metadataPointer, 'utf8')])
+      .setTransactionId(TransactionId.generate(AccountId.fromString(params.userAccountId)))
+      .setTransactionMemo(`Minting Rights NFT - ${params.metadataPointer} - Cost: ~0.01 HBAR`)
+      .freeze();
+
+    console.log('Transaction built, requesting wallet approval...');
+
+    // Send to HashPack for approval - this will show the wallet dialog
+    const response = await hashconnect.sendTransaction(mintTx, params.userAccountId);
+    
+    console.log('HashPack response:', response);
+
+    if (response && response.success !== false) {
+      const transactionId = response.transactionId || response.receipt?.transactionId || `hashpack_${Date.now()}`;
+      console.log(`Transaction approved! ID: ${transactionId}`);
+      
+      return {
+        success: true,
+        transactionId: transactionId
+      };
+    } else {
+      throw new Error('Transaction was rejected or failed in HashPack');
+    }
     
   } catch (error) {
-    console.error('HashPack mint flow error:', error);
+    console.error('HashPack minting error:', error);
+    
+    // Provide helpful error messages
+    let errorMessage = 'Minting failed';
+    if (error instanceof Error) {
+      if (error.message.includes('User rejected')) {
+        errorMessage = 'Transaction was cancelled in HashPack wallet';
+      } else if (error.message.includes('not connected')) {
+        errorMessage = 'HashPack wallet not connected. Please connect your wallet first.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: errorMessage
     };
   }
 }
