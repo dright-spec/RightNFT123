@@ -1247,7 +1247,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                    creator.collectionCreationStatus === 'created' &&
                                    !creator.hederaCollectionTokenId.startsWith('0.0.');
         
-        if (!hasValidCollection) {
+        // Skip collection requirement for YouTube-verified content (automatically verified)
+        const isYouTubeVerified = right.youtubeUrl && right.verificationStatus === 'verified';
+        
+        if (!hasValidCollection && !isYouTubeVerified) {
           return res.status(400).json({ 
             error: "User collection required", 
             message: "You must create your personal NFT collection first before minting rights",
@@ -1257,6 +1260,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             displayName: creator.displayName,
             invalidCollection: hasInvalidCollection
           });
+        }
+        
+        // For YouTube-verified content without collection, use a default collection
+        let collectionTokenId = creator.hederaCollectionTokenId;
+        if (isYouTubeVerified && !hasValidCollection) {
+          // Use a default Dright collection for YouTube-verified content
+          collectionTokenId = process.env.DRIGHT_YOUTUBE_COLLECTION_ID || '0.0.4889592'; // Default collection for YouTube content
+          console.log(`Using default YouTube collection for verified content: ${collectionTokenId}`);
         }
 
         // Mark as minting started
@@ -1385,15 +1396,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Generated metadata pointer:', metadataPointer);
         console.log('Metadata pointer length:', Buffer.byteLength(metadataPointer, 'utf8'), 'bytes');
 
-        // Return transaction details for Hedera NFT minting using user's collection
+        // Return transaction details for Hedera NFT minting using appropriate collection
         const mintingData = {
           metadata,
           transactionParams: {
             type: "TokenMintTransaction", 
-            collectionTokenId: creator.hederaCollectionTokenId, // Use user's collection
+            collectionTokenId: collectionTokenId || creator.hederaCollectionTokenId, // Use determined collection
             userAccountId: creator.hederaAccountId, // User signs and pays
             metadataPointer: metadataPointer, // Properly formatted IPFS metadata pointer
-            memo: `Dright NFT - ${right.title || 'Digital Rights'}`
+            memo: `Dright NFT - ${right.title || 'Digital Rights'}`,
+            isYouTubeVerified: isYouTubeVerified // Flag for special handling
           }
         };
         
