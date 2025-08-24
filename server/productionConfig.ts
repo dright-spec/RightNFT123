@@ -58,15 +58,16 @@ export function configureProductionSecurity(app: Express) {
     legacyHeaders: false,
   });
 
-  // Stricter rate limiting for auth endpoints
+  // Stricter rate limiting for auth endpoints (more lenient in development)
   const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 auth requests per windowMs
+    windowMs: process.env.NODE_ENV === 'development' ? 1 * 60 * 1000 : 15 * 60 * 1000, // 1 minute in dev, 15 minutes in prod
+    max: process.env.NODE_ENV === 'development' ? 50 : 5, // 50 attempts in dev, 5 in prod
     message: {
       error: "Too many authentication attempts, please try again later."
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skipSuccessfulRequests: process.env.NODE_ENV === 'development', // Don't count successful requests in dev
   });
 
   // Stricter rate limiting for admin endpoints
