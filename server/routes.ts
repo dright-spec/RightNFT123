@@ -1664,39 +1664,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/rights", async (req, res) => {
     try {
-      // For deployment, we'll create a temporary user system
-      // In production, this would come from proper authentication
-      const mockUserId = 1;
+      // Get authenticated user from session
+      const sessionToken = req.cookies?.session;
+      if (!sessionToken) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      const userFromSession = await getUserFromSession(sessionToken);
+      if (!userFromSession) {
+        return res.status(401).json({ error: "Invalid session" });
+      }
       
       const validatedData = insertRightSchema.parse(req.body);
       
-      // Ensure user exists - create anonymous user if needed
-      let user = await storage.getUser(mockUserId);
-      if (!user) {
-        console.log('User not found, creating anonymous user with ID:', mockUserId);
-        try {
-          user = await storage.createUser({
-            username: `user_${mockUserId}`,
-            password: 'secure_password',
-            email: `user_${mockUserId}@dright.com`,
-            walletAddress: null,
-            bio: 'Demo user for production testing'
-          });
-          console.log('Created user:', user);
-        } catch (createError) {
-          console.error('Failed to create user:', createError);
-          // Try to get the user again in case it was created by another request
-          user = await storage.getUser(mockUserId);
-          if (!user) {
-            throw new Error('Unable to create or find user');
-          }
-        }
-      }
+      // Use the authenticated user's ID
+      const userId = userFromSession.id;
       
       const right = await storage.createRight({
         ...validatedData,
-        creatorId: mockUserId,
-        ownerId: mockUserId,
+        creatorId: userId,
+        ownerId: userId,
       });
       
       // Create mint transaction for verified rights
