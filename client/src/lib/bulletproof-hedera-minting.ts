@@ -1,6 +1,15 @@
 // Bulletproof HashPack + Hedera HTS NFT minting following the exact specification
 import SignClient from "@walletconnect/sign-client";
 import { WalletConnectModal } from "@walletconnect/modal";
+import { patchLongForHedera } from "./hedera-long-patch";
+
+// Ensure Long.js is patched before importing Hedera SDK
+try {
+  patchLongForHedera();
+} catch (e) {
+  console.warn("Long.js patching already done or failed:", e);
+}
+
 import {
   Client,
   TokenMintTransaction,
