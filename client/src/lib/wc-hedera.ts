@@ -55,11 +55,37 @@ export type WCSession = {
   session: import("@walletconnect/types").SessionTypes.Struct;
 };
 
+// Track last connection attempt to prevent rapid retries
+let lastConnectionAttempt = 0;
+const CONNECTION_COOLDOWN = 3000; // 3 seconds cooldown between attempts
+
 export async function connectHashPack(opts?: {
   chains?: HederaChain[];
   themeMode?: "dark" | "light";
 }): Promise<WCSession> {
   const chains = opts?.chains ?? DEFAULT_CHAINS;
+
+  // Prevent too many rapid connection attempts
+  const now = Date.now();
+  if (now - lastConnectionAttempt < CONNECTION_COOLDOWN) {
+    throw new Error("Please wait a moment before trying to connect again");
+  }
+  lastConnectionAttempt = now;
+
+  // Clear any existing session before attempting new connection
+  const existingSession = hashPackSessionStore.getSession();
+  if (existingSession.signClient && existingSession.session) {
+    try {
+      console.log('Clearing existing session before new connection');
+      await existingSession.signClient.disconnect({
+        topic: existingSession.session.topic,
+        reason: { code: 6000, message: "Starting new connection" }
+      });
+    } catch (e) {
+      console.warn('Failed to clear existing session:', e);
+    }
+    hashPackSessionStore.clearSession();
+  }
 
   const client = await SignClient.init({ projectId: WC_PROJECT_ID });
 
@@ -72,6 +98,22 @@ export async function connectHashPack(opts?: {
     // Put HashPack first if we have its explorer id.
     explorerRecommendedWalletIds: hpId ? [hpId] : undefined,
   });
+
+  // Clean up any stale pairing sessions before creating new one
+  const pairings = client.pairing.getAll();
+  if (pairings.length > 0) {
+    console.log(`Cleaning up ${pairings.length} stale pairing(s)`);
+    for (const pairing of pairings) {
+      try {
+        await client.pairing.delete(pairing.topic, {
+          code: 6000,
+          message: "Cleaning up stale pairing"
+        });
+      } catch (e) {
+        console.warn('Failed to delete pairing:', e);
+      }
+    }
+  }
 
   const { uri, approval } = await client.connect({
     requiredNamespaces: {
@@ -134,13 +176,33 @@ export async function signMessage(params: {
 
 export async function disconnect(params: { client: WCSession["client"]; session: WCSession["session"] }) {
   const { client, session } = params;
-  await client.disconnect({
-    topic: session.topic,
-    reason: { code: 6000, message: "User disconnected" },
-  });
+  
+  try {
+    await client.disconnect({
+      topic: session.topic,
+      reason: { code: 6000, message: "User disconnected" },
+    });
+  } catch (e) {
+    console.warn('Disconnect error (might be already disconnected):', e);
+  }
   
   // Clear the global session store
   hashPackSessionStore.clearSession();
+  
+  // Clean up all pairings to prevent stale connections
+  try {
+    const pairings = client.pairing.getAll();
+    for (const pairing of pairings) {
+      await client.pairing.delete(pairing.topic, {
+        code: 6000,
+        message: "User disconnected"
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to clean up pairings:', e);
+  }
+  
+  console.log("Disconnected from wallet and cleared all sessions");
 }
 
 // Helper function to extract account ID from session

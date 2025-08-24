@@ -94,6 +94,15 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
   });
 
   const handleConnect = async () => {
+    // Prevent multiple clicks while connecting
+    if (isConnecting) {
+      toast({
+        title: "Connection in Progress",
+        description: "Please wait for the current connection attempt to complete",
+      });
+      return;
+    }
+    
     setIsConnecting(true);
     try {
       const session = await connectHashPack({ 
@@ -133,9 +142,24 @@ export function HashPackWalletConnect({ onConnect, onDisconnect }: HashPackWalle
       onConnect?.(session, hederaAccount);
     } catch (error) {
       console.error("Connection failed:", error);
+      
+      // Provide helpful error messages
+      let errorMessage = "Failed to connect to HashPack";
+      if (error instanceof Error) {
+        if (error.message.includes("wait a moment")) {
+          errorMessage = error.message; // Use the cooldown message
+        } else if (error.message.includes("User rejected")) {
+          errorMessage = "Connection was cancelled by user";
+        } else if (error.message.includes("No matching key")) {
+          errorMessage = "Connection expired. Please try again";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Connection Failed",
-        description: error instanceof Error ? error.message : "Failed to connect to HashPack",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
