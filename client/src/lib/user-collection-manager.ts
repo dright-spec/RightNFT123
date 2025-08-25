@@ -181,18 +181,19 @@ export class UserCollectionManager {
       // Extract the transaction ID from the response
       const transactionId = (result as any)?.transactionId || (result as any)?.txId || 'pending';
       
-      // For successful transactions, we need to query the token ID from the transaction
-      // The token ID will be in the transaction receipt
-      // Since we can't query it directly from the client, we'll parse it from the response
+      // CRITICAL: We MUST get the actual token ID from the transaction receipt
+      // The token ID is not returned directly by HashPack, we need to query for it
       let tokenId = null;
       
-      // Check if the result contains the token ID directly
-      if ((result as any)?.tokenId) {
+      // Check if HashPack returned the receipt with entity ID
+      if ((result as any)?.receipt?.entityId) {
+        tokenId = (result as any).receipt.entityId;
+        console.log('Got token ID from receipt:', tokenId);
+      } else if ((result as any)?.tokenId) {
         tokenId = (result as any).tokenId;
-      } else if (transactionId && transactionId !== 'pending') {
-        // The token ID needs to be retrieved from the transaction receipt
-        // For now, we'll return the transaction ID and let the backend handle it
-        console.log('Transaction successful, token ID will be retrieved from receipt');
+        console.log('Got token ID directly:', tokenId);
+      } else {
+        console.log('No token ID in response, backend will retrieve from transaction:', transactionId);
       }
       
       return {

@@ -300,36 +300,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (needsTokenIdRetrieval || !tokenId) {
         console.log('Retrieving token ID from transaction:', transactionId);
         
-        // Wait a moment for the transaction to be indexed by mirror node
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Wait for transaction to be indexed
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
-        // Query Hedera mirror node for the transaction result
+        // Try multiple approaches to get the token ID
         try {
-          // Query using the transaction ID directly
-          const searchUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/transactions?transactionId=${encodeURIComponent(transactionId)}`;
-          console.log('Querying mirror node:', searchUrl);
+          // First, try to get transaction by timestamp
+          const parts = transactionId.split('@');
+          const accountId = parts[0];
+          const timestamp = parts[1];
           
-          const searchResponse = await fetch(searchUrl);
+          // Format timestamp for mirror node (replace . with -)
+          const formattedTimestamp = timestamp.replace('.', '-');
+          const txUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/transactions/${accountId}-${formattedTimestamp}`;
           
-          if (searchResponse.ok) {
-            const searchData = await searchResponse.json();
-            console.log('Mirror node response:', searchData);
+          console.log('Checking transaction at:', txUrl);
+          const txResponse = await fetch(txUrl);
+          
+          if (txResponse.ok) {
+            const txData = await txResponse.json();
+            console.log('Transaction data:', txData);
             
-            // Find the transaction and extract the created entity
-            if (searchData.transactions && searchData.transactions.length > 0) {
-              const tx = searchData.transactions[0];
+            // Check if this is a token creation transaction
+            if (txData.name === 'TOKENCREATE' && txData.entity_id) {
+              actualTokenId = txData.entity_id;
+              console.log('Found created token ID:', actualTokenId);
+            }
+          }
+          
+          // If still no token ID, search by transaction ID
+          if (!actualTokenId) {
+            const searchUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/transactions?transactionId=${encodeURIComponent(transactionId)}`;
+            console.log('Searching for transaction:', searchUrl);
+            
+            const searchResponse = await fetch(searchUrl);
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              console.log('Search results:', searchData);
               
-              // For token creation transactions, the entity_id contains the created token
-              if (tx.entity_id) {
-                actualTokenId = tx.entity_id;
-                console.log('Retrieved token ID from transaction:', actualTokenId);
+              if (searchData.transactions && searchData.transactions.length > 0) {
+                const tx = searchData.transactions[0];
+                if (tx.name === 'TOKENCREATE' && tx.entity_id) {
+                  actualTokenId = tx.entity_id;
+                  console.log('Found token ID from search:', actualTokenId);
+                }
               }
             }
-          } else {
-            console.error('Mirror node query failed:', searchResponse.status);
+          }
+          
+          // Last resort: check recent token creations by the user
+          if (!actualTokenId) {
+            console.log('Checking recent token creations by user...');
+            const tokensUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/tokens?account.id=${accountId}&type=NON_FUNGIBLE_UNIQUE&limit=5&order=desc`;
+            
+            const tokensResponse = await fetch(tokensUrl);
+            if (tokensResponse.ok) {
+              const tokensData = await tokensResponse.json();
+              console.log('User tokens:', tokensData);
+              
+              // Find the most recently created token where user is treasury
+              if (tokensData.tokens && tokensData.tokens.length > 0) {
+                const recentToken = tokensData.tokens[0];
+                if (recentToken.treasury_account_id === accountId) {
+                  actualTokenId = recentToken.token_id;
+                  console.log('Found recent user token:', actualTokenId);
+                }
+              }
+            }
           }
         } catch (error) {
-          console.error('Failed to retrieve token ID from mirror node:', error);
+          console.error('Failed to retrieve token ID:', error);
         }
       }
       
