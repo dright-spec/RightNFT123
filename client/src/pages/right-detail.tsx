@@ -27,6 +27,7 @@ export default function RightDetail() {
 
   const { data: right, isLoading, error } = useQuery<RightWithCreator>({
     queryKey: [`/api/rights/${id}`],
+    enabled: !!id,
   });
 
   const handlePurchase = () => {
