@@ -226,7 +226,7 @@ export async function connectAndMintNFT(params: {
   metadataPointer: string;
   collectionTokenId: string;
   userAccountId: string;
-}): Promise<{ success: boolean; transactionId?: string; error?: string }> {
+}): Promise<{ success: boolean; transactionId?: string; serialNumber?: string; error?: string }> {
   try {
     console.log('Initiating HashPack wallet approval for NFT minting:', {
       metadataPointer: params.metadataPointer,
@@ -249,16 +249,61 @@ export async function connectAndMintNFT(params: {
     });
     
     console.log('Transaction approved and executed:', result);
+    console.log('Full transaction result structure:', JSON.stringify(result, null, 2));
     
-    // Extract transaction ID from result
+    // Extract transaction ID and serial number from result
     const transactionId = (result as any)?.transactionId || 
                          (result as any)?.receipt?.transactionId || 
                          (result as any)?.[0]?.transactionId ||
                          'success';
     
+    // Extract serial number from the receipt
+    // Hedera returns serial numbers in the receipt for minted NFTs
+    let serialNumber = '1'; // Default to 1 if not found
+    
+    // Try multiple possible response structures
+    if ((result as any)?.receipt?.serials) {
+      // Standard receipt format
+      const serials = (result as any).receipt.serials;
+      if (serials && serials.length > 0) {
+        serialNumber = serials[0].toString();
+        console.log('Extracted serial number from receipt.serials:', serialNumber);
+      }
+    } else if ((result as any)?.serialNumbers) {
+      // Alternative format - direct serialNumbers array
+      const serialNumbers = (result as any).serialNumbers;
+      if (serialNumbers && serialNumbers.length > 0) {
+        serialNumber = serialNumbers[0].toString();
+        console.log('Extracted serial number from serialNumbers:', serialNumber);
+      }
+    } else if ((result as any)?.[0]?.receipt?.serials) {
+      // Array response format
+      const serials = (result as any)[0].receipt.serials;
+      if (serials && serials.length > 0) {
+        serialNumber = serials[0].toString();
+        console.log('Extracted serial number from array[0].receipt.serials:', serialNumber);
+      }
+    } else if ((result as any)?.receipt?.serialNumbers) {
+      // Alternative receipt format
+      const serialNumbers = (result as any).receipt.serialNumbers;
+      if (serialNumbers && serialNumbers.length > 0) {
+        serialNumber = serialNumbers[0].toString();
+        console.log('Extracted serial number from receipt.serialNumbers:', serialNumber);
+      }
+    } else {
+      console.warn('Could not extract serial number from transaction result, will calculate on backend');
+      console.log('Result keys:', Object.keys(result || {}));
+      if ((result as any)?.receipt) {
+        console.log('Receipt keys:', Object.keys((result as any).receipt));
+      }
+    }
+    
+    console.log('Final serial number to send:', serialNumber);
+    
     return {
       success: true,
-      transactionId: transactionId
+      transactionId: transactionId,
+      serialNumber: serialNumber
     };
     
   } catch (error) {

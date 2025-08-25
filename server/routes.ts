@@ -1674,35 +1674,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing transaction data" });
       }
       
-      // For Hedera NFTs, the full token identifier is collectionId#serialNumber
-      const nftIdentifier = serialNumber ? `${tokenId}#${serialNumber}` : tokenId;
+      // Get existing NFTs in this collection to determine the correct serial number
+      const existingRights = await storage.getRightsByCollectionId(tokenId);
+      console.log(`Found ${existingRights.length} existing NFTs in collection ${tokenId}`);
       
-      const updatedRight = await storage.updateRight(rightId, {
-        tokenId: nftIdentifier, // Store the full NFT identifier
-        transactionHash: transactionHash || transactionId,
-        mintingStatus: "completed",
-        hederaTokenId: tokenId, // Store collection ID separately
-        hederaSerialNumber: serialNumber || "1", // Store serial number
-        chainId: 295, // Hedera mainnet
-        networkType: "hedera"
-      });
+      let finalSerialNumber = serialNumber;
       
-      if (!updatedRight) {
-        return res.status(404).json({ error: "Right not found" });
+      // If no serial number provided or it's the default "1", calculate the next one
+      if (!finalSerialNumber || finalSerialNumber === "1") {
+        if (existingRights && existingRights.length > 0) {
+          // Find the highest serial number
+          const maxSerial = Math.max(...existingRights
+            .map(r => parseInt(r.hederaSerialNumber || "0"))
+            .filter(n => !isNaN(n)));
+          
+          // Check if serial "1" is already taken
+          const serialOneExists = existingRights.some(r => r.hederaSerialNumber === "1");
+          
+          if (serialOneExists && finalSerialNumber === "1") {
+            // Serial 1 is taken, use the next available
+            finalSerialNumber = (maxSerial + 1).toString();
+            console.log(`Serial #1 already exists in collection ${tokenId}, using serial #${finalSerialNumber}`);
+          } else if (!finalSerialNumber) {
+            // No serial provided at all, use next available
+            finalSerialNumber = (maxSerial + 1).toString();
+            console.log(`No serial number provided, calculated next serial for collection ${tokenId}: #${finalSerialNumber}`);
+          }
+        } else {
+          // This is the first NFT in the collection
+          finalSerialNumber = "1";
+          console.log(`First NFT in collection ${tokenId}, using serial #1`);
+        }
       }
       
-      res.json({
-        success: true,
-        message: "NFT minting completed successfully",
-        data: {
-          right: updatedRight,
-          tokenId: tokenId,
-          transactionHash: transactionHash || transactionId
+      // For Hedera NFTs, the full token identifier is collectionId#serialNumber
+      const nftIdentifier = `${tokenId}#${finalSerialNumber}`;
+      
+      console.log(`Completing mint for right ${rightId} with token ${nftIdentifier}`);
+      
+      try {
+        const updatedRight = await storage.updateRight(rightId, {
+          tokenId: nftIdentifier, // Store the full NFT identifier
+          transactionHash: transactionHash || transactionId,
+          mintingStatus: "completed",
+          hederaTokenId: tokenId, // Store collection ID separately
+          hederaSerialNumber: finalSerialNumber, // Store serial number
+          chainId: 295, // Hedera mainnet
+          networkType: "hedera"
+        });
+        
+        if (!updatedRight) {
+          return res.status(404).json({ error: "Right not found" });
         }
-      });
+        
+        res.json({
+          success: true,
+          message: "NFT minting completed successfully",
+          data: {
+            right: updatedRight,
+            tokenId: tokenId,
+            serialNumber: finalSerialNumber,
+            nftIdentifier: nftIdentifier,
+            transactionHash: transactionHash || transactionId
+          }
+        });
+      } catch (dbError: any) {
+        if (dbError.code === '23505' && dbError.constraint === 'rights_token_id_unique') {
+          // Duplicate token ID error
+          console.error(`Token ID ${nftIdentifier} already exists. Transaction succeeded but database update failed.`);
+          
+          // Try to find the actual next serial number
+          const existingRights = await storage.getRightsByCollectionId(tokenId);
+          const usedSerials = existingRights
+            .map(r => parseInt(r.hederaSerialNumber || "0"))
+            .filter(n => !isNaN(n))
+            .sort((a, b) => a - b);
+          
+          res.status(409).json({ 
+            error: "NFT was minted successfully on Hedera, but this serial number is already recorded. Please check HashScan for the actual serial number.",
+            suggestion: `The next available serial number appears to be #${Math.max(...usedSerials) + 1}`,
+            hashscanUrl: `https://hashscan.io/mainnet/token/${tokenId}`,
+            transactionId: transactionId
+          });
+        } else {
+          throw dbError;
+        }
+      }
     } catch (error) {
       console.error("Error completing NFT mint:", error);
-      res.status(500).json({ error: "Failed to complete NFT mint" });
+      res.status(500).json({ error: "Failed to complete NFT mint", details: (error as any).message });
     }
   });
 

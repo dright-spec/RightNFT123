@@ -24,6 +24,7 @@ export interface IStorage {
   getRightsWithCreator(limit?: number, offset?: number, type?: string, isListed?: boolean): Promise<RightWithCreator[]>;
   getRightsByCreator(creatorId: number): Promise<Right[]>;
   getRightsByOwner(ownerId: number): Promise<Right[]>;
+  getRightsByCollectionId(collectionId: string): Promise<Right[]>;
   createRight(right: InsertRight & { creatorId: number; ownerId: number }): Promise<Right>;
   updateRight(id: number, updates: Partial<Right>): Promise<Right | undefined>;
   
@@ -261,6 +262,10 @@ export class MemStorage {
 
   async getRightsByOwner(ownerId: number): Promise<Right[]> {
     return Array.from(this.rights.values()).filter(r => r.ownerId === ownerId);
+  }
+
+  async getRightsByCollectionId(collectionId: string): Promise<Right[]> {
+    return Array.from(this.rights.values()).filter(r => r.hederaTokenId === collectionId);
   }
 
   async createRight(rightData: InsertRight & { creatorId: number; ownerId: number }): Promise<Right> {
@@ -568,6 +573,10 @@ export class DatabaseStorage {
 
   async getRightsByOwner(ownerId: number): Promise<Right[]> {
     return await db.select().from(rights).where(eq(rights.ownerId, ownerId));
+  }
+
+  async getRightsByCollectionId(collectionId: string): Promise<Right[]> {
+    return await db.select().from(rights).where(eq(rights.hederaTokenId, collectionId));
   }
 
   async createRight(rightData: InsertRight & { creatorId: number; ownerId: number }): Promise<Right> {

@@ -94,8 +94,9 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         }
 
         // Step 4: Complete the minting on backend
-        // Extract serial number from mint result (defaults to 1 for first NFT in collection)
-        const serialNumber = (mintResult as any).serialNumber || "1";
+        // Use the serial number returned from the transaction
+        const serialNumber = mintResult.serialNumber || "1";
+        console.log('Using serial number for mint completion:', serialNumber);
         
         // Send collection ID and serial number separately
         // Backend will create the full NFT identifier as collectionId#serialNumber
