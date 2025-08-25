@@ -33,10 +33,8 @@ function makeTransactionListBase64(txBytes: Uint8Array[]): string {
 
 const WC_PROJECT_ID = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string;
 const CHAIN = "hedera:mainnet"; // Using mainnet as requested
-const TOKEN_ID = import.meta.env.VITE_TOKEN_ID as string;       // existing HTS NFT collection
-const TREASURY_ID = import.meta.env.VITE_TREASURY_ID as string; // holds the supply key (in HashPack)
 
-console.log('Hedera minting config:', { WC_PROJECT_ID: !!WC_PROJECT_ID, CHAIN, TOKEN_ID, TREASURY_ID });
+console.log('Hedera minting config:', { WC_PROJECT_ID: !!WC_PROJECT_ID, CHAIN });
 
 // HIP-412 lives OFF-chain. Put only a short pointer (≤100 bytes) here.
 function assertPointerFits(pointer: string) {
