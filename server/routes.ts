@@ -1999,12 +1999,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/rights", async (req, res) => {
     try {
       // Get authenticated user from session
-      console.log('POST /api/rights - Cookies received:', Object.keys(req.cookies || {}));
       const sessionToken = req.cookies?.session_token;  // Fixed: use correct cookie name
-      console.log('POST /api/rights - Session token:', sessionToken ? sessionToken.substring(0, 8) + '...' : 'none');
       
       if (!sessionToken) {
-        console.log('POST /api/rights - No session token found in cookies');
         return res.status(401).json({ error: "Authentication required" });
       }
       
@@ -2028,7 +2025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (right.verificationStatus === 'verified') {
         await storage.createTransaction({
           rightId: right.id,
-          toUserId: mockUserId,
+          toUserId: userId,  // Use the authenticated user's ID
           transactionHash: null, // Will be set when actual Hedera transaction occurs
           price: right.price || "0",
           currency: right.currency || "ETH",
