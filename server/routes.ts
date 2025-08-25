@@ -1999,7 +1999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/rights", async (req, res) => {
     try {
       // Get authenticated user from session
-      const sessionToken = req.cookies?.session;
+      const sessionToken = req.cookies?.session_token;  // Fixed: use correct cookie name
       if (!sessionToken) {
         return res.status(401).json({ error: "Authentication required" });
       }
