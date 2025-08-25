@@ -1496,12 +1496,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing transaction data" });
       }
       
+      // For Hedera NFTs, the full token identifier is collectionId#serialNumber
+      const nftIdentifier = serialNumber ? `${tokenId}#${serialNumber}` : tokenId;
+      
       const updatedRight = await storage.updateRight(rightId, {
-        tokenId: tokenId,
+        tokenId: nftIdentifier, // Store the full NFT identifier
         transactionHash: transactionHash || transactionId,
         mintingStatus: "completed",
-        hederaTokenId: tokenId,
-        hederaSerialNumber: serialNumber || "1", // Default to 1 if not provided
+        hederaTokenId: tokenId, // Store collection ID separately
+        hederaSerialNumber: serialNumber || "1", // Store serial number
         chainId: 295, // Hedera mainnet
         networkType: "hedera"
       });

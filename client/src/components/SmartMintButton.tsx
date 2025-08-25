@@ -97,15 +97,17 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         // Extract serial number from mint result (defaults to 1 for first NFT in collection)
         const serialNumber = (mintResult as any).serialNumber || "1";
         
+        // Send collection ID and serial number separately
+        // Backend will create the full NFT identifier as collectionId#serialNumber
         const completeResponse = await fetch(`/api/rights/${rightId}/mint-complete`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tokenId: params.collectionTokenId,
+            tokenId: params.collectionTokenId, // Collection ID (e.g., 0.0.9268164)
             transactionId: mintResult.transactionId,
             transactionHash: mintResult.transactionId,
-            serialNumber: serialNumber
+            serialNumber: serialNumber // NFT serial number (e.g., 1, 2, 3...)
           })
         });
 
