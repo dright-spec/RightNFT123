@@ -1429,16 +1429,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ]
         };
 
-        // Simulate IPFS pinning (in production, use actual IPFS service)
-        // Create a short, deterministic CID based on right ID
-        const { createHash } = await import('crypto');
+        // Store metadata in database and create accessible URL
         const metadataString = JSON.stringify(metadata);
-        const metadataHash = createHash('sha256').update(metadataString).digest('hex');
-        // Create a shorter IPFS CID to fit within 100 bytes
-        // Using a shorter hash to ensure it fits: bafyb + 40 chars = ~50 bytes total
-        const shortHash = metadataHash.substring(0, 40).toLowerCase();
-        const ipfsCid = `bafyb${shortHash}`;
-        const metadataPointer = `ipfs://${ipfsCid}`;
+        
+        // Store metadata in the right record for later retrieval
+        await storage.updateRight(rightId, { 
+          metadataUrl: metadataString // Store full metadata JSON
+        });
+        
+        // Create a URL that HashScan can actually fetch from
+        // Use the actual Replit dev URL that's accessible from the internet
+        const replitUrl = process.env.REPLIT_DEV_DOMAIN || 
+                         `https://${process.env.REPL_SLUG || 'dright'}-${process.env.REPL_OWNER || 'user'}.replit.app`;
+        const baseUrl = replitUrl.includes('replit') ? replitUrl : 'https://dright.com';
+        const metadataPointer = `${baseUrl}/api/metadata/${rightId}`;
         
         console.log('Generated metadata pointer:', metadataPointer);
         console.log('Metadata pointer length:', Buffer.byteLength(metadataPointer, 'utf8'), 'bytes');
@@ -1518,6 +1522,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error completing NFT mint:", error);
       res.status(500).json({ error: "Failed to complete NFT mint" });
+    }
+  });
+
+  // Metadata endpoint for NFTs - accessible by HashScan/explorers
+  app.get("/api/metadata/:id", async (req, res) => {
+    try {
+      const rightId = parseInt(req.params.id);
+      const right = await storage.getRightById(rightId);
+      
+      if (!right || !right.metadataUrl) {
+        return res.status(404).json({ error: "Metadata not found" });
+      }
+      
+      // Parse stored metadata JSON
+      try {
+        const metadata = JSON.parse(right.metadataUrl);
+        
+        // Set proper headers for JSON response
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*'); // Allow cross-origin access for explorers
+        
+        res.json(metadata);
+      } catch (parseError) {
+        console.error('Failed to parse metadata:', parseError);
+        res.status(500).json({ error: "Invalid metadata format" });
+      }
+    } catch (error) {
+      console.error("Error fetching metadata:", error);
+      res.status(500).json({ error: "Failed to fetch metadata" });
     }
   });
 
