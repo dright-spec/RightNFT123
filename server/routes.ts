@@ -2000,14 +2000,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/rights/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const userId = req.query.userId ? parseInt(req.query.userId as string) : undefined;
-      const right = await storage.getRight(id, userId);
       
-      if (!right) {
+      // Get right with creator information for NFT detail pages
+      const rightQuery = await db
+        .select({
+          // Right fields
+          right: rights,
+          // Creator fields
+          creator: users
+        })
+        .from(rights)
+        .innerJoin(users, eq(rights.creatorId, users.id))
+        .where(eq(rights.id, id))
+        .limit(1);
+
+      if (!rightQuery || rightQuery.length === 0) {
         return res.status(404).json({ error: "Right not found" });
       }
+
+      const result = rightQuery[0];
       
-      res.json(right);
+      // Format the response with creator and owner information
+      const rightData = {
+        ...result.right,
+        creator: {
+          id: result.creator.id,
+          username: result.creator.username,
+          displayName: result.creator.displayName,
+          walletAddress: result.creator.walletAddress,
+          hederaAccountId: result.creator.hederaAccountId,
+          isVerified: result.creator.isVerified || false
+        },
+        owner: {
+          id: result.creator.id,
+          username: result.creator.username,
+          displayName: result.creator.displayName,
+          walletAddress: result.creator.walletAddress,
+          hederaAccountId: result.creator.hederaAccountId,
+          isVerified: result.creator.isVerified || false
+        }
+      };
+      
+      res.json(rightData);
     } catch (error) {
       console.error("Error fetching right:", error);
       res.status(500).json({ error: "Failed to fetch right" });
