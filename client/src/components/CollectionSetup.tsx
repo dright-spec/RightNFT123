@@ -181,18 +181,18 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
         throw new Error('No transaction ID returned from collection creation');
       }
       
-      // For now, hardcode the known token ID from the successful transaction
-      // In production, the backend would extract this from the transaction receipt
-      const knownTokenId = '0.0.9268164'; // From your successful transaction
+      // If we don't have the token ID from the response, we need to query for it
+      // Pass the transaction ID to the backend which will retrieve the actual token ID
       
       const completeResponse = await fetch(`/api/users/${account.id}/complete-collection`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          tokenId: tokenId || knownTokenId, // Use the known token ID for now
+          tokenId: tokenId || null, // Only use real token ID if available
           transactionId: transactionId,
-          transactionHash: transactionId
+          transactionHash: transactionId,
+          needsTokenIdRetrieval: !tokenId // Flag to indicate we need to fetch token ID from transaction
         })
       });
 
@@ -242,11 +242,10 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
   }
 
   if (collectionStatus?.hasCollection && collectionStatus.status === 'created') {
-    // Check if this is a simulated/invalid token ID (development tokens)
-    // Real Hedera tokens are in format 0.0.XXXXXX where XXXXXX is > 1000000
+    // Check if this is an invalid token ID
+    // We should verify the token exists on the blockchain
     const tokenId = collectionStatus.collectionTokenId;
-    const isInvalidToken = tokenId && tokenId.startsWith('0.0.') && 
-                          parseInt(tokenId.split('.')[2]) < 1000000;
+    const isInvalidToken = false; // Remove this check as it's not reliable
     
     if (isInvalidToken) {
       return (
