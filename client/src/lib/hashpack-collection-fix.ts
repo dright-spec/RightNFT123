@@ -93,12 +93,14 @@ export async function createCollectionWithExplicitKey(params: {
     .setTokenSymbol(collectionSymbol)
     .setTokenType(TokenType.NonFungibleUnique)
     .setSupplyType(TokenSupplyType.Infinite)
-    .setTreasuryAccountId(treasuryAccount)
+    .setTreasuryAccountId(treasuryAccount) // User is treasury - NFTs go directly to their wallet
     .setMaxTransactionFee(100000000)
-    // Use the actual public key
+    // Use the actual public key - user controls minting
     .setSupplyKey(publicKey)
-    .setAdminKey(publicKey)
+    // No admin key - prevents token deletion and ensures permanence
+    // .setAdminKey(publicKey) // Commented out for security
     .setTransactionId(TransactionId.generate(treasuryAccount))
+    .setTransactionMemo(`User ${userAccountId} NFT Collection`)
     .freezeWith(client);
 
   const txBytes = await transaction.toBytes();
