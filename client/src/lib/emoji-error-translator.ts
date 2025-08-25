@@ -297,8 +297,20 @@ const defaultError = (originalError: string): TranslatedError => ({
 /**
  * Translates technical error messages into user-friendly ones with emojis
  */
-export function translateError(error: string | Error): TranslatedError {
-  const errorMessage = error instanceof Error ? error.message : error;
+export function translateError(error: string | Error | any): TranslatedError {
+  // Ensure we have a string to work with
+  let errorMessage: string;
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === 'string') {
+    errorMessage = error;
+  } else if (error && typeof error === 'object' && 'message' in error) {
+    errorMessage = String(error.message);
+  } else if (error && typeof error === 'object' && 'error' in error) {
+    errorMessage = String(error.error);
+  } else {
+    errorMessage = String(error || 'Unknown error occurred');
+  }
   
   // Try to match against known patterns
   for (const { pattern, translate } of errorPatterns) {
