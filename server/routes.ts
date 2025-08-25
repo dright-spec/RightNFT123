@@ -360,10 +360,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               // Find the most recently created token where user is treasury
               if (tokensData.tokens && tokensData.tokens.length > 0) {
-                const recentToken = tokensData.tokens[0];
-                if (recentToken.treasury_account_id === accountId) {
-                  actualTokenId = recentToken.token_id;
-                  console.log('Found recent user token:', actualTokenId);
+                // Get the first token that has a supply key (can mint NFTs)
+                for (const token of tokensData.tokens) {
+                  // Check if this token has the right properties for minting
+                  const tokenDetailsUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/tokens/${token.token_id}`;
+                  const tokenDetailsResponse = await fetch(tokenDetailsUrl);
+                  
+                  if (tokenDetailsResponse.ok) {
+                    const tokenDetails = await tokenDetailsResponse.json();
+                    
+                    // Check if it has a supply key and user is treasury
+                    if (tokenDetails.supply_key && tokenDetails.treasury_account_id === accountId) {
+                      actualTokenId = token.token_id;
+                      console.log('Found suitable user token with supply key:', actualTokenId);
+                      break;
+                    }
+                  }
+                }
+                
+                // If no token with supply key found, take the most recent one anyway
+                if (!actualTokenId) {
+                  actualTokenId = tokensData.tokens[0].token_id;
+                  console.log('Using most recent token (may lack supply key):', actualTokenId);
                 }
               }
             }
