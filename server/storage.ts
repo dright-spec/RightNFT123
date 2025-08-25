@@ -150,9 +150,19 @@ export class MemStorage {
     const user: User = { 
       id: this.currentUserId++,
       username: insertUser.username,
+      displayName: insertUser.displayName || null,
       password: insertUser.password || "",
       walletAddress: insertUser.walletAddress || null,
+      hederaAccountId: insertUser.hederaAccountId || null,
+      hederaCollectionTokenId: null,
+      collectionCreationStatus: "not_created",
+      collectionCreatedAt: null,
+      walletType: insertUser.walletType || null,
+      networkType: insertUser.networkType || null,
       email: insertUser.email || null,
+      emailVerified: false,
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
       profileImageUrl: insertUser.profileImageUrl || null,
       coverImageUrl: null,
       bio: insertUser.bio || null,
@@ -195,6 +205,8 @@ export class MemStorage {
     const right = this.rights.get(id);
     if (!right) return undefined;
 
+    if (!right.creatorId || !right.ownerId) return undefined;
+
     const creator = this.users.get(right.creatorId);
     const owner = this.users.get(right.ownerId);
     
@@ -226,6 +238,8 @@ export class MemStorage {
     const rightsWithCreator: RightWithCreator[] = [];
     
     for (const right of rights) {
+      if (!right.creatorId || !right.ownerId) continue;
+      
       const creator = this.users.get(right.creatorId);
       const owner = this.users.get(right.ownerId);
       
@@ -256,7 +270,7 @@ export class MemStorage {
       title: rightData.title,
       type: rightData.type,
       description: rightData.description,
-      symbol: rightData.symbol,
+      symbol: rightData.symbol || null,
       categoryId: rightData.categoryId || null,
       tags: rightData.tags || null,
       imageUrl: rightData.imageUrl || null,
@@ -275,9 +289,7 @@ export class MemStorage {
       verificationStatus: "pending",
       verifiedAt: null,
       verifiedBy: null,
-      verificationNotes: rightData.verificationNotes || null,
-      legalDocumentHash: rightData.legalDocumentHash || null,
-      legalDocumentUrl: rightData.legalDocumentUrl || null,
+      verificationNotes: null,
       ownershipDocumentHash: rightData.ownershipDocumentHash || null,
       ownershipDocumentUrl: rightData.ownershipDocumentUrl || null,
       hederaAccountId: null,

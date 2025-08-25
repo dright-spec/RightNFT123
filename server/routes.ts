@@ -1274,7 +1274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       updateMintingStep(right.id, 5, "processing");
       await storage.updateRight(right.id, {
         hederaTokenId: mintResult.hederaTokenId,
-        hederaSerialNumber: mintResult.hederaSerialNumber,
+        hederaSerialNumber: mintResult.hederaSerialNumber.toString(),
         transactionHash: mintResult.transactionId,
         metadataUri: mintResult.metadataUri,
         mintingStatus: "completed",
@@ -1534,10 +1534,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             paysDividends: right.paysDividends || false,
             
             // RIGHTS DETAILS  
-            exclusive: right.exclusive || false,
-            allowedUses: right.allowedUses || "Standard usage rights",
-            termsAndConditions: right.termsAndConditions || "Standard terms apply",
-            attribution: right.attribution || "Attribution required",
+            exclusive: false,
+            allowedUses: "Standard usage rights",
+            termsAndConditions: "Standard terms apply",
+            attribution: "Attribution required",
             
             // PLATFORM & VERIFICATION
             verificationStatus: right.verificationStatus || "verified",
@@ -1559,13 +1559,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             mintedAt: new Date().toISOString(),
             
             // CONTENT LINKS
-            contentUrl: right.contentUrl || "",
+            contentUrl: right.contentFileUrl || "",
             youtubeUrl: right.contentFileUrl && right.contentFileUrl.includes('youtube') ? right.contentFileUrl : "",
             
             // RIGHTS MANAGEMENT
             transferable: true,
             resellable: true,
-            commercialUse: right.commercialUse || false
+            commercialUse: false
           },
           
           // Comprehensive attributes for blockchain explorer display (HIP-412 compliant)
@@ -1592,8 +1592,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             { trait_type: "Creator Verified", value: creator.isVerified ? "Yes" : "No", display_type: "string" },
             
             // RIGHTS FEATURES
-            { trait_type: "Exclusive", value: right.exclusive ? "Yes" : "No", display_type: "string" },
-            { trait_type: "Commercial Use", value: right.commercialUse ? "Allowed" : "Personal Only", display_type: "string" },
+            { trait_type: "Exclusive", value: "No", display_type: "string" },
+            { trait_type: "Commercial Use", value: "Personal Only", display_type: "string" },
             { trait_type: "Transferable", value: "Yes", display_type: "string" },
             { trait_type: "Resellable", value: "Yes", display_type: "string" },
             
@@ -1646,7 +1646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (mintingError) {
         console.error(`Minting preparation failed for right ${rightId}:`, mintingError);
-        console.error('Full error stack:', mintingError.stack);
+        console.error('Full error stack:', (mintingError as Error)?.stack);
         
         // Update minting status to failed
         await storage.updateRight(rightId, { mintingStatus: "failed" });
@@ -1654,7 +1654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({
           success: false,
           error: "Failed to prepare NFT minting",
-          details: mintingError.message || "Unknown error occurred"
+          details: (mintingError as Error)?.message || "Unknown error occurred"
         });
       }
 
@@ -1710,7 +1710,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/metadata/:id", async (req, res) => {
     try {
       const rightId = parseInt(req.params.id);
-      const right = await storage.getRightById(rightId);
+      const right = await storage.getRight(rightId);
       
       if (!right || !right.metadataUrl) {
         return res.status(404).json({ error: "Metadata not found" });
