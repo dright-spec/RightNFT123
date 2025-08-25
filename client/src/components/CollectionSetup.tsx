@@ -202,20 +202,80 @@ export function CollectionSetup({ onCollectionCreated, showTitle = true }: Colle
 
       const completeData = await completeResponse.json();
       
-      setCollectionStatus({
-        hasCollection: true,
-        collectionTokenId: completeData.data.collectionTokenId,
-        status: 'created',
-        createdAt: new Date().toISOString()
-      });
+      if (completeData.data.needsManualVerification) {
+        // Collection is pending verification, need to check transaction on HashScan
+        toast({
+          title: 'Collection Transaction Submitted',
+          description: 'Please wait while we verify your collection on the blockchain. This may take up to 30 seconds.',
+          duration: 5000
+        });
+        
+        // Poll for collection status
+        let attempts = 0;
+        const maxAttempts = 10;
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          
+          try {
+            const statusResponse = await fetch(`/api/users/${account.id}/collection-status`, {
+              credentials: 'include'
+            });
+            
+            if (statusResponse.ok) {
+              const statusData = await statusResponse.json();
+              
+              if (statusData.data.hasCollection && statusData.data.status === 'created') {
+                clearInterval(pollInterval);
+                setCollectionStatus({
+                  hasCollection: true,
+                  collectionTokenId: statusData.data.collectionTokenId,
+                  status: 'created',
+                  createdAt: new Date().toISOString()
+                });
+                
+                toast({
+                  title: 'Collection Created!',
+                  description: `Your NFT collection is ready: ${statusData.data.collectionTokenId}`
+                });
+                
+                if (onCollectionCreated) {
+                  onCollectionCreated(statusData.data.collectionTokenId);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error polling collection status:', error);
+          }
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            // Try to get token ID from HashScan manually
+            window.open(`https://hashscan.io/mainnet/transaction/${transactionId}`, '_blank');
+            toast({
+              title: 'Manual Verification Required',
+              description: 'Please check HashScan for your collection token ID and contact support.',
+              variant: 'destructive'
+            });
+          }
+        }, 3000);
+        
+      } else if (completeData.data.collectionTokenId) {
+        // Collection created successfully with token ID
+        setCollectionStatus({
+          hasCollection: true,
+          collectionTokenId: completeData.data.collectionTokenId,
+          status: 'created',
+          createdAt: new Date().toISOString()
+        });
 
-      toast({
-        title: 'Collection Created!',
-        description: `Your personal NFT collection is now ready for minting rights`
-      });
+        toast({
+          title: 'Collection Created!',
+          description: `Your personal NFT collection is now ready for minting rights`
+        });
 
-      if (onCollectionCreated) {
-        onCollectionCreated(completeData.data.collectionTokenId);
+        if (onCollectionCreated) {
+          onCollectionCreated(completeData.data.collectionTokenId);
+        }
       }
 
     } catch (error) {

@@ -300,25 +300,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (needsTokenIdRetrieval || !tokenId) {
         console.log('Retrieving token ID from transaction:', transactionId);
         
+        // Wait a moment for the transaction to be indexed by mirror node
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
         // Query Hedera mirror node for the transaction result
         try {
-          const txIdParts = transactionId.split('@');
-          const accountId = txIdParts[0];
-          const timestamp = txIdParts[1];
+          // Query using the transaction ID directly
+          const searchUrl = `https://mainnet-public.mirrornode.hedera.com/api/v1/transactions?transactionId=${encodeURIComponent(transactionId)}`;
+          console.log('Querying mirror node:', searchUrl);
           
-          // Query the mirror node for transaction details
-          const mirrorResponse = await fetch(
-            `https://mainnet-public.mirrornode.hedera.com/api/v1/transactions/${accountId}-${timestamp.replace('.', '-')}`
-          );
+          const searchResponse = await fetch(searchUrl);
           
-          if (mirrorResponse.ok) {
-            const txData = await mirrorResponse.json();
+          if (searchResponse.ok) {
+            const searchData = await searchResponse.json();
+            console.log('Mirror node response:', searchData);
             
-            // Extract the created token ID from the transaction
-            if (txData.entity_id) {
-              actualTokenId = txData.entity_id;
-              console.log('Retrieved token ID from transaction:', actualTokenId);
+            // Find the transaction and extract the created entity
+            if (searchData.transactions && searchData.transactions.length > 0) {
+              const tx = searchData.transactions[0];
+              
+              // For token creation transactions, the entity_id contains the created token
+              if (tx.entity_id) {
+                actualTokenId = tx.entity_id;
+                console.log('Retrieved token ID from transaction:', actualTokenId);
+              }
             }
+          } else {
+            console.error('Mirror node query failed:', searchResponse.status);
           }
         } catch (error) {
           console.error('Failed to retrieve token ID from mirror node:', error);
@@ -342,9 +350,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       if (!actualTokenId) {
-        return res.status(400).json(ApiResponseHelper.error(
-          'Failed to create collection on blockchain. Please try again.'
-        ));
+        // If we couldn't retrieve the token ID automatically, 
+        // save the transaction and mark as pending verification
+        console.log('Could not retrieve token ID automatically, saving transaction for manual verification');
+        
+        // Still update the user but with a pending status
+        const updatedUser = await storage.updateUser(userId, {
+          collectionCreationStatus: 'pending_verification',
+          collectionCreatedAt: new Date()
+        });
+        
+        return res.json(ApiResponseHelper.success({
+          message: 'Collection transaction submitted. Token ID will be verified shortly.',
+          user: updatedUser,
+          transactionHash: transactionHash || transactionId,
+          needsManualVerification: true
+        }));
       }
 
       // Update user with collection details
@@ -395,6 +416,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching collection status:', error);
       res.status(500).json(ApiResponseHelper.error('Failed to fetch collection status'));
+    }
+  }));
+  
+  // Manually verify collection token ID (for when automatic retrieval fails)
+  app.post('/api/users/:userId/verify-collection', asyncHandler(async (req: any, res: any) => {
+    const userId = parseInt(req.params.userId);
+    const { tokenId } = req.body;
+    
+    if (isNaN(userId)) {
+      return res.status(400).json(ApiResponseHelper.error('Invalid user ID'));
+    }
+    
+    if (!tokenId) {
+      return res.status(400).json(ApiResponseHelper.error('Token ID is required'));
+    }
+    
+    try {
+      // Verify the token exists on blockchain
+      const tokenCheckResponse = await fetch(
+        `https://mainnet-public.mirrornode.hedera.com/api/v1/tokens/${tokenId}`
+      );
+      
+      if (!tokenCheckResponse.ok) {
+        return res.status(400).json(ApiResponseHelper.error('Token does not exist on Hedera mainnet'));
+      }
+      
+      // Update user with verified collection token ID
+      const updatedUser = await storage.updateUser(userId, {
+        hederaCollectionTokenId: tokenId,
+        collectionCreationStatus: 'created',
+        collectionCreatedAt: new Date()
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json(ApiResponseHelper.error('User not found'));
+      }
+      
+      res.json(ApiResponseHelper.success({
+        message: 'Collection verified successfully',
+        user: updatedUser,
+        collectionTokenId: tokenId
+      }));
+      
+    } catch (error) {
+      console.error('Error verifying collection:', error);
+      res.status(500).json(ApiResponseHelper.error('Failed to verify collection'));
     }
   }));
 
