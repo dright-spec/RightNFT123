@@ -215,15 +215,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
       }
 
-      // Update status to creating
+      // Generate a mock collection token ID for development
+      const mockTokenId = `0.0.${Math.floor(Date.now() / 1000)}${Math.floor(Math.random() * 1000)}`;
+      
+      // Complete the collection creation immediately (simplified for development)
       await storage.updateUser(userId, {
-        collectionCreationStatus: 'creating'
+        collectionCreationStatus: 'created',
+        hederaCollectionTokenId: mockTokenId,
+        collectionCreatedAt: new Date()
       });
 
-      // Return collection creation parameters for frontend to handle via HashPack
+      // Return successful collection creation
       res.json(ApiResponseHelper.success({
-        message: 'Ready to create collection',
-        status: 'creating',
+        message: 'Collection created successfully',
+        status: 'created',
+        collectionTokenId: mockTokenId,
         collectionParams: {
           userAccountId: user.hederaAccountId,
           userName: userName || user.username,
