@@ -1300,87 +1300,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Create enhanced metadata for HIP-412 standard with clear rights information
         const metadata = {
-          name: `${symbol} ${right.title || `${rightLabel} #${rightId}`}`,
-          description: `🌟 DIGITAL RIGHTS NFT\n\n📋 Rights: ${rightLabel}\n🎯 Title: ${right.title || 'Untitled'}\n💰 Price: ${price.toFixed(2)} ${currency}\n\n📝 Description:\n${right.description || 'No description provided'}\n\n✅ Verified on Dright Platform\n🔗 Powered by Hedera Hashgraph\n\n🏛️ Creator: ${creator.displayName || creator.username}\n📅 Created: ${new Date(right.createdAt || Date.now()).toLocaleDateString()}`,
+          // Name format: [RIGHTS TYPE] Title - Makes type prominent on explorers
+          name: `[${rightLabel.toUpperCase()}] ${right.title || `Digital Rights #${rightId}`}`,
+          
+          // Structured description with clear sections
+          description: `🌟 DIGITAL RIGHTS NFT - ${rightLabel.toUpperCase()}\n\n` +
+                      `📋 Rights Type: ${symbol} ${rightLabel}\n` +
+                      `🎯 Asset: ${right.title || 'Untitled'}\n` +
+                      `💰 Value: ${price.toFixed(2)} ${currency}\n` +
+                      `🏛️ Collection: ${creator.displayName || creator.username} Rights Collection\n\n` +
+                      `📝 Description:\n${right.description || 'No description provided'}\n\n` +
+                      `✅ Verified on Dright Platform\n` +
+                      `🔗 View on Dright: https://dright.com/rights/${rightId}\n` +
+                      `⛓️ Powered by Hedera Hashgraph\n\n` +
+                      `👤 Creator: ${creator.displayName || creator.username}\n` +
+                      `📅 Minted: ${new Date().toLocaleDateString()}`,
+          
           image: right.imageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop&crop=center",
-          type: "Rights NFT",
+          
+          // Standard NFT type field
+          type: `${rightLabel} NFT`,
+          
+          // Creator info
           creator: creator.displayName || creator.username || `User ${right.creatorId}`,
+          
+          // Collection name - prominent for explorer display
           collection: `${creator.displayName || creator.username} Rights Collection`,
           
-          // Enhanced properties for detailed rights information
+          // External URL - Links back to Dright platform from explorers
+          external_url: `https://dright.com/rights/${rightId}`,
+          
+          // Animation URL for video content (if YouTube)
+          animation_url: right.contentFileUrl && right.contentFileUrl.includes('youtube') ? right.contentFileUrl : undefined,
+          
+          // Enhanced properties for detailed rights information (HIP-412 compliant)
           properties: {
-            // Core Rights Information
-            rightType: rightType,
+            // PRIMARY IDENTIFICATION - Most important for explorers
+            category: "Digital Rights",
+            rightType: rightLabel,
+            rightTypeCode: rightType,
             rightSymbol: symbol,
-            rightLabel: rightLabel,
+            collectionName: `${creator.displayName || creator.username} Rights Collection`,
+            collectionUrl: `https://dright.com/collection/${creator.hederaAccountId}`,
+            
+            // ASSET DETAILS
             title: right.title || `${rightLabel} #${rightId}`,
             description: right.description || "",
+            assetId: rightId.toString(),
             
-            // Financial Terms
+            // FINANCIAL TERMS
             price: price,
             currency: currency,
             priceDisplay: `${price.toFixed(2)} ${currency}`,
             royaltyPercentage: parseFloat(right.royaltyPercentage || "0"),
             paysDividends: right.paysDividends || false,
             
-            // Rights Details  
+            // RIGHTS DETAILS  
             exclusive: right.exclusive || false,
             allowedUses: right.allowedUses || "Standard usage rights",
             termsAndConditions: right.termsAndConditions || "Standard terms apply",
             attribution: right.attribution || "Attribution required",
             
-            // Verification & Platform
+            // PLATFORM & VERIFICATION
             verificationStatus: right.verificationStatus || "verified",
-            platform: "Dright - Digital Rights Marketplace",
+            platform: "Dright",
+            platformFullName: "Dright - Digital Rights Marketplace",
             platformUrl: "https://dright.com",
+            viewOnPlatform: `https://dright.com/rights/${rightId}`,
             blockchain: "Hedera Hashgraph",
             tokenStandard: "HTS (Hedera Token Service)",
             
-            // Creator Information
+            // CREATOR INFORMATION
             creatorAccountId: creator.hederaAccountId,
             creatorName: creator.displayName || creator.username,
+            creatorProfileUrl: `https://dright.com/profile/${creator.hederaAccountId}`,
             creatorVerified: creator.isVerified || false,
             
-            // Timestamps
+            // TIMESTAMPS
             createdAt: right.createdAt || new Date().toISOString(),
             mintedAt: new Date().toISOString(),
             
-            // Content Information
+            // CONTENT LINKS
             contentUrl: right.contentUrl || "",
-            youtubeUrl: right.youtubeUrl || "",
+            youtubeUrl: right.contentFileUrl && right.contentFileUrl.includes('youtube') ? right.contentFileUrl : "",
             
-            // Rights Management
+            // RIGHTS MANAGEMENT
             transferable: true,
             resellable: true,
             commercialUse: right.commercialUse || false
           },
           
-          // Comprehensive attributes for blockchain explorer display
+          // Comprehensive attributes for blockchain explorer display (HIP-412 compliant)
           attributes: [
-            // Primary Rights Information
-            { trait_type: "🎯 Rights Type", value: `${symbol} ${rightLabel}`, display_type: "string" },
-            { trait_type: "💰 Price", value: `${price.toFixed(2)} ${currency}`, display_type: "string" },
-            { trait_type: "✅ Status", value: (right.verificationStatus || "verified").toUpperCase(), display_type: "string" },
+            // PRIMARY CATEGORIZATION - Most visible on explorers
+            { trait_type: "Rights Category", value: rightLabel, display_type: "string" },
+            { trait_type: "Collection", value: `${creator.displayName || creator.username} Rights`, display_type: "string" },
+            { trait_type: "Rights Type", value: `${symbol} ${rightLabel}`, display_type: "string" },
             
-            // Creator & Platform
-            { trait_type: "👤 Creator", value: creator.displayName || creator.username, display_type: "string" },
-            { trait_type: "🏛️ Platform", value: "Dright Marketplace", display_type: "string" },
-            { trait_type: "⛓️ Blockchain", value: "Hedera Hashgraph", display_type: "string" },
+            // FINANCIAL INFO
+            { trait_type: "Price", value: price, display_type: "number" },
+            { trait_type: "Currency", value: currency, display_type: "string" },
+            { trait_type: "Royalty %", value: parseFloat(right.royaltyPercentage || "0"), display_type: "number" },
+            { trait_type: "Pays Dividends", value: right.paysDividends ? "Yes" : "No", display_type: "string" },
             
-            // Rights Features
-            { trait_type: "🔒 Exclusive", value: right.exclusive ? "Yes" : "No", display_type: "string" },
-            { trait_type: "💵 Pays Dividends", value: right.paysDividends ? "Yes" : "No", display_type: "string" },
-            { trait_type: "📈 Royalty %", value: parseFloat(right.royaltyPercentage || "0"), display_type: "number" },
+            // VERIFICATION & PLATFORM
+            { trait_type: "Status", value: (right.verificationStatus || "verified").toUpperCase(), display_type: "string" },
+            { trait_type: "Platform", value: "Dright", display_type: "string" },
+            { trait_type: "Blockchain", value: "Hedera", display_type: "string" },
+            { trait_type: "View on Dright", value: `dright.com/rights/${rightId}`, display_type: "string" },
             
-            // Usage Rights
-            { trait_type: "🏪 Commercial Use", value: right.commercialUse ? "Allowed" : "Personal Only", display_type: "string" },
-            { trait_type: "🔄 Transferable", value: "Yes", display_type: "string" },
-            { trait_type: "💱 Resellable", value: "Yes", display_type: "string" },
+            // CREATOR INFO
+            { trait_type: "Creator", value: creator.displayName || creator.username, display_type: "string" },
+            { trait_type: "Creator Verified", value: creator.isVerified ? "Yes" : "No", display_type: "string" },
             
-            // Technical Details
-            { trait_type: "🗓️ Created", value: new Date(right.createdAt || Date.now()).toLocaleDateString(), display_type: "date" },
-            { trait_type: "🆔 Token ID", value: rightId.toString(), display_type: "number" },
-            { trait_type: "🔢 Serial Number", value: "1", display_type: "number" }
+            // RIGHTS FEATURES
+            { trait_type: "Exclusive", value: right.exclusive ? "Yes" : "No", display_type: "string" },
+            { trait_type: "Commercial Use", value: right.commercialUse ? "Allowed" : "Personal Only", display_type: "string" },
+            { trait_type: "Transferable", value: "Yes", display_type: "string" },
+            { trait_type: "Resellable", value: "Yes", display_type: "string" },
+            
+            // DATES
+            { trait_type: "Created Date", value: new Date(right.createdAt || Date.now()).toLocaleDateString(), display_type: "date" },
+            { trait_type: "Minted Date", value: new Date().toLocaleDateString(), display_type: "date" },
+            
+            // TECHNICAL
+            { trait_type: "Asset ID", value: rightId.toString(), display_type: "number" },
+            { trait_type: "Serial", value: "1", display_type: "number" }
           ]
         };
 
