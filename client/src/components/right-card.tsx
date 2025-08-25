@@ -68,7 +68,13 @@ export function RightCard({ right }: RightCardProps) {
             {rightLabel}
           </Badge>
         </div>
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-3 right-3 flex gap-2">
+          {right.tokenId && (
+            <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 shadow-lg backdrop-blur-sm">
+              <Sparkles className="w-3 h-3 mr-1" />
+              NFT
+            </Badge>
+          )}
           <VerificationStatusBadge 
             status={right.verificationStatus || "pending"}
             hasFiles={right.contentFileHash ? true : false}
@@ -151,10 +157,19 @@ export function RightCard({ right }: RightCardProps) {
                 </div>
               )}
             </div>
-            <Link href={`/rights/${right.id}`}>
+            <Link href={right.tokenId ? `/nft/${right.id}` : `/rights/${right.id}`}>
               <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-all hover:scale-105 glow-primary">
-                View Details
-                <ArrowRight className="w-3 h-3 ml-1" />
+                {right.tokenId ? (
+                  <>
+                    View NFT
+                    <Sparkles className="w-3 h-3 ml-1" />
+                  </>
+                ) : (
+                  <>
+                    View Details
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </>
+                )}
               </Button>
             </Link>
           </div>

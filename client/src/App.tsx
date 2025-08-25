@@ -34,6 +34,7 @@ function Router() {
       <Route path="/create-right" component={CreateRight} />
       <Route path="/staking" component={Staking} />
       <Route path="/rights/:id" component={RightDetail} />
+      <Route path="/nft/:id" component={RightDetail} />
       <Route path="/admin" component={Admin} />
       <Route path="/admin/files" component={AdminFiles} />
       <Route path="/admin/login" component={AdminLogin} />

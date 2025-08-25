@@ -178,47 +178,126 @@ export default function RightDetail() {
 
             {/* NFT Information removed - component deleted */}
 
-            {/* Technical Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Hash className="w-5 h-5" />
-                  Technical Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
-                      Token ID
-                    </label>
-                    <p className="font-mono text-sm">{right.tokenId}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
-                      Created
-                    </label>
-                    <p className="text-sm">{new Date(right.createdAt!).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                
-                {right.metadataUrl && (
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">
-                      Metadata URI
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <p className="font-mono text-sm break-all flex-1">{right.metadataUrl}</p>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={right.metadataUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </Button>
+            {/* NFT Information - Enhanced for minted tokens */}
+            {right.tokenId && (
+              <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950 border-purple-200 dark:border-purple-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                    <Hash className="w-5 h-5" />
+                    🎨 NFT Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg p-4 border">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-purple-600 dark:text-purple-400 mb-1">
+                          🏷️ NFT Token ID
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <p className="font-mono text-sm bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">
+                            {right.tokenId}
+                          </p>
+                          <Button variant="outline" size="sm" asChild>
+                            <a 
+                              href={`https://hashscan.io/mainnet/token/${right.tokenId}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-purple-600 hover:text-purple-800"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-purple-600 dark:text-purple-400 mb-1">
+                          📅 Minted On
+                        </label>
+                        <p className="text-sm bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded inline-block">
+                          {new Date(right.createdAt!).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {right.transactionHash && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-purple-600 dark:text-purple-400 mb-1">
+                          🔗 Transaction Hash
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <p className="font-mono text-xs bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded flex-1 break-all">
+                            {right.transactionHash}
+                          </p>
+                          <Button variant="outline" size="sm" asChild>
+                            <a 
+                              href={`https://hashscan.io/mainnet/transaction/${right.transactionHash}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-purple-600 hover:text-purple-800"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {right.metadataUrl && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-purple-600 dark:text-purple-400 mb-1">
+                          📋 Metadata URI
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <p className="font-mono text-xs bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded flex-1 break-all">
+                            {right.metadataUrl}
+                          </p>
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={right.metadataUrl} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:text-purple-800">
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="mt-4 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                      <p className="text-sm text-green-700 dark:text-green-300 font-medium">
+                        ✅ This right has been successfully minted as an NFT on the Hedera network!
+                      </p>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Technical Details for non-minted rights */}
+            {!right.tokenId && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Hash className="w-5 h-5" />
+                    Technical Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1">
+                        Status
+                      </label>
+                      <p className="text-sm">Not yet minted as NFT</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1">
+                        Created
+                      </label>
+                      <p className="text-sm">{new Date(right.createdAt!).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
