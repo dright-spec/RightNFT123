@@ -146,29 +146,12 @@ export async function mintOneRightsNft(params: {
     .setTransactionId(TransactionId.generate(payer))      // payer = user account in HashPack
     .freezeWith(sdkClient);  // Freeze with client to get proper transaction bytes
 
-  // Check if we have the supply key stored locally (from collection creation)
-  const storedKeys = localStorage.getItem(`collection_keys_${userAccountId}`);
-  let finalTxBytes: Uint8Array;
+  // For collections where the user is the treasury AND has signing rights,
+  // the wallet signature is sufficient for minting
+  console.log('Preparing transaction for wallet signature...');
+  const finalTxBytes = await mintTx.toBytes();
   
-  if (storedKeys) {
-    try {
-      const keys = JSON.parse(storedKeys);
-      const { PrivateKey } = await import("@hashgraph/sdk");
-      const supplyKey = PrivateKey.fromString(keys.supplyPrivateKey);
-      
-      console.log('Signing mint transaction with stored supply key...');
-      const signedTx = await mintTx.sign(supplyKey);
-      finalTxBytes = signedTx.toBytes();
-    } catch (error) {
-      console.log('Could not sign with supply key, proceeding without it:', error);
-      finalTxBytes = await mintTx.toBytes();
-    }
-  } else {
-    console.log('No supply key found, transaction will be signed by wallet only');
-    finalTxBytes = await mintTx.toBytes();
-  }
-
-  console.log('Serializing transaction to bytes...');
+  console.log('Transaction ready for HashPack signing');
 
   // Pack into a TransactionList (base64) — REQUIRED by WalletConnect Hedera RPC
   console.log('Creating TransactionList Base64...');

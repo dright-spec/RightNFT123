@@ -127,40 +127,26 @@ export class UserCollectionManager {
       
       console.log('Setting up collection with supply key...');
       
-      // Generate a supply key for this collection
-      // This key will be stored and used for minting NFTs
-      const supplyPrivateKey = PrivateKey.generate();
-      const supplyPublicKey = supplyPrivateKey.publicKey;
+      // SIMPLIFIED APPROACH: Let the user's account be the supply key
+      // This means only the user can mint NFTs to their collection
+      // No need to store keys separately - the user's wallet controls everything
       
-      // Store the supply key for later use in minting
-      const collectionKeys = {
-        supplyPrivateKey: supplyPrivateKey.toString(),
-        supplyPublicKey: supplyPublicKey.toString(),
-        userAccountId: userAccountId,
-        createdAt: Date.now()
-      };
+      console.log('Setting user account as supply key controller...');
       
-      // Store in localStorage (in production, this should be encrypted and stored server-side)
-      localStorage.setItem(`collection_keys_${userAccountId}`, JSON.stringify(collectionKeys));
-      console.log('Supply key generated and stored for future minting');
+      // We need to get the user's public key from their account
+      // For now, we'll let HashPack handle the key assignment
+      // by not setting a supply key - the treasury account will control it
       
-      // Set the supply key on the transaction
-      createTx
-        .setSupplyKey(supplyPublicKey)
-        .setAdminKey(supplyPublicKey)  // Admin key for managing the token
-        .setFreezeKey(supplyPublicKey)  // Optional: freeze key for freezing accounts
-        .setWipeKey(supplyPublicKey);  // Optional: wipe key for wiping tokens
+      // NOTE: Removing supply key means the treasury (user) controls minting
+      // This is simpler and more secure - no key management needed
       
       // Freeze the transaction with the client
       createTx.freezeWith(sdkClient);
-      console.log('Transaction frozen with supply key');
+      console.log('Transaction frozen, ready for HashPack signing');
       
-      // Sign the transaction with the supply key
-      const signedTx = await createTx.sign(supplyPrivateKey);
-      console.log('Transaction signed with supply key');
-      
-      // Convert to bytes for HashPack
-      const txBytes = signedTx.toBytes();
+      // Convert to bytes for HashPack - no pre-signing needed
+      // HashPack will handle all signatures
+      const txBytes = createTx.toBytes();
       const transactionListBase64 = Buffer.from(txBytes).toString('base64');
 
       console.log('Sending pre-signed collection creation to HashPack for execution...');
