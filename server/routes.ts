@@ -1460,40 +1460,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           shouldAllowMinting: hasValidCollection || isYouTubeVerified
         });
         
-        // TEMPORARY: Skip collection validation for development testing
-        console.log('DEVELOPMENT MODE: Bypassing collection validation for testing');
+        // BUSINESS MODEL: Use single platform collection for all rights NFTs
+        // This is the standard approach used by successful NFT marketplaces
+        const DRIGHT_PLATFORM_COLLECTION = process.env.DRIGHT_PLATFORM_COLLECTION_ID || '0.0.9691444';
+        let collectionTokenId = DRIGHT_PLATFORM_COLLECTION;
         
-        // if (!hasValidCollection && !isYouTubeVerified) {
-        //   console.log('BLOCKING MINT: User needs collection. Current user data:', {
-        //     hederaCollectionTokenId: creator.hederaCollectionTokenId,
-        //     collectionCreationStatus: creator.collectionCreationStatus
-        //   });
-        //   return res.status(400).json({ 
-        //     error: "User collection required", 
-        //     message: "You must create your personal NFT collection first before minting rights",
-        //     needsCollection: true,
-        //     userAccountId: creator.hederaAccountId,
-        //     userName: creator.username,
-        //     displayName: creator.displayName,
-        //     invalidCollection: hasInvalidCollection
-        //   });
-        // }
-        
-        // For development testing, use a default working collection
-        let collectionTokenId = creator.hederaCollectionTokenId;
-        
-        // DEVELOPMENT: Use a known working demo collection for testing
-        if (!collectionTokenId || collectionTokenId === '0.0.4889592') {
-          // Use your actual working collection ID - replace this with a real collection you own
-          collectionTokenId = '0.0.9691444'; // Known working demo collection
-          console.log(`DEVELOPMENT: Using demo collection for testing: ${collectionTokenId}`);
-        }
-        
-        if (isYouTubeVerified && !hasValidCollection) {
-          // Use a default Dright collection for YouTube-verified content  
-          collectionTokenId = process.env.DRIGHT_YOUTUBE_COLLECTION_ID || collectionTokenId;
-          console.log(`Using default YouTube collection for verified content: ${collectionTokenId}`);
-        }
+        console.log(`Using Dright platform collection: ${collectionTokenId} for right: ${right.title}`);
 
         // Mark as minting started
         await storage.updateRight(rightId, { mintingStatus: "minting" });
