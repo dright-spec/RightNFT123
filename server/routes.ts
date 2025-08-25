@@ -1462,7 +1462,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // BUSINESS MODEL: Use single platform collection for all rights NFTs
         // This is the standard approach used by successful NFT marketplaces
-        const DRIGHT_PLATFORM_COLLECTION = process.env.DRIGHT_PLATFORM_COLLECTION_ID || '0.0.9691444';
+        // REPLACE WITH YOUR ACTUAL CREATED TOKEN ID FROM HASHPACK
+        const DRIGHT_PLATFORM_COLLECTION = process.env.DRIGHT_PLATFORM_COLLECTION_ID || '0.0.YOUR_REAL_TOKEN_ID_HERE';
         let collectionTokenId = DRIGHT_PLATFORM_COLLECTION;
         
         console.log(`Using Dright platform collection: ${collectionTokenId} for right: ${right.title}`);
