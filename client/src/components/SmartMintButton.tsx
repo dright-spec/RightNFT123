@@ -82,7 +82,7 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
           className: 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200'
         });
 
-        // Step 3: Execute minting (simulated in development)
+        // Step 3: Execute real HashPack minting
         const mintResult = await connectAndMintNFT({
           metadataPointer: params.metadataPointer,
           collectionTokenId: params.collectionTokenId,
