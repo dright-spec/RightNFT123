@@ -218,11 +218,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate a mock collection token ID for development
       const mockTokenId = `0.0.${Math.floor(Date.now() / 1000)}${Math.floor(Math.random() * 1000)}`;
       
+      console.log(`Creating collection for user ${userId} with token ID: ${mockTokenId}`);
+      
       // Complete the collection creation immediately (simplified for development)
-      await storage.updateUser(userId, {
+      const updatedUser = await storage.updateUser(userId, {
         collectionCreationStatus: 'created',
         hederaCollectionTokenId: mockTokenId,
         collectionCreatedAt: new Date()
+      });
+
+      console.log('User updated after collection creation:', {
+        id: updatedUser?.id,
+        hederaCollectionTokenId: updatedUser?.hederaCollectionTokenId,
+        collectionCreationStatus: updatedUser?.collectionCreationStatus
       });
 
       // Return successful collection creation
@@ -230,6 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: 'Collection created successfully',
         status: 'created',
         collectionTokenId: mockTokenId,
+        user: updatedUser,
         collectionParams: {
           userAccountId: user.hederaAccountId,
           userName: userName || user.username,
@@ -1427,6 +1436,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Check if user has a valid collection (must have a token ID and be created)
+        console.log('Checking collection validation for user:', {
+          userId: creator.id,
+          hederaCollectionTokenId: creator.hederaCollectionTokenId,
+          collectionCreationStatus: creator.collectionCreationStatus,
+          tokenIdPresent: !!creator.hederaCollectionTokenId,
+          statusIsCreated: creator.collectionCreationStatus === 'created',
+          tokenIdFormat: creator.hederaCollectionTokenId ? /^\d+\.\d+\.\d+$/.test(creator.hederaCollectionTokenId) : false
+        });
+
         const hasValidCollection = creator.hederaCollectionTokenId && 
                                    creator.collectionCreationStatus === 'created' &&
                                    /^\d+\.\d+\.\d+$/.test(creator.hederaCollectionTokenId); // Valid format: X.X.X
@@ -1436,7 +1454,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                   (right.contentFileUrl.includes('youtube.com') || right.contentFileUrl.includes('youtu.be')) && 
                                   right.verificationStatus === 'verified';
         
+        console.log('Collection validation results:', {
+          hasValidCollection,
+          isYouTubeVerified,
+          shouldAllowMinting: hasValidCollection || isYouTubeVerified
+        });
+        
         if (!hasValidCollection && !isYouTubeVerified) {
+          console.log('BLOCKING MINT: User needs collection. Current user data:', {
+            hederaCollectionTokenId: creator.hederaCollectionTokenId,
+            collectionCreationStatus: creator.collectionCreationStatus
+          });
           return res.status(400).json({ 
             error: "User collection required", 
             message: "You must create your personal NFT collection first before minting rights",
