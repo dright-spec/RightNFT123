@@ -77,8 +77,9 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         const params = result.data.transactionParams;
         
         toast({
-          title: 'Opening HashPack Wallet',
-          description: 'Please approve the minting transaction in your HashPack wallet. Transaction fee: ~0.01 HBAR'
+          title: '🚀 Opening HashPack Wallet',
+          description: 'Please approve the NFT minting transaction. Estimated fee: ~0.01 HBAR',
+          className: 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200'
         });
 
         // Step 3: Execute minting (simulated in development)
@@ -113,8 +114,9 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         }
 
         toast({
-          title: 'NFT Minted Successfully!',
-          description: `Your rights NFT has been minted! Token: ${params.collectionTokenId} Serial: ${serialNumber}. View it in your dashboard!`
+          title: '✨ NFT Minted Successfully!',
+          description: `Your rights NFT is now in your HashPack wallet! Collection: ${params.collectionTokenId} | Serial #${serialNumber}`,
+          className: 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
         });
 
         // Refresh the page to show updated status
@@ -126,8 +128,8 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
     } catch (error) {
       console.error('Minting error:', error);
       toast({
-        title: 'Minting Failed',
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        title: '⚠️ Minting Issue',
+        description: error instanceof Error ? error.message : 'Unable to complete minting. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -161,12 +163,12 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         {isMinting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            Minting NFT...
+            Minting to Hedera...
           </>
         ) : (
           <>
             <Wallet className="h-4 w-4 mr-2" />
-            Mint NFT
+            Mint on Hedera
           </>
         )}
       </Button>

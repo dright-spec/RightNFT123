@@ -319,8 +319,9 @@ function RightCard({ right }: RightCardProps) {
         
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between">
-            <div className="text-lg font-semibold">
-              {parseFloat(right.price).toFixed(2)} {right.currency}
+            <div className="text-lg font-semibold flex items-center gap-1">
+              <span className="text-purple-600 dark:text-purple-400">ℏ</span>
+              {parseFloat(right.price).toFixed(2)} HBAR
             </div>
             <div className="text-xs text-muted-foreground">
               {new Date(right.createdAt).toLocaleDateString()}

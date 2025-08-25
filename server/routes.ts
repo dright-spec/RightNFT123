@@ -1242,10 +1242,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(404).json({ error: "Creator not found" });
         }
 
-        // Check if user has a valid collection (not invalid 0.0.x format)
+        // Check if user has a valid collection (must have a token ID and be created)
         const hasValidCollection = creator.hederaCollectionTokenId && 
                                    creator.collectionCreationStatus === 'created' &&
-                                   !creator.hederaCollectionTokenId.startsWith('0.0.');
+                                   /^\d+\.\d+\.\d+$/.test(creator.hederaCollectionTokenId); // Valid format: X.X.X
         
         // Skip collection requirement for YouTube-verified content (automatically verified)
         const isYouTubeVerified = right.contentFileUrl && 
