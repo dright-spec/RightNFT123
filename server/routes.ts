@@ -2005,7 +2005,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Authentication required" });
       }
       
-      const userFromSession = await getUserFromSession(sessionToken);
+      const userFromSession = await sessionManager.getUserFromSession(sessionToken);
       if (!userFromSession) {
         return res.status(401).json({ error: "Invalid session" });
       }
