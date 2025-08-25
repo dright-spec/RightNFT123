@@ -93,6 +93,9 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
         }
 
         // Step 4: Complete the minting on backend
+        // Extract serial number from mint result (defaults to 1 for first NFT in collection)
+        const serialNumber = (mintResult as any).serialNumber || "1";
+        
         const completeResponse = await fetch(`/api/rights/${rightId}/mint-complete`, {
           method: 'POST',
           credentials: 'include',
@@ -100,7 +103,8 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
           body: JSON.stringify({
             tokenId: params.collectionTokenId,
             transactionId: mintResult.transactionId,
-            transactionHash: mintResult.transactionId
+            transactionHash: mintResult.transactionId,
+            serialNumber: serialNumber
           })
         });
 
@@ -110,11 +114,13 @@ export function SmartMintButton({ rightId, disabled = false, className = "" }: S
 
         toast({
           title: 'NFT Minted Successfully!',
-          description: 'Your rights NFT has been minted to your collection. Check your dashboard to see it!'
+          description: `Your rights NFT has been minted! Token: ${params.collectionTokenId} Serial: ${serialNumber}. View it in your dashboard!`
         });
 
-        // Don't reload - just update the UI
-        setIsMinting(false);
+        // Refresh the page to show updated status
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       }
 
     } catch (error) {

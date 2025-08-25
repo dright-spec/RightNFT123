@@ -1486,7 +1486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/rights/:id/mint-complete", async (req, res) => {
     try {
       const rightId = parseInt(req.params.id);
-      const { tokenId, transactionId, transactionHash } = req.body;
+      const { tokenId, transactionId, transactionHash, serialNumber } = req.body;
       
       if (!tokenId || !transactionId) {
         return res.status(400).json({ error: "Missing transaction data" });
@@ -1497,6 +1497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         transactionHash: transactionHash || transactionId,
         mintingStatus: "completed",
         hederaTokenId: tokenId,
+        hederaSerialNumber: serialNumber || "1", // Default to 1 if not provided
         chainId: 295, // Hedera mainnet
         networkType: "hedera"
       });
