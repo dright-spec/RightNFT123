@@ -1248,7 +1248,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                    !creator.hederaCollectionTokenId.startsWith('0.0.');
         
         // Skip collection requirement for YouTube-verified content (automatically verified)
-        const isYouTubeVerified = right.youtubeUrl && right.verificationStatus === 'verified';
+        const isYouTubeVerified = right.contentFileUrl && 
+                                  (right.contentFileUrl.includes('youtube.com') || right.contentFileUrl.includes('youtu.be')) && 
+                                  right.verificationStatus === 'verified';
         
         if (!hasValidCollection && !isYouTubeVerified) {
           return res.status(400).json({ 
