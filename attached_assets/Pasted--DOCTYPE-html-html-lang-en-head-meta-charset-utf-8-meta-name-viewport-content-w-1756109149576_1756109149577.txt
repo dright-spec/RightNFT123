@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Cash Cascade — Drag, Dodge, Collect</title>
+<style>
+  :root{--bg:#0e1020;--fg:#f6f7ff;--mut:#aab2e3;--acc:#6df1a4;--warn:#ff6b6b;--gold:#ffd166}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%, rgba(109,241,164,.12), transparent) , var(--bg); color:var(--fg); font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; display:flex; flex-direction:column}
+  #topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px}
+  .chip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);padding:6px 10px;border-radius:10px;font-weight:700;display:flex;gap:8px;align-items:center}
+  .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
+  .btn.play{background:linear-gradient(180deg,#7ee9b8,#39d589);color:#052416}
+  .btn.ghost{background:rgba(255,255,255,.08);color:var(--fg);border:1px solid rgba(255,255,255,.14)}
+  #gamewrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center}
+  canvas{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.35);touch-action:none}
+  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .panel{pointer-events:auto;background:rgba(0,0,0,.6);backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:16px;max-width:560px;width:90%}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  h1{margin:0 0 8px 0}
+  .sub{color:var(--mut);font-size:14px}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06)}
+  .bar{height:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:999px;overflow:hidden}
+  .bar>.fill{height:100%;background:linear-gradient(90deg,#6df1a4,#9cffda)}
+  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:rgba(0,0,0,.8);border:1px solid rgba(255,255,255,.12);padding:8px 12px;border-radius:10px;display:none;z-index:9}
+</style>
+</head>
+<body>
+  <div id="topbar">
+    <div class="chip">💰 Coins: <span id="coins">0</span></div>
+    <div class="chip">💎 Gems: <span id="gems">0</span></div>
+    <div class="chip">🔥 Mult: <span id="mult">x1.00</span></div>
+    <div class="chip">🏆 Best: <span id="best">0</span></div>
+    <div class="row">
+      <button id="shopBtn" class="btn ghost">🛒 Shop</button>
+      <button id="prestigeBtn" class="btn ghost">🚀 Prestige</button>
+      <button id="playBtn" class="btn play">▶ Play</button>
+    </div>
+  </div>
+
+  <div id="gamewrap">
+    <canvas id="cv" width="900" height="600"></canvas>
+    <div id="overlay"></div>
+  </div>
+
+  <div id="toast"></div>
+
+<script>
+/* ========= Utilities ========= */
+const el = id => document.getElementById(id);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const rand = (a,b)=>Math.random()*(b-a)+a;
+const randi = (a,b)=>Math.floor(rand(a,b+1));
+const dist2 = (a,b)=>{const dx=a.x-b.x, dy=a.y-b.y; return dx*dx+dy*dy;}
+const fmt = n=>n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.floor(n);
+const toast = (t)=>{const d=el('toast'); d.textContent=t; d.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>d.style.display='none',1400);};
+const save = ()=>localStorage.setItem('cash-cascade', JSON.stringify(S));
+const load = ()=>{const j=localStorage.getItem('cash-cascade'); return j?JSON.parse(j):null;};
+const now = ()=>performance.now();
+
+/* ========= State ========= */
+const DEF={
+  coins:0,gems:0,fame:0,baseMult:1,bestScore:0,
+  upgrades:{magnet:0,shield:0,spawn:0,greed:0,life:0},
+  settings:{vfx:true},
+};
+let S = Object.assign({},DEF,load()||{});
+S.baseMult = Math.max(1,S.baseMult||1);
+
+const CV=el('cv'), CT=CV.getContext('2d',{alpha:false});
+let W=CV.width, H=CV.height;
+const DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+function resize(){
+  const pad=12;
+  const ww = Math.min(window.innerWidth-pad*2, 1024);
+  const hh = Math.min(window.innerHeight- (document.getElementById('topbar').offsetHeight+pad*2), 760);
+  const targetW = Math.max(320, Math.round(ww));
+  const targetH = Math.max(360, Math.round(hh));
+  CV.style.width=targetW+'px'; CV.style.height=targetH+'px';
+  W = Math.round(targetW*DPR); H = Math.round(targetH*DPR);
+  CV.width=W; CV.height=H;
+}
+resize(); addEventListener('resize', resize);
+
+/* ========= Game Objects ========= */
+const state = {
+  running:false, score:0, time:0, lastSpawn:0, phase:0,
+  player:{x:W*0.5,y:H*0.7,r:20*DPR,vx:0,vy:0,alive:true,shield:0,lives:1},
+  orbs:[], hazards:[], fx:[], input:{down:false,x:0,y:0},
+  mult:1,
+};
+
+function resetRun(){
+  state.running=true; state.score=0; state.time=0; state.lastSpawn=0; state.phase=0; state.orbs.length=0; state.hazards.length=0; state.fx.length=0;
+  state.player={x:W*0.5,y:H*0.7,r:22*DPR,vx:0,vy:0,alive:true,shield:0,lives:1+S.upgrades.life};
+  state.mult = S.baseMult * (1 + S.fame*0.15);
+  spawnWave(); overlay(); // hide overlay
+}
+
+function endRun(){
+  state.running=false;
+  S.coins += Math.floor(state.score*0.2);
+  if (state.score>S.bestScore) S.bestScore=state.score;
+  save();
+  showGameOver();
+}
+
+/* ========= Spawning ========= */
+function spawnOrb(){
+  const r = rand(10,16)*DPR;
+  const value = Math.max(1, Math.round((1+S.upgrades.greed*0.25) * randi(10,20)));
+  state.orbs.push({x:rand(r,W-r), y:-r, r, vy:rand(1.2,2.0)*DPR, value, t:0, magnet:false});
+}
+function spawnHaz(){
+  const r = rand(14,22)*DPR;
+  const speed = rand(1.4,2.4)*DPR + state.phase*0.15*DPR;
+  const x = Math.random()<0.5?-r:W+r;
+  const y = rand(H*0.25, H*0.75);
+  const tx = rand(W*0.15, W*0.85);
+  const ty = rand(H*0.15, H*0.85);
+  state.hazards.push({x,y, r, vx:(tx-x)/200*speed, vy:(ty-y)/200*speed, t:0});
+}
+function spawnPower(){
+  // 1 of 3: magnet, shield, slow
+  const r = 14*DPR, type = ['magnet','shield','slow'][randi(0,2)];
+  state.orbs.push({x:rand(r,W-r), y:-r, r, vy:rand(1.3,1.8)*DPR, value:0, t:0, power:type});
+}
+function spawnWave(){
+  for(let i=0;i<6+S.upgrades.spawn;i++) spawnOrb();
+  for(let i=0;i<2;i++) spawnHaz();
+}
+
+/* ========= Input ========= */
+function pointerPos(e){
+  if (e.touches && e.touches[0]) return {x:(e.touches[0].clientX-CV.getBoundingClientRect().left)*DPR, y:(e.touches[0].clientY-CV.getBoundingClientRect().top)*DPR};
+  return {x:(e.clientX-CV.getBoundingClientRect().left)*DPR, y:(e.clientY-CV.getBoundingClientRect().top)*DPR};
+}
+CV.addEventListener('pointerdown', e=>{ const p=pointerPos(e); state.input.down=true; state.input.x=p.x; state.input.y=p.y; });
+CV.addEventListener('pointermove', e=>{ const p=pointerPos(e); state.input.x=p.x; state.input.y=p.y; });
+addEventListener('pointerup', ()=>state.input.down=false);
+addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); state.input.down=true; }});
+addEventListener('keyup', e=>{ if(e.code==='Space'){ state.input.down=false; }});
+
+/* ========= Loop ========= */
+let lastT=now();
+function loop(){
+  const t=now(); let dt=(t-lastT)/16.6667; lastT=t; dt=clamp(dt,0.2,2.5);
+  if (state.running) update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ========= Update ========= */
+let effects={magnet:0, slow:0};
+function update(dt){
+  state.time += dt;
+  state.phase = Math.floor(state.time/300)*0.5; // ramps difficulty slowly
+
+  // player movement (drag towards pointer)
+  const P=state.player, IN=state.input;
+  if(IN.down){ P.vx += (IN.x-P.x)*0.12*dt; P.vy += (IN.y-P.y)*0.12*dt; }
+  P.vx*=0.85; P.vy*=0.85; P.x = clamp(P.x + P.vx, P.r, W-P.r); P.y = clamp(P.y + P.vy, P.r, H-P.r);
+
+  // spawn
+  state.lastSpawn += dt;
+  const spawnRate = Math.max(14 - S.upgrades.spawn*2 - state.phase*1.2, 6);
+  if (state.lastSpawn>spawnRate){ state.lastSpawn=0; spawnWave(); if (Math.random()<0.35) spawnPower(); }
+
+  const slowFactor = effects.slow>0?0.5:1;
+
+  // orbs
+  for(let i=state.orbs.length-1;i>=0;i--){
+    const o=state.orbs[i]; o.t+=dt; o.y+=o.vy*dt*slowFactor;
+    // magnet effect
+    const magRadius = (110+S.upgrades.magnet*60)*DPR;
+    if (effects.magnet>0 && !o.power){
+      const d2 = dist2(P,o);
+      if (d2 < magRadius*magRadius){
+        const d = Math.max(0.001, Math.sqrt(d2));
+        const pull = 2.4*DPR*dt;
+        o.x += (P.x-o.x)/d*pull; o.y += (P.y-o.y)/d*pull;
+      }
+    }
+    // collect
+    const rr = (P.r+o.r);
+    if (dist2(P,o) < rr*rr){
+      if (o.power){
+        if (o.power==='magnet'){ effects.magnet=600; toast('🧲 Magnet!'); }
+        if (o.power==='shield'){ P.shield = 1.0 + S.upgrades.shield*0.5; toast('🛡️ Shield!'); }
+        if (o.power==='slow'){ effects.slow = 300; toast('🐢 Slow-mo!'); }
+      } else {
+        const gain = Math.round(o.value * state.mult);
+        state.score += gain;
+        if (S.settings.vfx) spawnPop(o.x,o.y, '+'+gain);
+      }
+      state.orbs.splice(i,1);
+      continue;
+    }
+    if (o.y-o.r>H) state.orbs.splice(i,1);
+  }
+
+  // hazards
+  for(let i=state.hazards.length-1;i>=0;i--){
+    const h=state.hazards[i]; h.t+=dt; h.x+=h.vx*dt*slowFactor; h.y+=h.vy*dt*slowFactor;
+    // bounce edges
+    if (h.x<h.r||h.x>W-h.r) h.vx*=-1;
+    if (h.y<h.r||h.y>H-h.r) h.vy*=-1;
+
+    // collide
+    const hit = dist2(state.player,h) < (state.player.r+h.r)*(state.player.r+h.r);
+    if (hit){
+      if (state.player.shield>0){ state.player.shield=0; if (S.settings.vfx) spawnRing(P.x,P.y); state.hazards.splice(i,1); continue; }
+      state.player.lives--;
+      if (state.player.lives<=0){ endRun(); return; }
+      // brief invuln
+      state.player.shield=0.6; state.hazards.splice(i,1);
+    }
+  }
+
+  // effects timers
+  if (effects.magnet>0) effects.magnet-=dt;
+  if (effects.slow>0) effects.slow-=dt;
+  if (state.player.shield>0) state.player.shield-=dt*0.02;
+
+  // passive score tick
+  state.score += Math.round(0.05 * state.mult * dt);
+}
+
+/* ========= Render ========= */
+function render(){
+  // bg
+  CT.fillStyle= '#0c0f1d'; CT.fillRect(0,0,W,H);
+  // grid
+  CT.globalAlpha = .2; CT.strokeStyle='rgba(255,255,255,.06)'; CT.lineWidth=1;
+  CT.beginPath(); for(let x=0;x<W;x+=60*DPR){ CT.moveTo(x,0); CT.lineTo(x,H);} for(let y=0;y<H;y+=60*DPR){ CT.moveTo(0,y); CT.lineTo(W,y);} CT.stroke(); CT.globalAlpha = 1;
+
+  // player
+  const P=state.player;
+  CT.save();
+  CT.shadowColor='rgba(109,241,164,.6)'; CT.shadowBlur=20*DPR;
+  CT.fillStyle='#6df1a4';
+  CT.beginPath(); CT.arc(P.x,P.y,P.r,0,Math.PI*2); CT.fill();
+  if (P.shield>0){ CT.lineWidth=4*DPR; CT.strokeStyle='rgba(100,200,255,.9)'; CT.beginPath(); CT.arc(P.x,P.y,P.r+5*DPR,0,Math.PI*2); CT.stroke(); }
+  CT.restore();
+
+  // orbs
+  for(const o of state.orbs){
+    if (o.power){
+      CT.fillStyle= o.power==='magnet' ? '#9cf9ff' : o.power==='shield' ? '#a0b6ff' : '#ffe08a';
+    } else CT.fillStyle = '#ffd166';
+    CT.beginPath(); CT.arc(o.x,o.y,o.r,0,Math.PI*2); CT.fill();
+  }
+
+  // hazards
+  CT.fillStyle='#ff6b6b';
+  for(const h of state.hazards){ CT.beginPath(); CT.arc(h.x,h.y,h.r,0,Math.PI*2); CT.fill(); }
+
+  // fx
+  for(let i=state.fx.length-1;i>=0;i--){
+    const f=state.fx[i]; f.t+=1;
+    if (f.type==='pop'){
+      CT.globalAlpha = Math.max(0,1-f.t/30);
+      CT.fillStyle='#ffffff'; CT.font = `${14*DPR}px sans-serif`; CT.fillText(f.text, f.x, f.y - f.t*0.7);
+      CT.globalAlpha=1;
+      if (f.t>30) state.fx.splice(i,1);
+    } else if (f.type==='ring'){
+      CT.strokeStyle='rgba(160,210,255,.8)'; CT.lineWidth=2*DPR; CT.beginPath(); CT.arc(f.x,f.y,f.t*1.5,0,Math.PI*2); CT.stroke();
+      if (f.t>22) state.fx.splice(i,1);
+    }
+  }
+
+  // HUD in-canvas
+  CT.fillStyle='rgba(255,255,255,.9)'; CT.font = `${Math.max(16,14*DPR)}px sans-serif`;
+  CT.fillText(`Score: ${fmt(state.score)}`, 14*DPR, 24*DPR);
+  CT.fillText(`x${state.mult.toFixed(2)}`, 14*DPR, 46*DPR);
+  if (!state.running) {
+    CT.fillStyle='rgba(255,255,255,.08)'; CT.fillRect(0,0,W,H);
+  }
+}
+function spawnPop(x,y,text){ state.fx.push({type:'pop',x,y,text,t:0}); }
+function spawnRing(x,y){ state.fx.push({type:'ring',x,y,t:0}); }
+
+/* ========= UI Panels ========= */
+function overlay(html=''){ const o=el('overlay'); if (!html){ o.innerHTML=''; o.style.display='none'; return; } o.style.display='flex'; o.innerHTML=html; }
+
+function showMenu(){
+  overlay(`
+    <div class="panel">
+      <h1>Cash Cascade</h1>
+      <div class="sub">Drag your orb. Collect 💰. Dodge 🔴. Snag powerups. Turn score into coins. Climb.</div>
+      <div class="row" style="margin:10px 0">
+        <span class="pill">Best: ${fmt(S.bestScore)}</span>
+        <span class="pill">Mult: x${(S.baseMult*(1+S.fame*0.15)).toFixed(2)}</span>
+      </div>
+      <div class="bar"><div class="fill" style="width:${Math.min(100, S.bestScore/1000*100)}%"></div></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn play" id="play2">▶ Start</button>
+        <button class="btn ghost" id="shop2">🛒 Shop</button>
+        <button class="btn ghost" id="prestige2">🚀 Prestige</button>
+      </div>
+      <div class="sub" style="margin-top:6px">Tip: Upgrades are permanent. Prestige resets upgrades ➜ Gems for bigger multiplier.</div>
+    </div>
+  `);
+  el('play2').onclick=resetRun;
+  el('shop2').onclick=showShop;
+  el('prestige2').onclick=showPrestige;
+}
+function showGameOver(){
+  overlay(`
+    <div class="panel">
+      <h1>Game Over</h1>
+      <div class="sub">Score: <b>${fmt(state.score)}</b> • Best: <b>${fmt(S.bestScore)}</b></div>
+      <div style="margin:8px 0">You earned <b>${fmt(Math.floor(state.score*0.2))}</b> coins.</div>
+      <div class="row">
+        <button class="btn play" id="again">▶ Play Again</button>
+        <button class="btn ghost" id="shop3">🛒 Shop</button>
+        <button class="btn ghost" id="menu3">🏠 Menu</button>
+      </div>
+    </div>
+  `);
+  el('again').onclick=resetRun;
+  el('shop3').onclick=showShop;
+  el('menu3').onclick=showMenu;
+}
+
+function shopItem(key, name, desc, base, step, max){
+  const lvl=S.upgrades[key];
+  const cost = Math.floor(base * Math.pow(1.6, lvl));
+  const capped = lvl>=max;
+  return `
+    <div class="panel" style="padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><b>${name}</b> <span class="sub">Lv ${lvl}/${max}</span></div>
+        <div><span style="color:var(--gold);font-weight:900">${capped?'MAX':cost+' 💰'}</span></div>
+      </div>
+      <div class="sub" style="margin-top:4px">${desc}</div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn play" ${capped?'disabled':''} data-buy="${key}" data-cost="${cost}">Buy</button>
+      </div>
+    </div>
+  `;
+}
+function showShop(){
+  overlay(`
+    <div class="panel">
+      <h1>Shop</h1>
+      <div class="grid" id="shopGrid">
+        ${shopItem('spawn','Spawner','More coins appear each wave.','120',0,10)}
+        ${shopItem('magnet','Magnet','Increase magnet radius.','150',0,10)}
+        ${shopItem('shield','Shield Power','Shield lasts longer.','180',0,10)}
+        ${shopItem('greed','Greed','Increase coin value.','220',0,10)}
+        ${shopItem('life','Extra Life','Start with +1 life.','400',0,3)}
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="back1">⬅ Back</button>
+      </div>
+      <div class="sub" style="margin-top:6px">Coins: ${fmt(S.coins)} • Gems: ${fmt(S.gems)} • Mult: x${(S.baseMult*(1+S.fame*0.15)).toFixed(2)}</div>
+    </div>
+  `);
+  document.querySelectorAll('[data-buy]').forEach(b=>{
+    b.onclick=()=>{
+      const key=b.getAttribute('data-buy');
+      const lvl=S.upgrades[key];
+      const max = key==='life'?3:10;
+      const cost = Math.floor((key==='life'?400:key==='greed'?220:key==='shield'?180:key==='magnet'?150:120) * Math.pow(1.6,lvl));
+      if (lvl>=max) return;
+      if (S.coins>=cost){ S.coins-=cost; S.upgrades[key]++; save(); updateTopbar(); showShop(); toast('Purchased '+key); }
+      else toast('Not enough coins');
+    };
+  });
+  el('back1').onclick=showMenu;
+}
+function showPrestige(){
+  const projected = 1 + Math.floor( Math.sqrt((S.upgrades.spawn+S.upgrades.greed+S.upgrades.magnet+S.upgrades.shield+S.upgrades.life)*2 + S.bestScore/2000) );
+  overlay(`
+    <div class="panel">
+      <h1>Prestige</h1>
+      <div class="sub">Reset upgrades ➜ gain Gems. Gems increase your base multiplier forever.</div>
+      <div style="margin:8px 0">Projected Gems: <b>${projected}</b></div>
+      <div class="row">
+        <button class="btn play" id="doPrestige">Confirm</button>
+        <button class="btn ghost" id="back2">Cancel</button>
+      </div>
+    </div>
+  `);
+  el('doPrestige').onclick=()=>{
+    S.gems += projected;
+    S.upgrades={magnet:0,shield:0,spawn:0,greed:0,life:0};
+    S.baseMult = 1 + S.gems*0.05;
+    save(); updateTopbar(); showMenu(); toast('Prestiged! 💎+'+projected);
+  };
+  el('back2').onclick=showMenu;
+}
+
+/* ========= Topbar & Buttons ========= */
+function updateTopbar(){
+  el('coins').textContent = fmt(S.coins);
+  el('gems').textContent = fmt(S.gems);
+  el('mult').textContent = 'x'+(S.baseMult*(1+S.fame*0.15)).toFixed(2);
+  el('best').textContent = fmt(S.bestScore);
+}
+updateTopbar();
+
+el('playBtn').onclick=()=>{ resetRun(); };
+el('shopBtn').onclick=showShop;
+el('prestigeBtn').onclick=showPrestige;
+
+/* ========= Boot ========= */
+showMenu();
+
+/* ========= Quality-of-life ========= */
+document.addEventListener('visibilitychange',()=>{ if (document.hidden && state.running){ /* pause visuals only */ }});
+</script>
+</body>
+</html>
