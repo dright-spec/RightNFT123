@@ -367,6 +367,55 @@ export class MemStorage {
   async markNotificationAsRead(notificationId: number): Promise<void> {
     console.log('Notification marked as read:', notificationId);
   }
+
+  // Additional methods needed by routes
+  async getCategories(): Promise<any[]> {
+    return [
+      { id: 1, name: 'Music', slug: 'music', description: 'Music rights and royalties', icon: '🎵' },
+      { id: 2, name: 'Film & TV', slug: 'film-tv', description: 'Movie and television rights', icon: '🎬' },
+      { id: 3, name: 'Art', slug: 'art', description: 'Artwork and visual content', icon: '🎨' },
+      { id: 4, name: 'Literature', slug: 'literature', description: 'Books and written content', icon: '📚' },
+      { id: 5, name: 'Technology', slug: 'technology', description: 'Patents and tech innovations', icon: '⚡' }
+    ];
+  }
+
+  async searchRights(query: string, options: { limit: number; offset: number }): Promise<Right[]> {
+    const { limit = 20, offset = 0 } = options;
+    const allRights = Array.from(this.rights.values());
+    const filtered = allRights.filter(right => 
+      right.title.toLowerCase().includes(query.toLowerCase()) ||
+      (right.description && right.description.toLowerCase().includes(query.toLowerCase()))
+    );
+    return filtered.slice(offset, offset + limit);
+  }
+
+  async placeBid(bid: any): Promise<any> {
+    return { id: Date.now(), ...bid, isActive: true };
+  }
+
+  async getBidsForRight(rightId: number): Promise<any[]> {
+    return [];
+  }
+
+  async addToFavorites(userId: number, rightId: number): Promise<void> {
+    console.log(`User ${userId} added right ${rightId} to favorites`);
+  }
+
+  async removeFromFavorites(userId: number, rightId: number): Promise<void> {
+    console.log(`User ${userId} removed right ${rightId} from favorites`);
+  }
+
+  async getStake(id: number): Promise<any> {
+    return null;
+  }
+
+  async createRevenueDistribution(distribution: any): Promise<any> {
+    return { id: Date.now(), ...distribution };
+  }
+
+  async updateStake(id: number, updates: any): Promise<any> {
+    return null;
+  }
 }
 
 import { db } from "./db";
@@ -632,4 +681,4 @@ export class DatabaseStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

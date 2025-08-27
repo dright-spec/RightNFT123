@@ -859,4 +859,73 @@ export class DatabaseMarketplaceStorage implements IMarketplaceStorage {
   }
 }
 
-export const marketplaceStorage = new DatabaseMarketplaceStorage();
+// Create a simple memory-based marketplace storage for development
+class MemoryMarketplaceStorage implements IMarketplaceStorage {
+  // Use the same implementation as MemStorage for the basic methods
+  // This is a simplified version that doesn't connect to the database
+
+  async getUser(id: number): Promise<any> { return null; }
+  async getUserByUsername(username: string): Promise<any> { return null; }
+  async getUserByWalletAddress(walletAddress: string): Promise<any> { return null; }
+  async getUserByHederaAccountId(hederaAccountId: string): Promise<any> { return null; }
+  async getUserByEmail(email: string): Promise<any> { return null; }
+  async getUserByEmailVerificationToken(token: string): Promise<any> { return null; }
+  async createUser(user: any): Promise<any> { return { id: 1, ...user }; }
+  async updateUser(id: number, updates: any): Promise<any> { return { id, ...updates }; }
+  async getUserProfile(userId: number, currentUserId?: number): Promise<any> { return null; }
+  
+  async getCategories(): Promise<any[]> {
+    return [
+      { id: 1, name: 'Music', slug: 'music', description: 'Music rights and royalties', icon: '🎵' },
+      { id: 2, name: 'Film & TV', slug: 'film-tv', description: 'Movie and television rights', icon: '🎬' },
+      { id: 3, name: 'Art', slug: 'art', description: 'Artwork and visual content', icon: '🎨' }
+    ];
+  }
+  async getCategoryBySlug(slug: string): Promise<any> { return null; }
+  async createCategory(category: any): Promise<any> { return { id: 1, ...category }; }
+  async seedCategories(): Promise<void> { }
+  
+  async getRight(id: number, userId?: number): Promise<any> { return null; }
+  async getRights(options?: any): Promise<any[]> { return []; }
+  async getRightsByCreator(creatorId: number): Promise<any[]> { return []; }
+  async getRightsByOwner(ownerId: number): Promise<any[]> { return []; }
+  async createRight(right: any): Promise<any> { return { id: 1, ...right }; }
+  async updateRight(id: number, updates: any): Promise<any> { return { id, ...updates }; }
+  async incrementRightViews(id: number): Promise<void> { }
+  
+  async placeBid(bid: any): Promise<any> { return { id: 1, ...bid }; }
+  async getBidsForRight(rightId: number): Promise<any[]> { return []; }
+  async getHighestBid(rightId: number): Promise<any> { return null; }
+  async endAuction(rightId: number): Promise<boolean> { return false; }
+  
+  async addToFavorites(userId: number, rightId: number): Promise<void> { }
+  async removeFromFavorites(userId: number, rightId: number): Promise<void> { }
+  async getUserFavorites(userId: number): Promise<any[]> { return []; }
+  async isRightFavorited(userId: number, rightId: number): Promise<boolean> { return false; }
+  
+  async followUser(followerId: number, followingId: number): Promise<void> { }
+  async unfollowUser(followerId: number, followingId: number): Promise<void> { }
+  async getUserFollowers(userId: number): Promise<any[]> { return []; }
+  async getUserFollowing(userId: number): Promise<any[]> { return []; }
+  async isUserFollowing(followerId: number, followingId: number): Promise<boolean> { return false; }
+  
+  async createTransaction(transaction: any): Promise<any> { return { id: 1, ...transaction }; }
+  async getTransactionsByUser(userId: number): Promise<any[]> { return []; }
+  async getTransactionsByRight(rightId: number): Promise<any[]> { return []; }
+  
+  async searchRights(query: string, options?: any): Promise<any[]> { return []; }
+  async getSearchSuggestions(query: string): Promise<string[]> { return []; }
+  
+  async createStake(stake: any): Promise<any> { return { id: 1, ...stake }; }
+  async getStake(id: number): Promise<any> { return null; }
+  async getStakeWithDetails(id: number): Promise<any> { return null; }
+  async getUserStakes(userId: number): Promise<any[]> { return []; }
+  async getStakes(options?: any): Promise<any[]> { return []; }
+  async getActiveStakeByRight(rightId: number): Promise<any> { return null; }
+  async updateStake(id: number, updates: any): Promise<any> { return null; }
+  
+  async createRevenueDistribution(distribution: any): Promise<any> { return { id: 1, ...distribution }; }
+  async getRevenueDistributionsByStake(stakeId: number): Promise<any[]> { return []; }
+}
+
+export const marketplaceStorage = new MemoryMarketplaceStorage();
