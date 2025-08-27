@@ -1371,7 +1371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trigger manual NFT minting (for testing or retry purposes)
-  app.post("/api/rights/:id/mint", async (req, res) => {
+  app.post("/api/rights/:id/mint", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const rightId = parseInt(req.params.id);
       
@@ -1379,9 +1379,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid right ID" });
       }
 
+      // Authentication check
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required to mint NFT" });
+      }
+
       const right = await storage.getRight(rightId);
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
+      }
+
+      // Ownership validation - only the creator/owner can mint their own rights
+      if (right.creatorId !== req.user.id && right.ownerId !== req.user.id) {
+        return res.status(403).json({ 
+          error: "Access denied. You can only mint NFTs for rights you own",
+          details: `Right belongs to user ${right.creatorId}, you are user ${req.user.id}`
+        });
       }
 
       if (right.verificationStatus !== "verified") {
@@ -1684,13 +1697,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Complete NFT minting after successful HashPack transaction
-  app.post("/api/rights/:id/mint-complete", async (req, res) => {
+  app.post("/api/rights/:id/mint-complete", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const rightId = parseInt(req.params.id);
       const { tokenId, transactionId, transactionHash, serialNumber } = req.body;
       
       if (!tokenId || !transactionId) {
         return res.status(400).json({ error: "Missing transaction data" });
+      }
+
+      // Authentication check
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required to complete minting" });
+      }
+
+      // Get the right and validate ownership
+      const right = await storage.getRight(rightId);
+      if (!right) {
+        return res.status(404).json({ error: "Right not found" });
+      }
+
+      // Ownership validation - only the creator/owner can complete minting for their rights
+      if (right.creatorId !== req.user.id && right.ownerId !== req.user.id) {
+        return res.status(403).json({ 
+          error: "Access denied. You can only complete minting for rights you own",
+          details: `Right belongs to user ${right.creatorId}, you are user ${req.user.id}`
+        });
       }
       
       // Get existing NFTs in this collection to determine the correct serial number
@@ -2151,15 +2183,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Endpoint to mint NFT for verified rights
-  app.post("/api/rights/:id/mint-nft", async (req, res) => {
+  app.post("/api/rights/:id/mint-nft", requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { hederaData } = req.body; // Contains minted NFT data from frontend
       
+      // Authentication check
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required to mint NFT" });
+      }
+
       const right = await storage.getRight(id);
       
       if (!right) {
         return res.status(404).json({ error: "Right not found" });
+      }
+
+      // Ownership validation - only the creator/owner can mint their own rights
+      if (right.creatorId !== req.user.id && right.ownerId !== req.user.id) {
+        return res.status(403).json({ 
+          error: "Access denied. You can only mint NFTs for rights you own",
+          details: `Right belongs to user ${right.creatorId}, you are user ${req.user.id}`
+        });
       }
 
       if (right.verificationStatus !== "verified") {
