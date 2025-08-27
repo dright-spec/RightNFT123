@@ -283,6 +283,25 @@ export class MemStorage {
     });
     
     this.currentRightId = 4; // Next ID after sample data
+    
+    // Reset some rights back to pending for demo purposes
+    const right1 = this.rights.get(1);
+    if (right1) {
+      right1.verificationStatus = "pending";
+      right1.verifiedAt = null;
+      right1.verifiedBy = null;
+      right1.verificationNotes = null;
+      this.rights.set(1, right1);
+    }
+    
+    const right3 = this.rights.get(3);
+    if (right3) {
+      right3.verificationStatus = "pending";
+      right3.verifiedAt = null;
+      right3.verifiedBy = null;
+      right3.verificationNotes = null;
+      this.rights.set(3, right3);
+    }
   }
 
   async getUser(id: number): Promise<User | undefined> {
