@@ -2591,14 +2591,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get('/api/admin/stats', async (req, res) => {
     try {
-      // Direct database query to avoid parameter issues
-      const allRights = await db.select().from(rights);
+      // Use in-memory storage instead of direct database queries
+      const allRights = await storage.getRights(1000);
+      const totalUsers = 10; // Sample user count for demo
+      
       const pendingRights = allRights.filter(r => r.verificationStatus === 'pending');
+      const verifiedRights = allRights.filter(r => r.verificationStatus === 'verified');
       
       const stats = {
-        totalUsers: 10, // Mock data for demo
+        totalUsers: totalUsers,
         totalRights: allRights.length,
         pendingVerifications: pendingRights.length,
+        verifiedRights: verifiedRights.length,
         bannedUsers: 0,
         totalRevenue: "15.7 HBAR",
         monthlyGrowth: 24.5
@@ -2615,22 +2619,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status, search } = req.query;
       
-      // Direct database query with creator info
-      let query = db.select().from(rights)
-        .leftJoin(users, eq(rights.creatorId, users.id))
-        .limit(100)
-        .orderBy(desc(rights.createdAt));
+      // Use in-memory storage instead of direct database queries
+      const allRights = await storage.getRights(100);
       
-      const result = await query;
-      
-      let rightsData = result.map(row => ({
-        ...row.rights,
-        creator: row.users!,
-      }));
+      let rightsData = allRights;
 
       // Filter by verification status if specified
       if (status && status !== 'all') {
         rightsData = rightsData.filter(right => right.verificationStatus === status);
+      }
+
+      // Filter by search if specified
+      if (search) {
+        const searchLower = String(search).toLowerCase();
+        rightsData = rightsData.filter(right => 
+          right.title.toLowerCase().includes(searchLower) ||
+          right.description.toLowerCase().includes(searchLower)
+        );
       }
 
       res.json({ data: rightsData });
@@ -2735,36 +2740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes
-  app.get('/api/admin/stats', async (req, res) => {
-    try {
-      const totalUsersQuery = `SELECT COUNT(*) as count FROM users`;
-      const totalRightsQuery = `SELECT COUNT(*) as count FROM rights`;
-      const pendingVerificationsQuery = `SELECT COUNT(*) as count FROM rights WHERE verification_status = 'pending'`;
-      const bannedUsersQuery = `SELECT COUNT(*) as count FROM users WHERE is_banned = true`;
-
-      const [totalUsers, totalRights, pendingVerifications, bannedUsers] = await Promise.all([
-        db.execute(totalUsersQuery),
-        db.execute(totalRightsQuery),
-        db.execute(pendingVerificationsQuery),
-        db.execute(bannedUsersQuery)
-      ]);
-
-      const stats = {
-        totalUsers: Number(totalUsers.rows[0]?.count || 0),
-        totalRights: Number(totalRights.rows[0]?.count || 0),
-        pendingVerifications: Number(pendingVerifications.rows[0]?.count || 0),
-        bannedUsers: Number(bannedUsers.rows[0]?.count || 0),
-        totalRevenue: "0 ETH",
-        monthlyGrowth: 0
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching admin stats:", error);
-      res.status(500).json({ error: "Failed to fetch admin stats" });
-    }
-  });
+  // Removed duplicate admin stats route - using the working one above
 
   app.get('/api/admin/rights', async (req, res) => {
     try {
@@ -3258,30 +3234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes - for platform management
-  app.get("/api/admin/stats", async (req, res) => {
-    try {
-      // Get total counts and stats using simple queries
-      const allUsers = await db.select().from(users);
-      const allRights = await db.select().from(rights);
-      const pendingRights = allRights.filter(r => r.verificationStatus === 'pending');
-      const bannedUsers = allUsers.filter(u => u.isBanned);
-
-      const stats = {
-        totalUsers: allUsers.length,
-        totalRights: allRights.length,
-        pendingVerifications: pendingRights.length,
-        bannedUsers: bannedUsers.length,
-        totalRevenue: "12.5 ETH", // This would come from transaction aggregation
-        monthlyGrowth: 15.2
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching admin stats:", error);
-      res.status(500).json({ error: "Failed to fetch admin stats" });
-    }
-  });
+  // Removed duplicate admin stats route - using the working one above
 
   // Removed duplicate admin rights route - using the one above with direct database queries
 
