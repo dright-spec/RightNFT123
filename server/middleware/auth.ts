@@ -4,6 +4,7 @@ import type { Response, NextFunction } from "express";
 import type { AuthenticatedRequest } from "../api-types";
 import { ApiResponseHelper, ApiErrorCode } from "../api-types";
 import { marketplaceStorage as storage } from "../marketplaceStorage";
+import { sessionManager } from "../session-manager";
 
 // Require authentication middleware
 export async function requireAuth(
@@ -12,20 +13,26 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Check session for user ID
-    if (!req.session?.userId) {
+    // Get session token from cookies (same approach as /api/auth/me)
+    const sessionToken = req.cookies?.session_token;
+    
+    if (!sessionToken) {
       res.status(401).json(
         ApiResponseHelper.error("Authentication required", ApiErrorCode.UNAUTHORIZED)
       );
       return;
     }
 
-    // Fetch user from database to ensure they still exist and aren't banned
-    const user = await storage.getUser(req.session.userId);
+    // Use sessionManager to get user (same as /api/auth/me endpoint)
+    const user = await sessionManager.getUserFromSession(sessionToken);
+    
     if (!user) {
-      // Clear invalid session
-      req.session.destroy((err) => {
-        if (err) console.error("Session destruction error:", err);
+      // Clear invalid cookie (same as /api/auth/me)
+      res.clearCookie('session_token', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        path: '/'
       });
       res.status(401).json(
         ApiResponseHelper.error("Invalid session", ApiErrorCode.UNAUTHORIZED)
