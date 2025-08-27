@@ -164,14 +164,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json(ApiResponseHelper.error('User not found'));
       }
 
-      // Get user's created rights directly from database
-      const createdRights = await db.select()
-        .from(rights)
-        .where(eq(rights.creatorId, userId))
-        .orderBy(desc(rights.createdAt));
+      // Get user's created rights from storage service (not database)
+      const createdRights = await storage.getRightsByCreator(userId);
+      
+      // Sort by creation date (newest first)
+      createdRights.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       // Get user's owned rights (includes all created rights regardless of minting status)
-      const ownedRights = [...createdRights];
+      const ownedRights = await storage.getRightsByOwner(userId);
+      ownedRights.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
       res.json(ApiResponseHelper.success({
         user,
